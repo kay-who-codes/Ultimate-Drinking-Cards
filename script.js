@@ -1,62 +1,126 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const coverCard = document.getElementById("cover-card");
-    const gameCard = document.getElementById("game-card");
-    const flipSound = document.getElementById("flip-sound");
-    const refreshButton = document.getElementById("refresh-btn");
-    const cardElement = document.getElementById("card");
-    const instructionText = document.getElementById("instruction-text");
-    const categoryText = document.getElementById("category-text");
+document.addEventListener("DOMContentLoaded", function () {
+    const coverCard = document.getElementById('coverCard');
+    const resetButton = document.getElementById('resetButton');
+    const flipSound = document.getElementById('flipSound');
+    const cardContainer = document.querySelector('.card-container');
 
-    let allCards = [];
-    let availableCards = [];
+    let cardData = [];
+    let currentCardIndex = 0;
 
-    // Try to load card data
+    // Fetch cards data from cards.json
     fetch('cards.json')
         .then(response => response.json())
         .then(data => {
-            allCards = data; // Directly assign the array of cards
-            availableCards = [...allCards]; // Make a copy of all cards for availability
-            displayCoverCard();
+            cardData = data;
+            showCard();
         })
-        .catch(error => {
-            console.error('Error loading cards:', error);
-            alert("There was an error loading the cards. Please check the file path.");
-        });
+        .catch(error => console.error('Error loading cards.json:', error));
 
-    // Display the cover card
-    function displayCoverCard() {
-        cardElement.classList.remove('flipped');
-        instructionText.textContent = '';
-        categoryText.textContent = '';
-        refreshButton.classList.add('hidden');
-    }
-
-    // Shuffle the cards and display a new one
-    function shuffleAndDisplayCard() {
-        if (availableCards.length === 0) {
-            availableCards = [...allCards]; // Reshuffle when all cards are used
-            refreshButton.classList.remove('hidden');
+    // Function to generate and display the next card
+    function showCard() {
+        if (cardData.length === 0) {
+            resetButton.classList.remove('hidden');
+            return;
         }
 
-        const randomIndex = Math.floor(Math.random() * availableCards.length);
-        const selectedCard = availableCards.splice(randomIndex, 1)[0]; // Remove card from available list
+        // Get the current card data
+        const currentCard = cardData[currentCardIndex];
 
-        instructionText.textContent = selectedCard.Rule;
-        categoryText.textContent = selectedCard.Category;
-        gameCard.style.backgroundColor = selectedCard.Colour;
+        // Create the game card HTML
+        const gameCard = document.createElement('div');
+        gameCard.classList.add('card', 'game-card');
+        gameCard.innerHTML = `
+            <div class="instructionText">${currentCard.Rule}</div>
+            <div class="categoryText" style="color: ${currentCard.Colour};">${currentCard.Category}</div>
+        `;
 
-        // Play sound and flip card
+        // Position the new card below the current one
+        gameCard.style.transform = 'translateY(100%)';
+
+        // Add click event to trigger flying off
+        gameCard.addEventListener('click', () => slideAndReveal(gameCard));
+
+        // Append the game card to the container
+        cardContainer.appendChild(gameCard);
+
+        // Play flip sound immediately
         flipSound.play();
-        cardElement.classList.add('flipped');
+
+        // Increment the card index for the next flip
+        currentCardIndex++;
+
+        // Hide the cover card after the first game card is shown
+        if (currentCardIndex === 1) {
+            coverCard.classList.add('hidden');
+        }
     }
 
-    // Event listener for card click to flip and show new card
-    coverCard.addEventListener("click", shuffleAndDisplayCard);
+    // Function to randomly slide the current card off the screen and reveal the next card
+    function slideAndReveal(currentCard) {
+        // Random directions array
+        const directions = [
+            'left', 'right', 'top', 'bottom', 
+            'top-left', 'top-right', 'bottom-left', 'bottom-right'
+        ];
 
-    // Event listener for refresh button to reshuffle cards
-    refreshButton.addEventListener("click", () => {
-        availableCards = [...allCards]; // Reshuffle cards
-        shuffleAndDisplayCard();
-        refreshButton.classList.add('hidden');
+        const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+
+        // Play the flip sound
+        flipSound.play();
+
+        // Slide the current card off-screen in the chosen direction
+        switch (randomDirection) {
+            case 'left':
+                currentCard.style.transform = 'translateX(-1000px)';
+                break;
+            case 'right':
+                currentCard.style.transform = 'translateX(1000px)';
+                break;
+            case 'top':
+                currentCard.style.transform = 'translateY(-1000px)';
+                break;
+            case 'bottom':
+                currentCard.style.transform = 'translateY(1000px)';
+                break;
+            case 'top-left':
+                currentCard.style.transform = 'translate(-1000px, -1000px)';
+                break;
+            case 'top-right':
+                currentCard.style.transform = 'translate(1000px, -1000px)';
+                break;
+            case 'bottom-left':
+                currentCard.style.transform = 'translate(-1000px, 1000px)';
+                break;
+            case 'bottom-right':
+                currentCard.style.transform = 'translate(1000px, 1000px)';
+                break;
+            default:
+                currentCard.style.transform = 'translateX(-1000px)';
+                break;
+        }
+
+        // After the card has moved off-screen, replace it with the next card
+        setTimeout(() => {
+            cardContainer.removeChild(currentCard);
+            // Show the next card
+            if (currentCardIndex < cardData.length) {
+                showCard();
+            }
+        }, 500);  // The time should match the transition duration
+    }
+
+    // Reset button functionality
+    resetButton.addEventListener('click', () => {
+        resetButton.classList.add('hidden');
+        coverCard.classList.remove('hidden');
+        cardContainer.innerHTML = '';
+        cardData = []; // Reset the card data if necessary
+        currentCardIndex = 0;
+        fetch('cards.json')
+            .then(response => response.json())
+            .then(data => {
+                cardData = data;
+            })
+            .catch(error => console.error('Error reloading cards:', error));
     });
 });
