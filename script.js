@@ -7,16 +7,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const instructionText = document.getElementById("instruction-text");
     const categoryText = document.getElementById("category-text");
 
-    let cardsData = [];
-    let availableCards = [];
     let allCards = [];
+    let availableCards = [];
 
     // Try to load card data
-    fetch('Cards.json')
+    fetch('cards.json')
         .then(response => response.json())
         .then(data => {
-            allCards = Object.values(data).flat(); // Flattening the object into an array
-            availableCards = [...allCards];
+            allCards = data; // Directly assign the array of cards
+            availableCards = [...allCards]; // Make a copy of all cards for availability
             displayCoverCard();
         })
         .catch(error => {
@@ -56,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Event listener for refresh button to reshuffle cards
     refreshButton.addEventListener("click", () => {
-        availableCards = [...allCards];
+        availableCards = [...allCards]; // Reshuffle cards
         shuffleAndDisplayCard();
         refreshButton.classList.add('hidden');
     });
