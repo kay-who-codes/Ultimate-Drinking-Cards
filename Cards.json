@@ -1,0 +1,824 @@
+{
+    "Drinking Game Rule Megaset.xlsx": [
+        {
+            "Category": "Challenge",
+            "Rule": "Act out a scene from a movie. First person to guess the movie correctly picks someone to drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Answer a \"would you rather\" question or drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Do 13 pushups or take 2 drinks",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Flip a coin. If it’s heads, you drink. If it’s tails, everyone else drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Give a confession or drink. If the group doubt the sincerity of the confession, take three drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Hum a song of your choice. First person to guess correctly picks someone to drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Imitate a celebrity or take 2 drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Pick a person and start a staring contest. Loser drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Pick a person to play rock, paper, scissors with. Loser drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Pick a superhero and act out this superhero without talking. First person to guess correctly picks someone to drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Pick an animal and act out this animal without talking. First person to guess correctly picks someone to drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Pick someone and guess the colour of their underwear. If you're right, they drink. If you're wrong, you drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Pick someone to play a game of thumb war. Loser drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Say the kinkiest thing you've done or drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Show everyone the last five photos on your phone or drink twice.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Tell a joke. Whoever laughs drinks. If no one chuckles or laughs, you drink twice.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "The person after you can ask you any question. You can either answer truthfully or refuse to answer and drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "The person after you can dare you to do anything. You can either fulfil the dare or refuse the dare and drink.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "Without touching anything, everyone must balance on one leg. First person to lose balance drinks.",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Challenge",
+            "Rule": "You must either take off an article of clothing or drink. (can’t be socks or shoes)",
+            "Colour": "Orange"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "All persons must only speak with one or two-syllable words until someone messes up. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Ask another person a true or false question about yourself. If they answer correctly you drink, otherwise they drink.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Everyone guesses what time it is without looking. Whoever is furthest off, drink.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Everyone must speak in third person until someone messes up. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Imitate another person. First person to guess correctly picks someone to drink.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Make any action, the next person repeats all previous actions and adds another. Continue on until someone messes up. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "On the count of three, start a group staring contest. Last person to blink picks someone to drink.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Pick a word. Everyone takes turns saying a word that relates to the previous word. The person that hesitates or says a non-relating word drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Pick a word. Everyone takes turns saying a word that rhymes with it. The person that hesitates or repeats a word drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Pick someone and guess the colour of their underwear. If you guess correctly, they drink, otherwise you drink.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Pick two people to perform a dance move of your choice. You pick the worst performer to drink.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming a colour. Continue until someone hesitates or repeats a colour. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming a country. Continue until someone hesitates or repeats a country. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming a fruit. Continue until someone hesitates or repeats a fruit. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming a land animal. Continue until someone hesitates or repeats. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming a spice. Continue until someone hesitates or repeats a word. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming an insect. Continue until someone hesitates or repeats. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Starting with you, take turns naming an ocean animal. Continue until someone hesitates or repeats a word. That person drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Tell two truths and a lie. Anyone can answer and if the first answer is correct, you drink. Otherwise the person who guessed incorrectly drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "Waterfall! Start drinking and everyone else must drink as long as you do. ",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Challenge",
+            "Rule": "You are Simon. Everyone plays Simon Says. First person that messes up drinks.",
+            "Colour": "Red"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone democratically votes for a person to drink.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is most likely to spend money on something stupid. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the biggest d**k. That person drinks two drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to argue with a stranger. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to be in bed by 10 pm. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to dodge paying for drinks. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to get arrested. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to get thrown out of a bar. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to have a one-night stand. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the most likely to spend all their money on something stupid. That person drinks.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "Group Voting",
+            "Rule": "Everyone votes on who is the nicest. That person picks someone to drink.",
+            "Colour": "Light Yellow"
+        },
+        {
+            "Category": "No Drink",
+            "Rule": "No drinks allowed until the next game-mandated drink.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "No Drink",
+            "Rule": "No drinks this turn.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "No Drink",
+            "Rule": "Switch places with someone across from you.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Permanent Rule",
+            "Rule": "Make a new rule for the rest of the game. If most players object, take 2 drinks. Rule-break = drink.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Permanent Rule",
+            "Rule": "Swap player turn order! ",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "After this card is read, everyone must play in silence until it is your turn again. First person to laugh or talk drinks and ends the silence.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "Keep your eyes closed until it’s your turn again. If you open your eyes, drink.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "Make a rule for another person to follow until it is your turn again. Anyone who breaks the rule has to drink.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "Make a rule that everyone has to follow until it is your turn again. Anyone who breaks the rule has to drink.",
+            "Colour": "Blue"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "Talk with an accent until your next turn. If caught not speaking in the accent, you drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "The person farthest from you makes a rule for you to follow until it is your turn again. Drink if you break the rule.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "Whoever drank in the last round gets to pick two people to drink (they may pick the same person twice)",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "You cannot laugh until it’s your turn again. If you do, drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Round-Based Rule",
+            "Rule": "You cannot make eye contact with anyone until it’s your turn again. If you do, you drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Drink! Drink! Drink! Everybody drinks!",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Drink! Drink! Drink! Everybody drinks!",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Everyone except you drinks",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Everyone except you drinks",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take a drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take three drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take three drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take three drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "Take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "The person after you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Take a Drink",
+            "Rule": "The person before you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "All men drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "All women drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Anyone wearing a hat drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Anyone with an Apple phone, take a drink. Everyone with an Android phone, take two drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Anyone with tattoos, drink.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Anyone with the letter \"A\" in their first name drinks twice.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you currently have dye in your hair.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you like pineapple on pizza",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you're afraid of spiders",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you're unemployed.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you're wearing a belt.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you're wearing black.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you're wearing white.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you've been in a motor accident",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you've broke a bone.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you've ever eaten from a bin.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if you've ever spent over £1,000 in a day.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if your birthday is in the next 6 months",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Drink if your birthday was in the last 6 months",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone born in the same month as you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone born in the same month as you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone drinks for every sibling they have.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone in a relationship drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone left-handed drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone of the opposite sex drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone older than you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone shorter than you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone take a drink for every pet you have",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone wearing a top with buttons drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone wearing a watch drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone wearing glasses drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone wearing jeans drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone wearing the same colour top as you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone who has a dietary restriction drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone who is shorter than you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone who is single drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone who is single drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone who is taller than you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone who is taller than you drinks.",
+            "Colour": "Light Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone with facial hair drinks.",
+            "Colour": "Dark Yellow"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone with longer hair than you drinks.",
+            "Colour": "Dark Yellow"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone younger than you drinks.",
+            "Colour": "Dark Yellow"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Everyone, drink if you’ve ever faked an orgasm.",
+            "Colour": "Dark Grey"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "If your age is an even number, drink.",
+            "Colour": "Dark Grey"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "On the count of three, everyone holds up either a thumbs up or a thumbs down. Whoever does the opposite of you drinks.",
+            "Colour": "Light Grey"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "On the count of three, everyone says a colour from the rainbow. Whoever says the same colour as you has to drink.",
+            "Colour": "Light Grey"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "persons who use spotify drink, persons who use apple music take two drinks.",
+            "Colour": "Light Grey"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Take a drink if you've ever been on TV.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "Take a drink with the person you've known the longest.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The oldest person take a drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person farthest from you drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person nearest to you drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person who is the most depressed picks two other people to drink (you can pick the same person twice).",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person who most recently posted on social media drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person who most recently used the bathroom drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the biggest ears drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the biggest hands picks someone to drink, and takes two drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the largest shoe size drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the least drink in their vessel drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the longest first name drinks. If there’s a tie you both drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the lowest battery on their phone drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the most drink in their vessel drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The person with the shortest last name drinks. If there is a tie you both drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The persons to either side of you drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The player who has travelled the furthest away this year drinks.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Trait-Based Drink",
+            "Rule": "The youngest person takes a drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Vote",
+            "Rule": "Pick a person to drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Vote",
+            "Rule": "Tell the sexiest person to take a drink.",
+            "Colour": "Dark Green"
+        },
+        {
+            "Category": "Vote",
+            "Rule": "Vote on who the funniest person, they pick someone to drink.",
+            "Colour": "Dark Green"
+        }
+    ]
+}
