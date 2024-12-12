@@ -4,26 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Black and White Cards Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <div class="card-container">
-            <div class="card" id="card">
-                <div class="cover-card" id="cover-card">
-                    <div class="cover-text">Black and White Cards</div>
-                </div>
-                <div class="game-card" id="game-card">
-                    <div class="instruction-text" id="instruction-text"></div>
-                    <div class="category-text" id="category-text"></div>
-                </div>
-            </div>
+    <div class="card-container">
+        <div id="coverCard" class="card cover-card">
+            <p id="coverText">Black and White Cards</p>
         </div>
-        <button id="refresh-btn" class="hidden">Refresh</button>
     </div>
-
-    <audio id="flip-sound" src="Card Flip.mp3"></audio>
-
+    <button id="resetButton" class="hidden">Refresh</button>
+    <audio id="flipSound" src="flip.mp3" preload="auto"></audio>
     <script src="script.js"></script>
 </body>
 </html>
