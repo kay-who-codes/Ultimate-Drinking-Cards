@@ -136,25 +136,29 @@ const rulesModal = document.getElementById("rulesModal");
 const closeRulesButton = document.getElementById("closeRulesButton");
 const rulesText = document.getElementById("rulesText");
 
-// Function to fetch and display the rules
-function fetchAndDisplayRules() {
-  fetch("rules.txt")
-    .then(response => response.text())
-    .then(data => {
-      rulesText.textContent = data; // Display the rules text in the modal
-      rulesModal.style.display = "flex"; // Show the modal
-    })
-    .catch(error => {
-      console.error("Error fetching rules:", error);
-      rulesText.textContent = "Failed to load rules. Please try again later.";
-      rulesModal.style.display = "flex"; // Show the modal even on error
-    });
+// Rules embedded directly in the JavaScript
+const embeddedRules = `
+How to Play:
+
+Take it in turns tapping the card to draw a new card.
+
+If your drawn card is white, perform the instruction on the card.
+
+If your drawn card is black, invert the instruction, perform the inverted instruction.
+
+Some inverted cards make more sense than others. Don't worry if a card isn't obviously invertable, just try it, chill, and have fun.
+`;
+
+// Function to display the rules
+function displayEmbeddedRules() {
+  rulesText.textContent = embeddedRules; // Display the rules text in the modal
+  rulesModal.style.display = "flex"; // Show the modal
 }
 
 // Event listener for the "View Game Rules" link
 showRulesLink.addEventListener("click", (event) => {
   event.preventDefault(); // Prevent default link behaviour
-  fetchAndDisplayRules(); // Show the rules modal
+  displayEmbeddedRules(); // Show the rules modal
 });
 
 // Event listener for closing the modal
