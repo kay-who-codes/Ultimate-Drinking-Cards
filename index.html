@@ -7,6 +7,27 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header class="header-bar">
+    <a href="https://github.com/kay-who-codes/Ultimate-Drinking-Cards" class="header-link">🃏 Ultimate Drinking Cards 🍺</a>
+    <div class="dropdown">
+      <button class="dropbtn" onclick="toggleDropdown()">More Apps</button>
+      <div class="dropdown-content" id="dropdownMenu">
+        <a href="https://kay-who-codes.github.io/Misanthrocards/">⬛ Misanthrocards</a>
+        <a href="https://kay-who-codes.github.io/Laughing-Hazard">🤣 Laughing Hazard</a>
+        <a href="https://kay-who-codes.github.io/Employment-Cards/">👔 Employment Cards</a>
+        <a href="https://kay-who-codes.github.io/Ultimate-Drinking-Cards">🍻 Ultimate Drinking Cards</a>
+        <a href="https://kay-who-codes.github.io/Kings-Cup/">🍺 Kings Cup</a>
+        <a href="https://kay-who-codes.github.io/Would-You-Rather/">❓ Would You Rather</a>
+        <a href="https://kay-who-codes.github.io/Invention-Cards/">💡 Invention Cards</a>
+        <a href="https://kay-who-codes.github.io/Daily-Comic-Strips/">🗞️ Daily Comic Strips</a>
+        <a href="https://kay-who-codes.github.io/Soundboard/">🔊 Soundboard</a>
+        <a href="https://kay-who-codes.github.io/Skint-Countdown/">⌛ Skint Countdown</a>
+        <a href="https://kay-who-codes.github.io/Song-Inspirator/">🎶 Song Inspirator</a>
+        <a href="https://kay-who-codes.github.io/Random-Numbers/">🔢 Random Number Generator</a>
+        <a href="https://kay-who-codes.github.io/Coinflip/">🪙 Coinflip</a>
+      </div>
+    </div>
+  </header>
   <div id="app">
     <div class="card" id="coverCard">
       <div class="card-front">Ultimate Drinking Cards</div>
@@ -14,6 +35,25 @@
     </div>
     <button id="resetButton" hidden>Refresh</button>
   </div>
+
+  <!-- Container for the 'Show Rules' button placed at the bottom -->
+  <div id="rulesButtonContainer">
+    <a href="#" id="showRulesLink">View Game Rules</a>
+  </div>
+
+  <!-- Modal for displaying rules -->
+  <div id="rulesModal" class="modal">
+    <div class="modal-content">
+      <div id="rulesText"></div>
+      <button id="closeRulesButton">Close Rules</button>
+    </div>
+  </div>
+
+  <!-- Footer with the credit link -->
+  <footer id="footer">
+    Made by <a href="https://linktr.ee/kaywhocreates" target="_blank" rel="noopener noreferrer">Kay 🧡</a>
+  </footer>
+
   <script src="script.js"></script>
 </body>
 </html>
