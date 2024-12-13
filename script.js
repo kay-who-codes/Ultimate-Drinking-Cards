@@ -32,6 +32,26 @@ function generateCardContent(card) {
   };
 }
 
+// HEADER BAR
+
+
+// Toggle dropdown visibility
+function toggleDropdown() {
+  const dropdown = document.querySelector('.dropdown');
+  dropdown.classList.toggle('show');
+}
+
+// Close dropdown when clicking outside
+window.addEventListener('click', (event) => {
+  const dropdown = document.querySelector('.dropdown');
+  if (!dropdown.contains(event.target)) {
+    dropdown.classList.remove('show');
+  }
+});
+
+
+
+
 // Preload the content for the next card
 function preloadNextCard() {
   if (cards.length === 0) {
@@ -108,3 +128,36 @@ coverCard.addEventListener("transitionend", () => {
 
 // Add click event to initiate flip
 coverCard.addEventListener("click", flipCard);
+
+// Modal functionality
+
+const showRulesLink = document.getElementById("showRulesLink");
+const rulesModal = document.getElementById("rulesModal");
+const closeRulesButton = document.getElementById("closeRulesButton");
+const rulesText = document.getElementById("rulesText");
+
+// Function to fetch and display the rules
+function fetchAndDisplayRules() {
+  fetch("rules.txt")
+    .then(response => response.text())
+    .then(data => {
+      rulesText.textContent = data; // Display the rules text in the modal
+      rulesModal.style.display = "flex"; // Show the modal
+    })
+    .catch(error => {
+      console.error("Error fetching rules:", error);
+      rulesText.textContent = "Failed to load rules. Please try again later.";
+      rulesModal.style.display = "flex"; // Show the modal even on error
+    });
+}
+
+// Event listener for the "View Game Rules" link
+showRulesLink.addEventListener("click", (event) => {
+  event.preventDefault(); // Prevent default link behaviour
+  fetchAndDisplayRules(); // Show the rules modal
+});
+
+// Event listener for closing the modal
+closeRulesButton.addEventListener("click", () => {
+  rulesModal.style.display = "none"; // Hide the modal
+});
