@@ -1,126 +1,110 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const coverCard = document.getElementById('coverCard');
-    const resetButton = document.getElementById('resetButton');
-    const flipSound = document.getElementById('flipSound');
-    const cardContainer = document.querySelector('.card-container');
+const coverCard = document.getElementById("coverCard");
+const cardFront = coverCard.querySelector(".card-front");
+const cardBack = coverCard.querySelector(".card-back");
 
-    let cardData = [];
-    let currentCardIndex = 0;
+let cards = [];
+let showingFront = true; // Track whether the front or back is being displayed
 
-    // Fetch cards data from cards.json
-    fetch('cards.json')
-        .then(response => response.json())
-        .then(data => {
-            cardData = data;
-            showCard();
-        })
-        .catch(error => console.error('Error loading cards.json:', error));
+// Load cards from JSON
+fetch("cards.json")
+  .then((response) => response.json())
+  .then((data) => {
+    cards = [...data];
+    preloadNextCard(); // Preload the first card on load
+  })
+  .catch((error) => console.error("Error loading cards:", error));
 
-    // Function to generate and display the next card
-    function showCard() {
-        if (cardData.length === 0) {
-            resetButton.classList.remove('hidden');
-            return;
-        }
+// Generate content for a card
+function generateCardContent(card) {
+  const inverted = Math.random() < 0.15; // 15% chance to invert colours
+  
+  return {
+    content: `
+      <div class="instructionText" style="color: ${inverted ? "#ffffff" : "#000000"};">
+        ${card.Rule}
+      </div>
+      <div class="categoryText" style="color: ${card.Colour};">
+        ${card.Category}
+      </div>
+    `,
+    backgroundColor: inverted ? "#000000" : "#ffffff",
+    textColor: inverted ? "#ffffff" : "#000000",
+  };
+}
 
-        // Get the current card data
-        const currentCard = cardData[currentCardIndex];
+// Preload the content for the next card
+function preloadNextCard() {
+  if (cards.length === 0) {
+    cardBack.innerHTML = `
+      <div class="instructionText" style="color: #000;">
+        No more cards!
+      </div>
+    `;
+    cardBack.style.backgroundColor = "#ffffff";
+    cardBack.style.color = "#000000";
+    return;
+  }
 
-        // Create the game card HTML
-        const gameCard = document.createElement('div');
-        gameCard.classList.add('card', 'game-card');
-        gameCard.innerHTML = `
-            <div class="instructionText">${currentCard.Rule}</div>
-            <div class="categoryText" style="color: ${currentCard.Colour};">${currentCard.Category}</div>
-        `;
+  const randomIndex = Math.floor(Math.random() * cards.length);
+  const newCard = cards.splice(randomIndex, 1)[0];
+  const { content, backgroundColor, textColor } = generateCardContent(newCard);
 
-        // Position the new card below the current one
-        gameCard.style.transform = 'translateY(100%)';
+  // Store the content for later
+  cardBack.dataset.content = content;
+  cardBack.dataset.backgroundColor = backgroundColor;
+  cardBack.dataset.textColor = textColor;
+  cardBack.dataset.categoryColour = newCard.Colour;  // Store the Category Colour
+}
 
-        // Add click event to trigger flying off
-        gameCard.addEventListener('click', () => slideAndReveal(gameCard));
+// Apply preloaded content to the visible card
+function applyPreloadedContent(isFront = true) {
+  if (isFront) {
+    cardFront.innerHTML = cardBack.dataset.content || "";
+    cardFront.style.backgroundColor = cardBack.dataset.backgroundColor || "#ffffff";
+    cardFront.style.color = cardBack.dataset.textColor || "#000000";
+  } else {
+    cardBack.innerHTML = cardBack.dataset.content || "";
+    cardBack.style.backgroundColor = cardBack.dataset.backgroundColor || "#ffffff";
+    cardBack.style.color = cardBack.dataset.textColor || "#000000";
+  }
 
-        // Append the game card to the container
-        cardContainer.appendChild(gameCard);
+  // Apply Category Text Colour after half of the flip animation
+  const categoryTextElements = document.querySelectorAll('.categoryText');
+  categoryTextElements.forEach(element => {
+    // Delay the colour change until halfway through the animation
+    setTimeout(() => {
+      element.style.color = cardBack.dataset.categoryColour || "#000000";  // Apply the Category Colour dynamically
+    }, 250);  // Change the colour after 250ms (halfway through the 0.5s animation)
+  });
+}
 
-        // Play flip sound immediately
-        flipSound.play();
+// Flip card function
+function flipCard() {
+  const audio = new Audio("flip.mp3");
+  audio.play();
 
-        // Increment the card index for the next flip
-        currentCardIndex++;
+  // Preload the next card before flipping
+  preloadNextCard();
 
-        // Hide the cover card after the first game card is shown
-        if (currentCardIndex === 1) {
-            coverCard.classList.add('hidden');
-        }
-    }
+  // Apply content to the visible card
+  if (showingFront) {
+    applyPreloadedContent(false); // Apply to back
+  } else {
+    applyPreloadedContent(true); // Apply to front
+  }
 
-    // Function to randomly slide the current card off the screen and reveal the next card
-    function slideAndReveal(currentCard) {
-        // Random directions array
-        const directions = [
-            'left', 'right', 'top', 'bottom', 
-            'top-left', 'top-right', 'bottom-left', 'bottom-right'
-        ];
+  // Toggle flip animation
+  coverCard.classList.toggle("flipped");
+  showingFront = !showingFront; // Switch between front and back
+}
 
-        const randomDirection = directions[Math.floor(Math.random() * directions.length)];
-
-        // Play the flip sound
-        flipSound.play();
-
-        // Slide the current card off-screen in the chosen direction
-        switch (randomDirection) {
-            case 'left':
-                currentCard.style.transform = 'translateX(-1000px)';
-                break;
-            case 'right':
-                currentCard.style.transform = 'translateX(1000px)';
-                break;
-            case 'top':
-                currentCard.style.transform = 'translateY(-1000px)';
-                break;
-            case 'bottom':
-                currentCard.style.transform = 'translateY(1000px)';
-                break;
-            case 'top-left':
-                currentCard.style.transform = 'translate(-1000px, -1000px)';
-                break;
-            case 'top-right':
-                currentCard.style.transform = 'translate(1000px, -1000px)';
-                break;
-            case 'bottom-left':
-                currentCard.style.transform = 'translate(-1000px, 1000px)';
-                break;
-            case 'bottom-right':
-                currentCard.style.transform = 'translate(1000px, 1000px)';
-                break;
-            default:
-                currentCard.style.transform = 'translateX(-1000px)';
-                break;
-        }
-
-        // After the card has moved off-screen, replace it with the next card
-        setTimeout(() => {
-            cardContainer.removeChild(currentCard);
-            // Show the next card
-            if (currentCardIndex < cardData.length) {
-                showCard();
-            }
-        }, 500);  // The time should match the transition duration
-    }
-
-    // Reset button functionality
-    resetButton.addEventListener('click', () => {
-        resetButton.classList.add('hidden');
-        coverCard.classList.remove('hidden');
-        cardContainer.innerHTML = '';
-        cardData = []; // Reset the card data if necessary
-        currentCardIndex = 0;
-        fetch('cards.json')
-            .then(response => response.json())
-            .then(data => {
-                cardData = data;
-            })
-            .catch(error => console.error('Error reloading cards:', error));
-    });
+// Event listener for card flip animation end
+coverCard.addEventListener("transitionend", () => {
+  if (!showingFront) {
+    // After the flip, update the content
+    applyPreloadedContent(false);
+  }
 });
+
+// Add click event to initiate flip
+coverCard.addEventListener("click", flipCard);
