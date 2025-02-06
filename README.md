@@ -4,7 +4,7 @@ Play the ULTIMATE card-based drinking game in your browser.
 
 Open the app in a browser - **[LINK TO THE APP](https://kay-who-codes.github.io/Ultimate-Drinking-Cards)**.
 
-![App Image](Non-App/App%20Image.png)
+[![App Image](Non-App/App%20Image.png)](https://kay-who-codes.github.io/Ultimate-Drinking-Cards)
 
 ## Features
 
