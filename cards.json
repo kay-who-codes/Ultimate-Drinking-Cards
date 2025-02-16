@@ -66,7 +66,7 @@
     },
     {
         "Category": "Challenge",
-        "Rule": "Do 13 pushups or take 2 drinks",
+        "Rule": "Do 13 pushups or take 2 drinks.",
         "Colour": "Red"
     },
     {
@@ -92,11 +92,6 @@
     {
         "Category": "Challenge",
         "Rule": "Without touching anything, everyone must balance on one leg. First player to lose balance drinks.",
-        "Colour": "Red"
-    },
-    {
-        "Category": "Challenge",
-        "Rule": "You must either take off an article of clothing or drink. (can’t be socks or shoes)",
         "Colour": "Red"
     },
     {
@@ -196,7 +191,7 @@
     },
     {
         "Category": "Group Challenge",
-        "Rule": "Waterfall! Start drinking and everyone else must drink as long as you do. ",
+        "Rule": "Waterfall! Start drinking and everyone else must drink as long as you do.",
         "Colour": "Purple"
     },
     {
@@ -296,12 +291,12 @@
     },
     {
         "Category": "Round-Based Rule",
-        "Rule": "You cannot laugh until it’s your turn again. If you do, drink.",
+        "Rule": "No laughing until it’s your turn again. If you do, drink.",
         "Colour": "DarkGreen"
     },
     {
         "Category": "Round-Based Rule",
-        "Rule": "You cannot make eye contact with anyone until it’s your turn again. If you do, you drink.",
+        "Rule": "No eye contact with anyone until it’s your turn again. If you do, you drink.",
         "Colour": "DarkGreen"
     },
     {
@@ -311,7 +306,7 @@
     },
     {
         "Category": "Drink Time!",
-        "Rule": "Everyone except you drinks",
+        "Rule": "Everyone except you drinks.",
         "Colour": "Fuchsia"
     },
     {
@@ -366,7 +361,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone, drink if you're afraid of spiders",
+        "Rule": "Everyone, drink if you're afraid of spiders.",
         "Colour": "DarkGreen"
     },
     {
@@ -376,12 +371,17 @@
     },
     {
         "Category": "Trait-Based Drink",
+        "Rule": "Whoever has been unemployed the longest, take 2 drinks.",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
         "Rule": "Everyone, drink if you're unemployed.",
         "Colour": "DarkGreen"
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone, drink if you've been in a motor accident",
+        "Rule": "Everyone, drink if you've been in a motor accident.",
         "Colour": "DarkGreen"
     },
     {
@@ -411,12 +411,12 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone, drink if your birthday was in the last 6 months",
+        "Rule": "Everyone, drink if your birthday was in the last 6 months.",
         "Colour": "DarkGreen"
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone, drink if your birthday is in the next 6 months",
+        "Rule": "Everyone, drink if your birthday is in the next 6 months.",
         "Colour": "DarkGreen"
     },
     {
@@ -571,7 +571,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone take a drink for every pet you have",
+        "Rule": "Everyone take a drink for every pet you have.",
         "Colour": "DarkGreen"
     },
     {
@@ -691,7 +691,7 @@
     },
     {
         "Category": "Permanent Rule",
-        "Rule": "Swap player turn order! ",
+        "Rule": "Swap player turn order!",
         "Colour": "dodgerblue"
     },
     {
@@ -707,6 +707,31 @@
     {
         "Category": "No Drink",
         "Rule": "Switch places with someone across from you.",
+        "Colour": "Grey"
+    },
+    {
+        "Category": "No Drink",
+        "Rule": "Take a break (if you want).",
+        "Colour": "Grey"
+    },
+    {
+        "Category": "No Drink",
+        "Rule": "Take a break (if you want).",
+        "Colour": "Grey"
+    },
+    {
+        "Category": "No Drink",
+        "Rule": "Take a break (if you want).",
+        "Colour": "Grey"
+    },
+    {
+        "Category": "No Drink",
+        "Rule": "Take a break (if you want).",
+        "Colour": "Grey"
+    },
+    {
+        "Category": "No Drink",
+        "Rule": "Take a break (if you want).",
         "Colour": "Grey"
     },
     {
@@ -751,7 +776,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "If you can't whistle properly, take 2 drinks",
+        "Rule": "If you can't whistle properly, take 2 drinks.",
         "Colour": "DarkGreen"
     },
     {
@@ -801,7 +826,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Drink if you’ve ever lost your phone. If more than one player, cheers! ",
+        "Rule": "Drink if you’ve ever lost your phone. If more than one player, cheers!",
         "Colour": "DarkGreen"
     },
     {
@@ -901,7 +926,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone, take a drink if you play games on your phone",
+        "Rule": "Everyone, take a drink if you play games on your phone.",
         "Colour": "DarkGreen"
     },
     {
@@ -916,7 +941,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone, take a drink if you're wearing colourful socks",
+        "Rule": "Everyone, take a drink if you're wearing colourful socks.",
         "Colour": "DarkGreen"
     },
     {
@@ -926,7 +951,7 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone who smokes tobacco takes a drink",
+        "Rule": "Everyone who smokes tobacco takes a drink.",
         "Colour": "DarkGreen"
     },
     {
@@ -936,12 +961,12 @@
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone who's drink is more potent (ABV%) than yours, take a drink",
+        "Rule": "Everyone who's drink is more potent (ABV%) than yours, take a drink.",
         "Colour": "DarkGreen"
     },
     {
         "Category": "Trait-Based Drink",
-        "Rule": "Everyone who's drink is less potent (ABV%) than yours, take 2 drinks",
+        "Rule": "Everyone who's drink is less potent (ABV%) than yours, take 2 drinks.",
         "Colour": "DarkGreen"
     },
     {
@@ -966,7 +991,7 @@
     },
     {
         "Category": "Vote",
-        "Rule": "If you want, assign someone who drinks for you this round",
+        "Rule": "If you want, assign someone who drinks for you this round.",
         "Colour": "Tan"
     },
     {
