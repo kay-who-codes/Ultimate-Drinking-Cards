@@ -670,6 +670,21 @@
         "Colour": "DarkGreen"
     },
     {
+        "Category": "Trait-Based Drink",
+        "Rule": "Take a number of drinks - from 0 to 3 - to reflect your degree of superstitiousness",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "Everyone, take a drink if you're dyslexic.",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "If you haven't had a drink yet, take 3 BIG drinks.",
+        "Colour": "DarkGreen"
+    },
+    {
         "Category": "Vote",
         "Rule": "Pick a player to drink.",
         "Colour": "Tan"
@@ -837,6 +852,36 @@
     {
         "Category": "Trait-Based Drink",
         "Rule": "Drink if you’ve ever won a trophy or medal.",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "Everyone, if you have a gym membership, take a drink (to good health!)",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "Everyone, if you play a sport, take a drink (to good health!)",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "All giants (over 6 ft, 2 in) take a drink",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "All shorties (under 5 ft) take a drink",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "If you bite your nails, take 2 drinks. If not, chose who takes 2 drinks.",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "If you've been arrested, take a drink.",
         "Colour": "DarkGreen"
     },
     {
