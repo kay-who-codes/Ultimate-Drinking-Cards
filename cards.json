@@ -984,6 +984,11 @@
         "Rule": "Anyone who's ever undergone surgery, take a drink.",
         "Colour": "DarkGreen"
     },
+     {
+        "Category": "Trait-Based Drink",
+        "Rule": "Everyone, take a drink for each allergy you have.",
+        "Colour": "DarkGreen"
+    },
     {
         "Category": "Vote",
         "Rule": "Everyone you point at takes a drink.",
@@ -1007,6 +1012,11 @@
     {
         "Category": "Trait-Based Drink",
         "Rule": "Everyone who has different hair colour from your takes a drink.",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
+        "Rule": "Everyone whose birthday is this month takes a drink.",
         "Colour": "DarkGreen"
     },
     {
