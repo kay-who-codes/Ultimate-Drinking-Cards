@@ -826,6 +826,11 @@
     },
     {
         "Category": "Trait-Based Drink",
+        "Rule": "Whoever has come closest to dying, take as many drinks as you like.",
+        "Colour": "DarkGreen"
+    },
+    {
+        "Category": "Trait-Based Drink",
         "Rule": "Everyone who has a first name starting with a vowel drinks.",
         "Colour": "DarkGreen"
     },
