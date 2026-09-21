@@ -1,24 +1,740 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🃏 Ultimate Drinking Cards 🍺</title>
-<!-- Linking multiple CSS files -->
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="header.css">
-</head>
-<body>
-<!-- Header Bar -->
-<div id="header"></div>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>UDC</title>
 
-<!-- Main Content -->
+  <!-- App icons -->
+  <link rel="icon" type="image/x-icon" href="AppFiles/Icons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="AppFiles/Logos/AppIcon192px.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="AppFiles/Logos/AppIcon512px.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1210">
+  <!-- End app icons -->
+<style>
+  :root {
+    --bg: #131313;
+    --card-bg: #ffffff;
+    --card-text: #000000;
+    --accent: #ff6347;
+    --muted: #535353;
+    --panel-bg: #e3e3e3;
+    --panel-text: #000000;
+    --btn-bg: #5b5b5b;
+    --btn-text: #ffffff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background-color: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: background-color 0.3s;
+  }
+
+  #app {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    gap: 14px;
+  }
+
+  /* Top bar / cog */
+  #topBar {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    z-index: 900;
+  }
+
+  #cogButton {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    width: 46px;
+    height: 46px;
+    margin-top: -10px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+  }
+  #cogButton:hover { background: rgba(255,255,255,0.18); transform: rotate(25deg); }
+
+  /* Turn tracker */
+  #turnTracker {
+    color: #ffffff;
+    font-family: Tahoma, sans-serif;
+    text-align: center;
+    min-height: 50px;
+  }
+  #turnTracker .turnLabel {
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  #turnTracker .turnName {
+    font-size: 26px;
+    font-weight: bold;
+    color: var(--accent);
+    animation: turnNameIn 0.4s ease-out;
+  }
+
+  @keyframes turnNameIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #turnTracker .roundLabel {
+    font-size: 13px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  /* Setup overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+
+  .setup-box {
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    padding: 36px 32px;
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
+    font-family: Tahoma, sans-serif;
+    text-align: center;
+    box-shadow:
+      0 20px 50px rgba(0,0,0,0.45),
+      0 2px 0 rgba(255,255,255,0.4) inset;
+    border: 1px solid rgba(0,0,0,0.06);
+    animation: setupBoxIn 0.28s ease-out;
+  }
+
+  @keyframes setupBoxIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .setup-box h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 25px;
+    letter-spacing: 0.2px;
+  }
+
+  .setup-box p.sub {
+    font-size: 13.5px;
+    color: #6b6b6b;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .setup-field {
+    text-align: left;
+    margin-bottom: 18px;
+  }
+
+  .setup-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    color: #555;
+  }
+
+  .setup-field input[type="text"],
+  .setup-field input[type="number"] {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 15px;
+    font-family: Tahoma, sans-serif;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .setup-field input[type="text"]:hover,
+  .setup-field input[type="number"]:hover {
+    border-color: #999;
+  }
+
+  .setup-field input[type="text"]:focus,
+  .setup-field input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  #playerNamesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .roundsRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .roundsRow label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: normal;
+    text-transform: none;
+    font-size: 14px;
+    color: var(--panel-text);
+    cursor: pointer;
+  }
+
+  .setup-field input[type="radio"],
+  .setup-field input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .setup-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .setup-btn-row button,
+  .primary-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background-color: var(--accent);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .setup-btn-row button:hover,
+  .primary-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .setup-btn-row button:active,
+  .primary-btn:active {
+    transform: translateY(0);
+  }
+
+  .secondary-btn {
+    background-color: transparent !important;
+    color: #333 !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+  }
+
+  .small-add-btn {
+    padding: 9px;
+    border-radius: 8px;
+    border: 1px dashed #aaa;
+    background: rgba(0,0,0,0.02);
+    cursor: pointer;
+    font-size: 13px;
+    color: #444;
+    font-weight: 600;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .small-add-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .toggleButtonRow {
+    display: flex;
+    gap: 8px;
+    background: rgba(0,0,0,0.04);
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #555;
+    font-size: 13.5px;
+    font-weight: bold;
+    font-family: Tahoma, sans-serif;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+
+  .toggle-btn:hover {
+    color: #222;
+  }
+
+  .toggle-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  /* Theme menu */
+  #themeMenu {
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    border-radius: 12px;
+    padding: 16px;
+    width: 220px;
+    z-index: 950;
+    display: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    font-family: Tahoma, sans-serif;
+  }
+
+  #themeMenu h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .theme-swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .theme-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    position: relative;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+  }
+  .theme-swatch:hover {
+    transform: scale(1.1);
+  }
+  .theme-swatch.active {
+    border-color: #333;
+    transform: scale(1.25);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  }
+
+  #themeMenu .menu-action {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #999;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    margin-top: 4px;
+  }
+
+  /* Card styles */
+  .card {
+    width: 300px;
+    height: 400px;
+    max-width: 85vw;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px;
+    position: relative;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), border 0.3s;
+    z-index: 1;
+  }
+
+  .card.inverted {
+    border: 5px solid var(--accent);
+  }
+
+  .card .card-front,
+  .card .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: left;
+    flex-direction: column;
+    border-radius: 20px;
+    padding: 35px;
+    font-family: Arial, sans-serif;
+  }
+
+  .card .card-front {
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    text-align: left;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    font-family: Arial, sans-serif;
+  }
+
+  .card .card-back {
+    transform: rotateY(180deg);
+    font-size: 24px;
+    text-align: left;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .card.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-back .instructionText,
+  .card-front .instructionText {
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+    margin-bottom: auto;
+    overflow-wrap: break-word;
+  }
+
+  .card-back .categoryText,
+  .card-front .categoryText {
+    font-size: 22px;
+    margin-top: 6%;
+    text-align: center;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-decoration: underline;
+  }
+
+  #resetButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #131313;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  #resetButton:hover {
+    background-color: #dddddd;
+  }
+
+  .card .card-front.inverted,
+  .card .card-back.inverted {
+    background-color: #000000;
+    color: #ffffff;
+  }
+
+  .card .card-front.inverted .instructionText,
+  .card .card-back.inverted .instructionText {
+    color: #ffffff;
+  }
+
+  .card .card-front.inverted .categoryText,
+  .card .card-back.inverted .categoryText {
+    color: var(--accent);
+  }
+
+  #footer {
+    position: fixed;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  #footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  #footer a:hover {
+    text-decoration: underline;
+  }
+
+  #rulesButtonContainer {
+    position: fixed;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    text-align: center;
+    padding: 40px;
+  }
+
+  #showRulesLink {
+    color: var(--muted);
+    font-size: 18px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  #showRulesLink:hover {
+    text-decoration: underline;
+  }
+
+  /* Rules modal - improved formatting */
+  .modal-content {
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    padding: 24px;
+    border-radius: 12px;
+    border: 2px solid #ccc;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    font-family: Tahoma, sans-serif;
+  }
+
+  #closeRulesButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid black;
+  }
+
+  #closeRulesButton:hover {
+    background-color: var(--accent);
+  }
+
+  #rulesText h2 {
+    margin-top: 0;
+    font-size: 22px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
+  }
+
+  #rulesText h3 {
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 8px 0;
+    color: #333;
+  }
+
+  #rulesText ol,
+  #rulesText ul {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+
+  #rulesText li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .rule-card-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    margin-right: 4px;
+  }
+  .rule-card-tag.white { background-color: #999; color: #000; border: 1px solid #666; }
+  .rule-card-tag.black { background-color: #000; }
+
+  #rulesText .tip {
+    font-size: 13px;
+    color: #555;
+    font-style: italic;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 600px) {
+    .modal-content {
+      padding: 15px;
+      max-width: 90%;
+      width: 100%;
+    }
+    #closeRulesButton {
+      padding: 8px 16px;
+    }
+    .card {
+      width: 260px;
+      height: 360px;
+    }
+    .card .card-front {
+      font-size: 34px;
+    }
+  }
+
+    /* --- REPO SEARCH BAR - ALIGNED TO TOP LEFT (like the cog on top right) --- */
+  .kwc-repo-search {
+    position: fixed !important;
+    top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+    left: 16px !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 900 !important;
+    display: flex !important;
+    align-items: center !important;
+    transform: none !important;
+  }
+
+  /* Neutralize any injected inline/relative offsets from Header.js */
+  .kwc-repo-search * {
+    margin-left: 0 !important;
+  }
+
+  #kwc-repo-search {
+    position: fixed !important;
+    top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+    left: 16px !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
+  .kwc-bar {
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    width: 115px;
+  }
+
+</style></head>
+
+
+<body>
+  <!-- Repo search bar now fixed to top-left corner -->
+  <div class="kwc-repo-search" id="kwc-repo-search"></div>
+
+  <!-- Top bar with settings cog -->
+  <div id="topBar" class="kwc-bar">
+    <button id="cogButton" aria-label="Settings">⚙️</button>
+  </div>
+
+  <!-- Theme menu -->
+  <div id="themeMenu">
+    <h3>Theme</h3>
+    <div class="theme-swatch-row" id="themeSwatchRow"></div>
+
+    <div id="customThemePanel" style="display:none; margin-bottom:12px;">
+      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+        <label style="font-size:12px;">Background</label>
+        <input type="color" id="customBgInput" value="#131313">
+      </div>
+      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+        <label style="font-size:12px;">Accent</label>
+        <input type="color" id="customAccentInput" value="#ff6347">
+      </div>
+      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+        <label style="font-size:12px;">Card</label>
+        <input type="color" id="customCardBgInput" value="#ffffff">
+      </div>
+      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+        <label style="font-size:12px;">Panel</label>
+        <input type="color" id="customPanelBgInput" value="#e3e3e3">
+      </div>
+    </div>
+
+    <button class="menu-action" id="editPlayersButton">Edit Players / Rounds</button>
+    <button class="menu-action" id="restartGameButton">Restart Game</button>
+  </div>
+
+  <!-- Setup overlay -->
+  <div class="overlay" id="setupOverlay">
+    <div class="setup-box">
+      <h2>Ultimate Drinking Cards</h2>
+      <p class="sub">Set up your game before you start</p>
+
+      <div class="setup-field">
+        <label>Player / Round Tracking</label>
+        <div class="toggleButtonRow" id="trackingModeRow">
+          <button type="button" class="toggle-btn active" id="trackingOffBtn" data-mode="off">Just Cards</button>
+          <button type="button" class="toggle-btn" id="trackingOnBtn" data-mode="on">Use Tracker</button>
+        </div>
+      </div>
+
+      <div id="trackingFields">
+        <div class="setup-field">
+          <label>Players</label>
+          <div id="playerNamesContainer"></div>
+          <button class="small-add-btn" id="addPlayerButton" style="margin-top:8px; width:100%;">+ Add Player</button>
+        </div>
+
+        <div class="setup-field">
+          <label>Rounds</label>
+          <div class="roundsRow">
+            <input type="number" id="roundsInput" min="1" value="5" style="width:80px;">
+            <label><input type="checkbox" id="unlimitedRoundsCheckbox"> Unlimited</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-btn-row">
+        <button class="primary-btn" id="startGameButton">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
   <div id="app">
+    <div id="turnTracker"></div>
     <div class="card" id="coverCard">
       <div class="card-front">Ultimate Drinking Cards</div>
       <div class="card-back"></div>
     </div>
-    <button id="resetButton" hidden>Refresh</button>
+    <button id="resetButton" hidden="">Refresh</button>
   </div>
 
   <!-- Container for the 'Show Rules' button placed at the bottom -->
@@ -27,7 +743,7 @@
   </div>
 
   <!-- Modal for displaying rules -->
-  <div id="rulesModal" class="modal">
+  <div id="rulesModal" class="overlay">
     <div class="modal-content">
       <div id="rulesText"></div>
       <button id="closeRulesButton">Close Rules</button>
@@ -38,8 +754,465 @@
   <footer id="footer">
     Made by <a href="https://linktr.ee/kaywhocreates" target="_blank" rel="noopener noreferrer">Kay 🧡</a>
   </footer>
-  
-  <script src="script.js" defer></script>
-  <script src="header.js" defer></script>  
-</body>
-</html>
+
+  <script src="https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js"></script><script>
+  const coverCard = document.getElementById("coverCard");
+  const cardFront = coverCard.querySelector(".card-front");
+  const cardBack = coverCard.querySelector(".card-back");
+
+  let cards = [];
+  let allCards = [];
+  let showingFront = true;
+
+  // ---------- Game state ----------
+  let players = [];
+  let currentPlayerIndex = 0;
+  let currentRound = 1;
+  let totalRounds = 5;
+  let unlimitedRounds = false;
+  let gameStarted = false;
+  let trackingEnabled = true;
+
+  const turnTracker = document.getElementById("turnTracker");
+
+  function updateTurnTracker() {
+    if (!gameStarted || !trackingEnabled || players.length === 0) {
+      turnTracker.innerHTML = "";
+      return;
+    }
+    const roundText = unlimitedRounds ? `Round ${currentRound}` : `Round ${currentRound} of ${totalRounds}`;
+    turnTracker.innerHTML = `
+      <div class="turnLabel">It's your turn</div>
+      <div class="turnName">${players[currentPlayerIndex]}</div>
+      <div class="roundLabel">${roundText}</div>
+    `;
+  }
+
+  function advanceTurn() {
+    if (!gameStarted || !trackingEnabled || players.length === 0) return;
+    currentPlayerIndex++;
+    if (currentPlayerIndex >= players.length) {
+      currentPlayerIndex = 0;
+      currentRound++;
+      if (!unlimitedRounds && currentRound > totalRounds) {
+        currentRound = totalRounds;
+        turnTracker.innerHTML = `
+          <div class="turnLabel">Game complete</div>
+          <div class="turnName" style="color: var(--accent);">🎉 Nice one!</div>
+          <div class="roundLabel">Tap ⚙️ to restart or change players</div>
+        `;
+        return;
+      }
+    }
+    updateTurnTracker();
+  }
+
+  // ---------- Setup overlay ----------
+  const setupOverlay = document.getElementById("setupOverlay");
+  const playerNamesContainer = document.getElementById("playerNamesContainer");
+  const addPlayerButton = document.getElementById("addPlayerButton");
+  const roundsInput = document.getElementById("roundsInput");
+  const unlimitedRoundsCheckbox = document.getElementById("unlimitedRoundsCheckbox");
+  const startGameButton = document.getElementById("startGameButton");
+  const trackingOnBtn = document.getElementById("trackingOnBtn");
+  const trackingOffBtn = document.getElementById("trackingOffBtn");
+  const trackingFields = document.getElementById("trackingFields");
+
+  let trackingModeSelected = "off";
+
+  function toggleTrackingFieldsVisibility() {
+    trackingFields.style.display = trackingModeSelected === "on" ? "block" : "none";
+  }
+
+  function setTrackingMode(mode) {
+    trackingModeSelected = mode;
+    trackingOnBtn.classList.toggle("active", mode === "on");
+    trackingOffBtn.classList.toggle("active", mode === "off");
+    toggleTrackingFieldsVisibility();
+  }
+
+  trackingOnBtn.addEventListener("click", () => setTrackingMode("on"));
+  trackingOffBtn.addEventListener("click", () => setTrackingMode("off"));
+
+  function createPlayerRow(name = "") {
+    const row = document.createElement("input");
+    row.type = "text";
+    row.className = "playerNameInput";
+    row.placeholder = `Player ${playerNamesContainer.children.length + 1}`;
+    row.value = name;
+    playerNamesContainer.appendChild(row);
+  }
+
+  function resetSetupFields(prefillNames = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false) {
+    playerNamesContainer.innerHTML = "";
+    prefillNames.forEach(n => createPlayerRow(n));
+    roundsInput.value = prefillRounds;
+    unlimitedRoundsCheckbox.checked = prefillUnlimited;
+    roundsInput.disabled = prefillUnlimited;
+    setTrackingMode(prefillTracking ? "on" : "off");
+  }
+
+  addPlayerButton.addEventListener("click", () => createPlayerRow());
+
+  unlimitedRoundsCheckbox.addEventListener("change", () => {
+    roundsInput.disabled = unlimitedRoundsCheckbox.checked;
+  });
+
+  function openSetupOverlay() {
+    setupOverlay.style.display = "flex";
+  }
+
+  function closeSetupOverlay() {
+    setupOverlay.style.display = "none";
+  }
+
+  startGameButton.addEventListener("click", () => {
+    trackingEnabled = trackingModeSelected === "on";
+
+    if (trackingEnabled) {
+      const nameInputs = Array.from(document.querySelectorAll(".playerNameInput"));
+      const names = nameInputs.map((input, i) => input.value.trim() || `Player ${i + 1}`);
+
+      if (names.length < 1) {
+        alert("Add at least one player.");
+        return;
+      }
+
+      players = names;
+      currentPlayerIndex = 0;
+      currentRound = 1;
+      unlimitedRounds = unlimitedRoundsCheckbox.checked;
+      totalRounds = unlimitedRounds ? Infinity : Math.max(1, parseInt(roundsInput.value, 10) || 1);
+    } else {
+      players = [];
+    }
+
+    gameStarted = true;
+
+    closeSetupOverlay();
+    updateTurnTracker();
+
+    // Reset the deck for a fresh game
+    cards = [...allCards];
+    preloadNextCard();
+  });
+
+  // ---------- Theme menu ----------
+  const cogButton = document.getElementById("cogButton");
+  const themeMenu = document.getElementById("themeMenu");
+  const themeSwatchRow = document.getElementById("themeSwatchRow");
+  const editPlayersButton = document.getElementById("editPlayersButton");
+  const restartGameButton = document.getElementById("restartGameButton");
+
+  const themes = [
+    { id: "classic",  label: "Classic",  bg: "#131313", accent: "#ff6347", cardBg: "#ffffff", cardText: "#000000", panelBg: "#e3e3e3", panelText: "#000000" },
+    { id: "midnight", label: "Midnight", bg: "#0b0f2b", accent: "#5da9ff", cardBg: "#ffffff", cardText: "#000000", panelBg: "#e6ecff", panelText: "#0b0f2b" },
+    { id: "emerald",  label: "Emerald",  bg: "#0d1f16", accent: "#3ddc84", cardBg: "#ffffff", cardText: "#000000", panelBg: "#e2f5e9", panelText: "#0d1f16" },
+    { id: "plum",     label: "Plum",     bg: "#1e0f24", accent: "#c66bff", cardBg: "#ffffff", cardText: "#000000", panelBg: "#efe1fb", panelText: "#1e0f24" },
+    { id: "sunset",   label: "Sunset",   bg: "#241205", accent: "#ffb347", cardBg: "#ffffff", cardText: "#000000", panelBg: "#fdeedb", panelText: "#241205" },
+    { id: "mono",     label: "Mono",     bg: "#101010", accent: "#dddddd", cardBg: "#ffffff", cardText: "#000000", panelBg: "#eeeeee", panelText: "#101010" },
+  ];
+
+  const customThemePanel = document.getElementById("customThemePanel");
+  const customBgInput = document.getElementById("customBgInput");
+  const customAccentInput = document.getElementById("customAccentInput");
+  const customCardBgInput = document.getElementById("customCardBgInput");
+  const customPanelBgInput = document.getElementById("customPanelBgInput");
+
+  function readableTextColor(hex) {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 150 ? "#000000" : "#ffffff";
+  }
+
+  function applyTheme(themeId) {
+    if (themeId === "custom") {
+      customThemePanel.style.display = "block";
+      document.querySelectorAll(".theme-swatch").forEach(el => {
+        el.classList.toggle("active", el.dataset.themeId === "custom");
+      });
+      try { localStorage.setItem("udcTheme", "custom"); } catch (e) {}
+      return;
+    }
+    customThemePanel.style.display = "none";
+
+    const t = themes.find(t => t.id === themeId) || themes[0];
+    const root = document.documentElement;
+    root.style.setProperty("--bg", t.bg);
+    root.style.setProperty("--accent", t.accent);
+    root.style.setProperty("--card-bg", t.cardBg);
+    root.style.setProperty("--card-text", t.cardText);
+    root.style.setProperty("--panel-bg", t.panelBg);
+    root.style.setProperty("--panel-text", t.panelText);
+    document.querySelectorAll(".theme-swatch").forEach(el => {
+      el.classList.toggle("active", el.dataset.themeId === themeId);
+    });
+    try { localStorage.setItem("udcTheme", themeId); } catch (e) {}
+  }
+
+  function applyCustomTheme(save = true) {
+    const bg = customBgInput.value;
+    const accent = customAccentInput.value;
+    const cardBg = customCardBgInput.value;
+    const panelBg = customPanelBgInput.value;
+    const root = document.documentElement;
+    root.style.setProperty("--bg", bg);
+    root.style.setProperty("--accent", accent);
+    root.style.setProperty("--card-bg", cardBg);
+    root.style.setProperty("--card-text", readableTextColor(cardBg));
+    root.style.setProperty("--panel-bg", panelBg);
+    root.style.setProperty("--panel-text", readableTextColor(panelBg));
+    document.querySelectorAll(".theme-swatch").forEach(el => {
+      el.classList.toggle("active", el.dataset.themeId === "custom");
+    });
+    if (save) {
+      try {
+        localStorage.setItem("udcTheme", "custom");
+        localStorage.setItem("udcCustomColors", JSON.stringify({ bg, accent, cardBg, panelBg }));
+      } catch (e) {}
+    }
+  }
+
+  [customBgInput, customAccentInput, customCardBgInput, customPanelBgInput].forEach(input => {
+    input.addEventListener("input", () => applyCustomTheme(true));
+  });
+
+  function buildThemeSwatches() {
+    themeSwatchRow.innerHTML = "";
+    themes.forEach(t => {
+      const sw = document.createElement("div");
+      sw.className = "theme-swatch";
+      sw.dataset.themeId = t.id;
+      sw.title = t.label;
+      sw.style.background = `linear-gradient(135deg, ${t.bg} 50%, ${t.accent} 50%)`;
+      sw.addEventListener("click", () => applyTheme(t.id));
+      themeSwatchRow.appendChild(sw);
+    });
+
+    const customSw = document.createElement("div");
+    customSw.className = "theme-swatch";
+    customSw.dataset.themeId = "custom";
+    customSw.title = "Custom";
+    customSw.style.background = "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)";
+    customSw.addEventListener("click", () => applyTheme("custom"));
+    themeSwatchRow.appendChild(customSw);
+  }
+
+  cogButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    themeMenu.style.display = themeMenu.style.display === "block" ? "none" : "block";
+  });
+
+  document.addEventListener("click", (e) => {
+    if (themeMenu.style.display === "block" && !themeMenu.contains(e.target) && e.target !== cogButton) {
+      themeMenu.style.display = "none";
+    }
+  });
+
+  editPlayersButton.addEventListener("click", () => {
+    themeMenu.style.display = "none";
+    resetSetupFields(
+      players.length ? players : ["", ""],
+      Number.isFinite(totalRounds) ? totalRounds : 5,
+      unlimitedRounds,
+      trackingEnabled
+    );
+    openSetupOverlay();
+  });
+
+  restartGameButton.addEventListener("click", () => {
+    themeMenu.style.display = "none";
+    if (trackingEnabled && players.length === 0) {
+      resetSetupFields();
+      openSetupOverlay();
+      return;
+    }
+    currentPlayerIndex = 0;
+    currentRound = 1;
+    gameStarted = true;
+    cards = [...allCards];
+    preloadNextCard();
+    updateTurnTracker();
+  });
+
+  // Load saved theme
+  try {
+    const savedTheme = localStorage.getItem("udcTheme");
+    buildThemeSwatches();
+    if (savedTheme === "custom") {
+      const saved = JSON.parse(localStorage.getItem("udcCustomColors") || "null");
+      if (saved) {
+        customBgInput.value = saved.bg;
+        customAccentInput.value = saved.accent;
+        customCardBgInput.value = saved.cardBg;
+        customPanelBgInput.value = saved.panelBg;
+        applyCustomTheme(false);
+        customThemePanel.style.display = "block";
+        document.querySelectorAll(".theme-swatch").forEach(el => {
+          el.classList.toggle("active", el.dataset.themeId === "custom");
+        });
+      } else {
+        applyTheme("classic");
+      }
+    } else {
+      applyTheme(savedTheme || "classic");
+    }
+  } catch (e) {
+    buildThemeSwatches();
+    applyTheme("classic");
+  }
+
+  // ---------- Card loading ----------
+  fetch("cards.json")
+    .then((response) => response.json())
+    .then((data) => {
+      allCards = [...data];
+      cards = [...data];
+      preloadNextCard();
+      resetSetupFields();
+    })
+    .catch((error) => console.error("Error loading cards:", error));
+
+  function generateCardContent(card) {
+    const inverted = Math.random() < 0.15;
+    return {
+      content: `
+        <div class="instructionText" style="color: ${inverted ? "#ffffff" : "#000000"};">
+          ${card.Rule}
+        </div>
+        <div class="categoryText" style="color: ${card.Colour};">
+          ${card.Category}
+        </div>
+      `,
+      backgroundColor: inverted ? "#000000" : "#ffffff",
+      textColor: inverted ? "#ffffff" : "#000000",
+    };
+  }
+
+  function preloadNextCard() {
+    if (cards.length === 0) {
+      cardBack.dataset.content = `
+        <div class="instructionText" style="color: #000;">
+          No more cards!
+        </div>
+      `;
+      cardBack.dataset.backgroundColor = "#ffffff";
+      cardBack.dataset.textColor = "#000000";
+      cardBack.dataset.categoryColour = "#000000";
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * cards.length);
+    const newCard = cards.splice(randomIndex, 1)[0];
+    const { content, backgroundColor, textColor } = generateCardContent(newCard);
+
+    cardBack.dataset.content = content;
+    cardBack.dataset.backgroundColor = backgroundColor;
+    cardBack.dataset.textColor = textColor;
+    cardBack.dataset.categoryColour = newCard.Colour;
+  }
+
+  const INSTRUCTION_MAX_FONT_SIZE = 34;
+  const INSTRUCTION_MIN_FONT_SIZE = 15;
+
+  function fitInstructionText(container) {
+    const el = container.querySelector(".instructionText");
+    if (!el) return;
+    let fontSize = INSTRUCTION_MAX_FONT_SIZE;
+    el.style.fontSize = fontSize + "px";
+    const maxHeight = container.clientHeight - 70;
+    let guard = 0;
+    while (el.scrollHeight > maxHeight && fontSize > INSTRUCTION_MIN_FONT_SIZE && guard < 40) {
+      fontSize -= 1;
+      el.style.fontSize = fontSize + "px";
+      guard++;
+    }
+  }
+
+  function applyPreloadedContent(isFront = true) {
+    const target = isFront ? cardFront : cardBack;
+    target.innerHTML = cardBack.dataset.content || "";
+    target.style.backgroundColor = cardBack.dataset.backgroundColor || "#ffffff";
+    target.style.color = cardBack.dataset.textColor || "#000000";
+
+    const categoryTextElements = target.querySelectorAll('.categoryText');
+    categoryTextElements.forEach(element => {
+      setTimeout(() => {
+        element.style.color = cardBack.dataset.categoryColour || "#000000";
+      }, 250);
+    });
+
+    requestAnimationFrame(() => fitInstructionText(target));
+  }
+
+  function flipCard() {
+    if (!gameStarted) {
+      const clickAudio = new Audio("click.mp3");
+      clickAudio.play().catch(() => {});
+      openSetupOverlay();
+      return;
+    }
+
+    const audio = new Audio("flip.mp3");
+    audio.play().catch(() => {});
+
+    preloadNextCard();
+
+    if (showingFront) {
+      applyPreloadedContent(false);
+    } else {
+      applyPreloadedContent(true);
+    }
+
+    coverCard.classList.toggle("flipped");
+    showingFront = !showingFront;
+
+    advanceTurn();
+  }
+
+  coverCard.addEventListener("click", flipCard);
+
+  // ---------- Rules modal ----------
+  const showRulesLink = document.getElementById("showRulesLink");
+  const rulesModal = document.getElementById("rulesModal");
+  const closeRulesButton = document.getElementById("closeRulesButton");
+  const rulesText = document.getElementById("rulesText");
+
+  const embeddedRulesHTML = `
+    <h2>How to Play</h2>
+    <ol>
+      <li>Take it in turns tapping the card to draw a new one.</li>
+      <li><span class="rule-card-tag white">White card</span> Perform the instruction shown on the card.</li>
+      <li><span class="rule-card-tag black">Black card</span> Invert the instruction, then perform the inverted version.</li>
+    </ol>
+    <h3>A note on inverted cards</h3>
+    <ul>
+      <li>Some inverted cards make more sense than others.</li>
+      <li>Don't worry if a card isn't obviously invertible &mdash; just try it, stay chill, and have fun.</li>
+    </ul>
+    <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, or change the theme at any time.</p>
+  `;
+
+  function displayEmbeddedRules() {
+    rulesText.innerHTML = embeddedRulesHTML;
+    rulesModal.style.display = "flex";
+  }
+
+  showRulesLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    displayEmbeddedRules();
+  });
+
+  closeRulesButton.addEventListener("click", () => {
+    rulesModal.style.display = "none";
+  });
+
+  rulesModal.addEventListener("click", (e) => {
+    if (e.target === rulesModal) rulesModal.style.display = "none";
+  });
+  </script>
+
+</body></html>
