@@ -1197,6 +1197,8 @@
 const difficultyNormalBtn = document.getElementById("difficultyNormalBtn");
 const difficultyCrazyBtn = document.getElementById("difficultyCrazyBtn");
 
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 function setDifficulty(mode) {
   difficulty = mode;
   difficultyNormalBtn.classList.toggle("active", mode === "normal");
