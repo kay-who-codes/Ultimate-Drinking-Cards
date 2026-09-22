@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <clipPath id="pageClip">
+      <rect id="pageClipRect" x="0" y="0" width="200" height="200">
+    </rect>
+  </clipPath>
+</defs>
+<g transform="translate(0,0) translate(101.163,99.612) rotate(0) scale(1,1) translate(-101.163,-99.612)">
+  <g transform="translate(1.163,-0.388) translate(100,100) rotate(0) scale(1,1) translate(-100,-100)">
+    <rect x="5" y="5" width="190" height="190" rx="25" ry="25" fill="white">
+  </rect>
+</g>
+</g>
+<g transform="translate(0,0) translate(56.387,99.309) rotate(0) scale(1,1) translate(-56.387,-99.309)">
+  <g transform="translate(3.887,-0.691) translate(52.5,100) rotate(0) scale(1.082,1) translate(-52.5,-100)">
+    <rect x="5" y="5" width="95" height="190" fill="black" clip-path="url(#rounded-square)" rx="19" ry="19">
+  </rect>
+</g>
+</g>
+<g transform="translate(0,0) translate(100,100) rotate(0) scale(1,1) translate(-100,-100)">
+  <g transform="translate(0,0) translate(100,100) rotate(0) scale(1,1) translate(-100,-100)">
+    <rect x="5" y="5" width="190" height="190" rx="25" ry="25" fill="none" stroke="black" stroke-width="6">
+  </rect>
+</g>
+</g>
+<g transform="translate(0,0) translate(54.253,42.437) rotate(0) scale(1,1) translate(-54.253,-42.437)">
+  <g transform="translate(8.482,14.212) translate(45.773,28.085) rotate(0) scale(2.202,2.202) translate(-45.773,-28.085)">
+    <text x="35.928436279296875" y="39.72798538208008" fill="#ffffff" font-size="28" font-family="'Segoe UI', sans-serif" font-weight="500" stroke-width="1" stroke="#ffffff">U
+
+  </text>
+</g>
+</g>
+<g transform="translate(1.331,4.1) translate(148.086,91.412) rotate(0) scale(0.897,0.964) translate(-148.086,-91.412)">
+  <g transform="translate(102.111,63.228) translate(45.97,28.162) rotate(0) scale(4.101,4.101) translate(-45.97,-28.162)">
+    <text x="35.928436279296875" y="39.72798538208008" fill="#000000" font-size="28" font-family="'Segoe UI', sans-serif" font-weight="500" stroke-width="1" stroke="#000000">D
+
+  </text>
+</g>
+</g>
+<g transform="translate(0,0) translate(50.354,152.229) rotate(0) scale(1,1) translate(-50.354,-152.229)">
+  <g transform="translate(5.728,123.958) translate(44.624,28.162) rotate(0) scale(2.214,2.214) translate(-44.624,-28.162)">
+    <text x="35.928436279296875" y="39.72798538208008" fill="#ffffff" font-size="28" font-family="'Segoe UI', sans-serif" font-weight="500" stroke-width="1" stroke="#ffffff">C
+
+  </text>
+</g>
+</g>
+</svg>

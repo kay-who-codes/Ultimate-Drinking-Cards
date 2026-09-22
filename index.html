@@ -4,28 +4,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>UDC</title>
 
-  <!-- App icons -->
   <link rel="icon" type="image/x-icon" href="AppFiles/Icons/favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="AppFiles/Logos/AppIcon192px.png">
   <link rel="icon" type="image/png" sizes="512x512" href="AppFiles/Logos/AppIcon512px.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0d1210">
-  <!-- End app icons -->
+
 <style>
+
+
   :root {
     --bg: #131313;
     --card-bg: #ffffff;
     --card-text: #000000;
-    --accent: #ff6347;
-    --muted: #535353;
+    --card-black-bg: #000000;
+    --card-black-text: #ffffff;
+    --card-red-bg: #eb0e0e;
+    --card-red-text: #ffffff;
+    --accent: #999999;
+    --muted: #767676;
     --panel-bg: #e3e3e3;
     --panel-text: #000000;
     --btn-bg: #5b5b5b;
     --btn-text: #ffffff;
+
+    --font-new: 'CustomFont', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
   }
 
   * { box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'CustomFont';
+    src: url('AppFiles/Fonts/UDC.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
 
   body {
     background-color: var(--bg);
@@ -49,6 +65,7 @@
     align-items: center;
     flex-grow: 1;
     gap: 14px;
+    width: 100%;
   }
 
   /* Top bar / cog */
@@ -128,6 +145,8 @@
     border-radius: 20px;
     max-width: 420px;
     width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
     font-family: Tahoma, sans-serif;
     text-align: center;
     box-shadow:
@@ -299,7 +318,7 @@
     color: #555;
     font-size: 13.5px;
     font-weight: bold;
-    font-family: Tahoma, sans-serif;
+    font-family: var(--font-new);
     cursor: pointer;
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   }
@@ -314,71 +333,135 @@
     box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
   }
 
-  /* Theme menu */
+  /* Theme / settings menu */
   #themeMenu {
     position: fixed;
     top: calc(70px + env(safe-area-inset-top, 0px));
     right: 16px;
     background-color: var(--panel-bg);
     color: var(--panel-text);
-    border-radius: 12px;
-    padding: 16px;
-    width: 220px;
+    border-radius: 16px;
+    padding: 0;
+    width: 260px;
+    max-height: 75vh;
+    overflow-y: auto;
     z-index: 950;
     display: none;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-    font-family: Tahoma, sans-serif;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45), 0 2px 0 rgba(255,255,255,0.4) inset;
+    border: 1px solid rgba(0,0,0,0.08);
+    font-family: var(--font-new);
+  }
+
+  #themeMenu .menuSection {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  #themeMenu .menuSection:last-child {
+    border-bottom: none;
   }
 
   #themeMenu h3 {
-    margin: 0 0 10px 0;
-    font-size: 15px;
+    margin: 0 0 12px 0;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+    color: var(--muted);
   }
 
   .theme-swatch-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
+    gap: 10px;
+    margin-bottom: 4px;
   }
 
   .theme-swatch {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     cursor: pointer;
-    border: 2px solid transparent;
+    border: 2px solid rgba(0,0,0,0.12);
     position: relative;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, border-color 0.2s;
   }
   .theme-swatch:hover {
     transform: scale(1.1);
   }
   .theme-swatch.active {
     border-color: #333;
-    transform: scale(1.25);
+    transform: scale(1.22);
     box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  }
+  .theme-swatch.active::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
 
   #themeMenu .menu-action {
     width: 100%;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #999;
-    background: transparent;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.03);
     cursor: pointer;
+    font-family: var(--font-new);
     font-size: 13px;
-    color: #333;
-    margin-top: 4px;
+    font-weight: 200;
+    color: var(--panel-text);
+    margin-top: 8px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  #themeMenu .menu-action:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-color: var(--accent);
+  }
+
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .category-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: normal;
+    text-transform: none;
+    color: var(--panel-text);
+    cursor: pointer;
+  }
+
+  .category-swatch-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .category-empty {
+    font-size: 12px;
+    color: #777;
+    font-style: italic;
   }
 
   /* Card styles */
   .card {
-    width: 300px;
-    height: 400px;
-    max-width: 85vw;
+    width: min(300px, 88vw);
+    height: min(400px, 56vh, 480px);
     background-color: var(--card-bg);
     color: var(--card-text);
     border-radius: 20px;
@@ -391,10 +474,21 @@
     transform-style: preserve-3d;
     transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), border 0.3s;
     z-index: 1;
+    flex-shrink: 0;
+  box-shadow:
+        0px 0px 5px 10px rgba(255,255,255,0.01),
+        0px 0px 0px 6px var(--category-glow, transparent);
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border 0.3s,
+    box-shadow 0.55s ease-out;
   }
 
-  .card.inverted {
-    border: 5px solid var(--accent);
+  .card.type-black {
+    border: 2px solid #000000;
+  }
+  .card.type-red {
+    border: 2px solid var(--card-red-bg);
   }
 
   .card .card-front,
@@ -407,20 +501,24 @@
     justify-content: center;
     align-items: left;
     flex-direction: column;
-    border-radius: 20px;
+    border-radius: 15px;
     padding: 35px;
-    font-family: Arial, sans-serif;
+    font-family: var(--font-new);
+    overflow: hidden;
+    box-shadow:
+        0 0 30px 0px rgba(255,255,255,0.1),
+        0 0 28px 6px var(--category-glow, transparent);
   }
 
   .card .card-front {
     font-size: 44px;
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: -0.5px;
     line-height: 1.1;
     text-align: left;
     background-color: var(--card-bg);
     color: var(--card-text);
-    font-family: Arial, sans-serif;
+    font-family: var(--font-new);
   }
 
   .card .card-back {
@@ -432,14 +530,36 @@
     transition: background-color 0.3s, color 0.3s;
   }
 
+  @keyframes glowPulse {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 12px 2px var(--category-glow, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 34px 10px var(--category-glow, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 28px 6px var(--category-glow, transparent);
+  }
+}
+
+.card.revealing {
+  animation: glowPulse 0.7s ease-out;
+}
+
   .card.flipped {
     transform: rotateY(180deg);
   }
 
   .card-back .instructionText,
   .card-front .instructionText {
-    font-size: 26px;
-    font-weight: 900;
+    font-size: clamp(18px, 6vw, 26px);
+    font-weight: 600;
     letter-spacing: -0.3px;
     line-height: 1.15;
     margin-bottom: auto;
@@ -454,6 +574,20 @@
     font-weight: 800;
     letter-spacing: 0.3px;
     text-decoration: underline;
+  }
+
+  .card-back .tripleBadge,
+  .card-front .tripleBadge {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: rgba(255,255,255,0.85);
+    color: #8b0000;
   }
 
   #resetButton {
@@ -472,20 +606,32 @@
     background-color: #dddddd;
   }
 
-  .card .card-front.inverted,
-  .card .card-back.inverted {
-    background-color: #000000;
-    color: #ffffff;
+  .card .card-front.type-black,
+  .card .card-back.type-black {
+    background-color: var(--card-black-bg);
+    color: var(--card-black-text);
   }
-
-  .card .card-front.inverted .instructionText,
-  .card .card-back.inverted .instructionText {
-    color: #ffffff;
+  .card .card-front.type-black .instructionText,
+  .card .card-back.type-black .instructionText {
+    color: var(--card-black-text);
   }
-
-  .card .card-front.inverted .categoryText,
-  .card .card-back.inverted .categoryText {
+  .card .card-front.type-black .categoryText,
+  .card .card-back.type-black .categoryText {
     color: var(--accent);
+  }
+
+  .card .card-front.type-red,
+  .card .card-back.type-red {
+    background-color: var(--card-red-bg);
+    color: var(--card-red-text);
+  }
+  .card .card-front.type-red .instructionText,
+  .card .card-back.type-red .instructionText {
+    color: var(--card-red-text);
+  }
+  .card .card-front.type-red .categoryText,
+  .card .card-back.type-red .categoryText {
+    color: var(--card-red-text);
   }
 
   #footer {
@@ -611,6 +757,7 @@
   }
   .rule-card-tag.white { background-color: #999; color: #000; border: 1px solid #666; }
   .rule-card-tag.black { background-color: #000; }
+  .rule-card-tag.red { background-color: #8b0000; }
 
   #rulesText .tip {
     font-size: 13px;
@@ -692,28 +839,35 @@
       padding: 8px 16px;
     }
     .card {
-      width: 260px;
-      height: 360px;
+      width: min(88vw, 320px);
+      height: min(58vh, 420px);
     }
-    .card .card-front {
-      font-size: 34px;
+    .card .card-front,
+    .card .card-back {
+      padding: 22px;
+    }
+  }
+
+  @media (max-height: 700px) {
+    .card {
+      height: min(50vh, 380px);
     }
   }
 
     /* --- REPO SEARCH BAR - ALIGNED TO TOP LEFT (like the cog on top right) --- */
-  .kwc-repo-search {
-    position: fixed !important;
-    top: calc(16px + env(safe-area-inset-top, 0px)) !important;
-    left: 16px !important;
-    right: auto !important;
-    bottom: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    z-index: 900 !important;
-    display: flex !important;
-    align-items: center !important;
-    transform: none !important;
-  }
+.kwc-repo-search {
+  position: fixed !important;
+  top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+  left: calc(16px + 46px + 10px) !important;   /* icon width + gap */
+  right: auto !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 900 !important;
+  display: flex !important;
+  align-items: center !important;
+  transform: none !important;
+}
 
   /* Neutralize any injected inline/relative offsets from Header.js */
   .kwc-repo-search * {
@@ -723,7 +877,7 @@
   #kwc-repo-search {
     position: fixed !important;
     top: calc(16px + env(safe-area-inset-top, 0px)) !important;
-    left: 16px !important;
+    left: calc(16px + 46px + 10px) !important;   /* icon width + gap */
     right: auto !important;
     transform: none !important;
   }
@@ -734,53 +888,218 @@
     width: 115px;
   }
 
+  .card-counter {
+    color: var(--accent);
+    opacity: 0.25;
+    font-size: 14px;
+    font-family: var(--font-new);
+    position: relative;
+    bottom: 50px;
+  }
+
+  .card-counter #cardCounterNumber {
+  display: inline-block;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.card-counter #cardCounterNumber.changing {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.black-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0) 25%, rgba(0,0,0,0.85) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.6s ease-out;
+}
+.black-flash.active {
+  opacity: 1;
+  transition: opacity 0.08s ease-in;
+}
+
+  .red-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(235, 14, 14, 0.45) 0%, rgba(235,14,14,0.75) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.85s ease-out;
+}
+
+.red-flash.active {
+  opacity: 1;
+  transition: opacity 0.05s ease-in;
+}
+
+#spinIcon {
+  position: fixed;
+  top: calc(11px + env(safe-area-inset-top, 0px));
+  left: 16px;
+  width: 46px;
+  height: 46px;
+  z-index: 901;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  animation: spinLoop 10s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#spinIcon img,
+#spinIcon svg {
+  display: block;
+  width: 39px;
+  height: 39px;
+  transform-origin: 50% 50%;
+}
+
+@keyframes spinLoop {
+  0%, 30% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  36% {
+    transform: rotate(90deg);
+    animation-timing-function: linear;
+  }
+  60% {
+    transform: rotate(90deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  66%, 100% {
+    transform: rotate(0deg);
+    animation-timing-function: linear;
+  }
+}
+
+.emptyDeck {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.emptyDeckEmoji { font-size: 56px; }
+.emptyDeckTitle {
+  font-family: var(--font-new);
+  font-size: 26px;
+  font-weight: 700;
+}
+.emptyDeckSub {
+  font-family: var(--font-new);
+  font-size: 15px;
+  opacity: 0.7;
+}
+
+.card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 6px;
+}
+
+.loading-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: var(--accent);
+  animation: spinSpinner 0.9s linear infinite;
+  margin: 0 auto 18px auto;
+}
+@keyframes spinSpinner {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-family: var(--font-new);
+  font-size: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
 </style></head>
 
 
 <body>
-  <!-- Repo search bar now fixed to top-left corner -->
+
+  <div id="blackFlash" class="black-flash"></div>
+  <div id="redFlash" class="red-flash"></div>
+
+  <div id="srAnnouncer" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);"></div>
+
+    <div id="spinIcon" aria-hidden="true">
+    <img src="AppFiles/Icons/UDC - Face.svg" alt="">
+  </div>
+
   <div class="kwc-repo-search" id="kwc-repo-search"></div>
 
-  <!-- Top bar with settings cog -->
   <div id="topBar" class="kwc-bar">
     <button id="cogButton" aria-label="Settings">⚙️</button>
   </div>
 
-  <!-- Theme menu -->
   <div id="themeMenu">
-    <h3>Theme</h3>
-    <div class="theme-swatch-row" id="themeSwatchRow"></div>
 
-    <div id="customThemePanel" style="display:none; margin-bottom:12px;">
-      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
-        <label style="font-size:12px;">Background</label>
-        <input type="color" id="customBgInput" value="#131313">
+    <div class="menuSection">
+      <h3>Theme</h3>
+      
+      <div class="theme-swatch-row" id="themeSwatchRow"></div>
+
+      <div id="customThemePanel" style="display:none; margin-top:12px;">
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Background</label>
+          <input type="color" id="customBgInput" value="#131313">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Accent</label>
+          <input type="color" id="customAccentInput" value="#999999">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Card</label>
+          <input type="color" id="customCardBgInput" value="#ffffff">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Panel</label>
+          <input type="color" id="customPanelBgInput" value="#e3e3e3">
+        </div>
       </div>
-      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
-        <label style="font-size:12px;">Accent</label>
-        <input type="color" id="customAccentInput" value="#ff6347">
+
+      <h3>Difficulty</h3>
+  <div class="toggleButtonRow" id="difficultyRow">
+    <button type="button" class="toggle-btn active" id="difficultyNormalBtn" data-difficulty="normal">Normal</button>
+    <button type="button" class="toggle-btn" id="difficultyCrazyBtn" data-difficulty="crazy">CRAZY</button>
+  </div>
+
+    </div>
+
+    <div class="menuSection">
+      <h3>Categories</h3>
+      <div class="category-bulk-row">
+        <button class="menu-action" id="selectAllCategoriesButton">Select All</button>
+        <button class="menu-action" id="deselectAllCategoriesButton">Deselect All</button>
       </div>
-      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
-        <label style="font-size:12px;">Card</label>
-        <input type="color" id="customCardBgInput" value="#ffffff">
-      </div>
-      <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
-        <label style="font-size:12px;">Panel</label>
-        <input type="color" id="customPanelBgInput" value="#e3e3e3">
+      <div class="category-list" id="categoryList">
+        <div class="category-empty">Loading categories&hellip;</div>
       </div>
     </div>
 
-    <button class="menu-action" id="editPlayersButton">Edit Players / Rounds</button>
-    <button class="menu-action" id="restartGameButton">Restart Game</button>
+    <div class="menuSection">
+      <button class="menu-action" id="editPlayersButton">Edit Players / Rounds</button>
+      <button class="menu-action" id="restartGameButton">Restart Game</button>
+    </div>
   </div>
 
-  <!-- Setup overlay -->
   <div class="overlay" id="setupOverlay">
     <div class="setup-box">
       <h2>Ultimate Drinking Cards</h2>
       <p class="sub">Set up your game before you start</p>
 
       <div class="setup-field">
+
         <label>Player / Round Tracking</label>
         <div class="toggleButtonRow" id="trackingModeRow">
           <button type="button" class="toggle-btn active" id="trackingOffBtn" data-mode="off">Just Cards</button>
@@ -810,22 +1129,32 @@
     </div>
   </div>
 
-  <!-- Main Content -->
+
+
   <div id="app">
     <div id="turnTracker"></div>
-    <div class="card" id="coverCard">
-      <div class="card-front">Ultimate Drinking Cards</div>
+
+  <div id="cardCounter" class="card-counter">
+  <span id="cardCounterNumber"></span>
+  <span id="cardCounterSuffix"></span>
+</div>
+
+    <div class="card" id="coverCard" role="button" tabindex="0" aria-label="Draw next card">
+
+      <div class="card-front" id="cardFrontInitial">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading cards…</div>
+      </div>
+
       <div class="card-back"></div>
     </div>
     <button id="resetButton" hidden="">Refresh</button>
   </div>
 
-  <!-- Container for the 'Show Rules' button placed at the bottom -->
   <div id="rulesButtonContainer">
     <a href="#" id="showRulesLink">View Game Rules</a>
   </div>
 
-  <!-- Modal for displaying rules -->
   <div id="rulesModal" class="overlay">
     <div class="modal-content">
       <div id="rulesText"></div>
@@ -834,39 +1163,91 @@
     </div>
   </div>
 
-  <!-- Footer with the credit link -->
   <footer id="footer">
     Made by <a href="https://linktr.ee/kaywhocreates" target="_blank" rel="noopener noreferrer">Kay 🧡</a>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js"></script><script>
+  <script src="https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js"></script>
+  
+  <script>
   const coverCard = document.getElementById("coverCard");
   const cardFront = coverCard.querySelector(".card-front");
   const cardBack = coverCard.querySelector(".card-back");
 
-  let cards = [];
-  let allCards = [];
+  // ---------- Data shapes ----------
+  // OLD: allCards = [{ Category, Rule, Colour }, ...]  (one entry per rule)
+  // NEW: allCards = [{ Category, Colour, Rules: [rule, rule, ...] }, ...] (one entry per category)
+  //
+  // Internally we now work with "draws": individual { Category, Colour, Rule } entries,
+  // reconstructed from the grouped data so all the existing game logic still works.
+  let cards = [];          // remaining draws in the current deck
+  let allCards = [];       // grouped category objects, straight from cards.json
+  let allDraws = [];       // flat list of every individual draw, for "View All Cards"
   let showingFront = true;
+  const NORMAL_BLACK_CHANCE = 0.15;
+  const NORMAL_RED_CHANCE = NORMAL_BLACK_CHANCE / 2;
+  const CRAZY_BLACK_CHANCE = 0.33;
+  const CRAZY_RED_CHANCE = CRAZY_BLACK_CHANCE / 1.5;
 
-  // ---------- Game state ----------
+  let difficulty = "normal";                // "normal" | "crazy"
+  let BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+  let RED_CHANCE = NORMAL_RED_CHANCE;
+
+  const difficultyRow = document.getElementById("difficultyRow");
+const difficultyNormalBtn = document.getElementById("difficultyNormalBtn");
+const difficultyCrazyBtn = document.getElementById("difficultyCrazyBtn");
+
+function setDifficulty(mode) {
+  difficulty = mode;
+  difficultyNormalBtn.classList.toggle("active", mode === "normal");
+  difficultyCrazyBtn.classList.toggle("active", mode === "crazy");
+  if (mode === "crazy") {
+    BLACK_CHANCE = CRAZY_BLACK_CHANCE;
+    RED_CHANCE = CRAZY_RED_CHANCE;
+  } else {
+    BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+    RED_CHANCE = NORMAL_RED_CHANCE;
+  }
+}
+
+difficultyNormalBtn.addEventListener("click", () => setDifficulty("normal"));
+difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
+
+  let enabledCategories = new Set();
+  const categoryColours = {};
+
   let players = [];
   let currentPlayerIndex = 0;
   let currentRound = 1;
   let totalRounds = 5;
   let unlimitedRounds = false;
-  // App starts directly in "Just Cards" mode - no setup required to begin playing.
-  // Player/round tracking can be turned on later from the settings (⚙️) menu.
   let gameStarted = true;
   let trackingEnabled = false;
 
+  let totalDrawsInPlay = 0;   // total draws in the current filtered deck
+  let drawnCount = 0;         // how many draws have been revealed
+
   const turnTracker = document.getElementById("turnTracker");
+  const cardCounter = document.getElementById("cardCounter");
+
+  // Flatten a grouped category object into one draw per rule.
+function groupToDraws(group) {
+    const rules = Array.isArray(group.Rules) ? group.Rules : [];
+    const colour = group.Colour || group.Color || group.color || group.colour || "#999999";
+    return rules.map(rule => ({
+      Category: group.Category || "",
+      Colour: colour,
+      Rule: rule
+    }));
+  }
 
   function updateTurnTracker() {
     if (!gameStarted || !trackingEnabled || players.length === 0) {
       turnTracker.innerHTML = "";
       return;
     }
-    const roundText = unlimitedRounds ? `Round ${currentRound}` : `Round ${currentRound} of ${totalRounds}`;
+    const diffBadge = difficulty === "crazy" ? ` · <span style="color:#ff4747;">CRAZY</span>` : "";
+    const roundText = (unlimitedRounds ? `Round ${currentRound}` : `Round ${currentRound} of ${totalRounds}`) + diffBadge;
     turnTracker.innerHTML = `
       <div class="turnLabel">It's your turn</div>
       <div class="turnName">${players[currentPlayerIndex]}</div>
@@ -893,7 +1274,6 @@
     updateTurnTracker();
   }
 
-  // ---------- Setup overlay ----------
   const setupOverlay = document.getElementById("setupOverlay");
   const playerNamesContainer = document.getElementById("playerNamesContainer");
   const addPlayerButton = document.getElementById("addPlayerButton");
@@ -952,6 +1332,40 @@
     setupOverlay.style.display = "none";
   }
 
+  // Build the deck of individual draws from the enabled categories.
+  function buildDeckFromEnabledCategories() {
+    const enabledGroups = allCards.filter(c => enabledCategories.has(c.Category || ""));
+    const source = (enabledGroups.length || allCards.length === 0)
+      ? enabledGroups
+      : allCards; // safety net: if nothing enabled, use everything
+    cards = source.flatMap(groupToDraws);
+    totalDrawsInPlay = cards.length;
+    drawnCount = -1;
+    updateCardCounter();
+  }
+
+  const cardCounterNumber = document.getElementById("cardCounterNumber");
+const cardCounterSuffix = document.getElementById("cardCounterSuffix");
+
+function updateCardCounter() {
+  if (!totalDrawsInPlay) {
+    cardCounterNumber.textContent = "";
+    cardCounterSuffix.textContent = "";
+    return;
+  }
+  const current = Math.min(drawnCount + 1, totalDrawsInPlay);
+  const newText = String(current);
+
+  if (cardCounterNumber.textContent !== newText) {
+    cardCounterNumber.classList.add("changing");
+    setTimeout(() => {
+      cardCounterNumber.textContent = newText;
+      cardCounterSuffix.textContent = ` of ${totalDrawsInPlay}`;
+      cardCounterNumber.classList.remove("changing");
+    }, 180);
+  }
+}
+
   startGameButton.addEventListener("click", () => {
     trackingEnabled = trackingModeSelected === "on";
 
@@ -978,8 +1392,7 @@
     closeSetupOverlay();
     updateTurnTracker();
 
-    // Reset the deck for a fresh game
-    cards = [...allCards];
+    buildDeckFromEnabledCategories();
     preloadNextCard();
   });
 
@@ -989,14 +1402,41 @@
   const themeSwatchRow = document.getElementById("themeSwatchRow");
   const editPlayersButton = document.getElementById("editPlayersButton");
   const restartGameButton = document.getElementById("restartGameButton");
+  const categoryList = document.getElementById("categoryList");
+  const selectAllCategoriesButton = document.getElementById("selectAllCategoriesButton");
+  const deselectAllCategoriesButton = document.getElementById("deselectAllCategoriesButton");
 
   const themes = [
-    { id: "classic",  label: "Classic",  bg: "#131313", accent: "#ff6347", cardBg: "#ffffff", cardText: "#000000", panelBg: "#e3e3e3", panelText: "#000000" },
-    { id: "midnight", label: "Midnight", bg: "#0b0f2b", accent: "#5da9ff", cardBg: "#ffffff", cardText: "#000000", panelBg: "#e6ecff", panelText: "#0b0f2b" },
-    { id: "emerald",  label: "Emerald",  bg: "#0d1f16", accent: "#3ddc84", cardBg: "#ffffff", cardText: "#000000", panelBg: "#e2f5e9", panelText: "#0d1f16" },
-    { id: "plum",     label: "Plum",     bg: "#1e0f24", accent: "#c66bff", cardBg: "#ffffff", cardText: "#000000", panelBg: "#efe1fb", panelText: "#1e0f24" },
-    { id: "sunset",   label: "Sunset",   bg: "#241205", accent: "#ffb347", cardBg: "#ffffff", cardText: "#000000", panelBg: "#fdeedb", panelText: "#241205" },
-    { id: "mono",     label: "Mono",     bg: "#101010", accent: "#dddddd", cardBg: "#ffffff", cardText: "#000000", panelBg: "#eeeeee", panelText: "#101010" },
+    { id: "mono",     label: "Mono",     bg: "#101010", accent: "#9a9a9a",
+      cardBg: "#ffffff", cardText: "#000000",
+      cardBlackBg: "#000000", cardBlackText: "#ffffff",
+      cardRedBg: "#E61111", cardRedText: "#ffffff",
+      panelBg: "#eeeeee", panelText: "#101010" },
+    { id: "classic",  label: "Classic",  bg: "#180606", accent: "#FF4747",
+      cardBg: "#FFE5E5", cardText: "#000000",
+      cardBlackBg: "#000000", cardBlackText: "#FFC6C6",
+      cardRedBg: "#E61111", cardRedText: "#FFF0F0",
+      panelBg: "#e3e3e3", panelText: "#000000" },
+    { id: "midnight", label: "Midnight", bg: "#0b0f2b", accent: "#5da9ff",
+      cardBg: "#eef3ff", cardText: "#0b0f2b",
+      cardBlackBg: "#050814", cardBlackText: "#CEDFFF",
+      cardRedBg: "#E61111", cardRedText: "#ffe3ec",
+      panelBg: "#e6ecff", panelText: "#0b0f2b" },
+    { id: "emerald",  label: "Emerald",  bg: "#0D1F0F", accent: "#3ddc84",
+      cardBg: "#EAFFEF", cardText: "#0d1f16",
+      cardBlackBg: "#04120a", cardBlackText: "#BEFFD8",
+      cardRedBg: "#E61111", cardRedText: "#ffe3e3",
+      panelBg: "#e2f5e9", panelText: "#0d1f16" },
+    { id: "plum",     label: "Plum",     bg: "#1e0f24", accent: "#c66bff",
+      cardBg: "#f6ecff", cardText: "#1e0f24",
+      cardBlackBg: "#100713", cardBlackText: "#EDD4FF",
+      cardRedBg: "#E61111", cardRedText: "#ffe1ef",
+      panelBg: "#efe1fb", panelText: "#1e0f24" },
+    { id: "sunset",   label: "Sunset",   bg: "#241205", accent: "#FF9A47",
+      cardBg: "#FFF3E6", cardText: "#241205",
+      cardBlackBg: "#130a03", cardBlackText: "#FFE2B7",
+      cardRedBg: "#E61111", cardRedText: "#ffe6e6",
+      panelBg: "#fdeedb", panelText: "#241205" },
   ];
 
   const customThemePanel = document.getElementById("customThemePanel");
@@ -1012,6 +1452,17 @@
     const b = parseInt(c.substring(4, 6), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
     return yiq >= 150 ? "#000000" : "#ffffff";
+  }
+
+  function hexToRgba(hex, alpha = 1) {
+    if (typeof hex !== "string") return `rgba(153,153,153,${alpha})`;
+    const c = hex.replace('#', '').trim();
+    const full = c.length === 3 ? c.split('').map(x => x + x).join('') : c;
+    if (!/^[0-9a-fA-F]{6}$/.test(full)) return `rgba(153,153,153,${alpha})`;
+    const r = parseInt(full.substring(0, 2), 16);
+    const g = parseInt(full.substring(2, 4), 16);
+    const b = parseInt(full.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   function applyTheme(themeId) {
@@ -1031,6 +1482,10 @@
     root.style.setProperty("--accent", t.accent);
     root.style.setProperty("--card-bg", t.cardBg);
     root.style.setProperty("--card-text", t.cardText);
+    root.style.setProperty("--card-black-bg", t.cardBlackBg);
+    root.style.setProperty("--card-black-text", t.cardBlackText);
+    root.style.setProperty("--card-red-bg", t.cardRedBg);
+    root.style.setProperty("--card-red-text", t.cardRedText);
     root.style.setProperty("--panel-bg", t.panelBg);
     root.style.setProperty("--panel-text", t.panelText);
     document.querySelectorAll(".theme-swatch").forEach(el => {
@@ -1049,6 +1504,10 @@
     root.style.setProperty("--accent", accent);
     root.style.setProperty("--card-bg", cardBg);
     root.style.setProperty("--card-text", readableTextColor(cardBg));
+    root.style.setProperty("--card-black-bg", "#000000");
+    root.style.setProperty("--card-black-text", "#ffffff");
+    root.style.setProperty("--card-red-bg", "#eb0e0e");
+    root.style.setProperty("--card-red-text", "#ffffff");
     root.style.setProperty("--panel-bg", panelBg);
     root.style.setProperty("--panel-text", readableTextColor(panelBg));
     document.querySelectorAll(".theme-swatch").forEach(el => {
@@ -1119,12 +1578,11 @@
     currentPlayerIndex = 0;
     currentRound = 1;
     gameStarted = true;
-    cards = [...allCards];
+    buildDeckFromEnabledCategories();
     preloadNextCard();
     updateTurnTracker();
   });
 
-  // Load saved theme
   try {
     const savedTheme = localStorage.getItem("udcTheme");
     buildThemeSwatches();
@@ -1141,75 +1599,197 @@
           el.classList.toggle("active", el.dataset.themeId === "custom");
         });
       } else {
-        applyTheme("classic");
+        applyTheme("mono");
       }
     } else {
-      applyTheme(savedTheme || "classic");
+      applyTheme(savedTheme || "mono");
     }
   } catch (e) {
     buildThemeSwatches();
-    applyTheme("classic");
+    applyTheme("mono");
+  }
+
+  // ---------- Category settings ----------
+  const CATEGORY_PREF_VERSION = 4; // bump this to force a fresh default for everyone
+
+function loadEnabledCategoriesFromStorage(allCategoryNames) {
+    let stored = null;
+    let storedVersion = 0;
+    try {
+      stored = JSON.parse(localStorage.getItem("udcEnabledCategories") || "null");
+      storedVersion = parseInt(localStorage.getItem("udcEnabledCategoriesVersion") || "0", 10) || 0;
+    } catch (e) {}
+
+    const isSpicy = (c) => c.trim().toLowerCase() === "spicy";
+
+    if (Array.isArray(stored) && storedVersion >= CATEGORY_PREF_VERSION) {
+      const storedSet = new Set(stored);
+      enabledCategories = new Set(allCategoryNames.filter(c => storedSet.has(c)));
+    } else {
+      // First run, or outdated stored preference: enable everything except "Spicy".
+      enabledCategories = new Set(allCategoryNames.filter(c => !isSpicy(c)));
+      saveEnabledCategoriesToStorage();
+    }
+}
+
+function saveEnabledCategoriesToStorage() {
+    try {
+      localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
+      localStorage.setItem("udcEnabledCategoriesVersion", String(CATEGORY_PREF_VERSION));
+    } catch (e) {}
+}
+
+  function saveEnabledCategoriesToStorage() {
+    try {
+      localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
+    } catch (e) {}
+  }
+
+  function setAllCategories(enabled) {
+    const categories = getUniqueCategories();
+    enabledCategories = enabled ? new Set(categories) : new Set();
+    saveEnabledCategoriesToStorage();
+    buildCategoryList();
+    buildDeckFromEnabledCategories();
+  }
+
+  selectAllCategoriesButton.addEventListener("click", () => setAllCategories(true));
+  deselectAllCategoriesButton.addEventListener("click", () => setAllCategories(false));
+
+  function buildCategoryList() {
+    const categories = getUniqueCategories();
+    categoryList.innerHTML = "";
+
+    if (categories.length === 0) {
+      categoryList.innerHTML = `<div class="category-empty">No categories found.</div>`;
+      return;
+    }
+
+    categories.forEach(cat => {
+      const id = "cat-" + cat.replace(/[^a-z0-9]/gi, "_");
+      const wrapper = document.createElement("label");
+      wrapper.setAttribute("for", id);
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = id;
+      checkbox.checked = enabledCategories.has(cat);
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          enabledCategories.add(cat);
+        } else {
+          enabledCategories.delete(cat);
+        }
+        saveEnabledCategoriesToStorage();
+        buildDeckFromEnabledCategories();
+      });
+
+      const dot = document.createElement("span");
+      dot.className = "category-swatch-dot";
+      dot.style.backgroundColor = categoryColours[cat] || "#999999";
+
+      const text = document.createElement("span");
+      text.textContent = cat;
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(dot);
+      wrapper.appendChild(text);
+      categoryList.appendChild(wrapper);
+    });
   }
 
   // ---------- Card loading ----------
-  fetch("cards.json")
+  fetch("AppFiles/Data/cards.json")
     .then((response) => response.json())
     .then((data) => {
+      // NEW grouped shape: one entry per category, Rules is an array.
       allCards = [...data];
-      cards = [...data];
+
+      // Build category colours + flat draws from the grouped data.
+      allDraws = [];
+      data.forEach(group => {
+        if (group.Category && !(group.Category in categoryColours)) {
+          categoryColours[group.Category] = group.Colour || "#999999";
+        }
+        allDraws.push(...groupToDraws(group));
+      });
+
+      const uniqueCategories = getUniqueCategories();
+      loadEnabledCategoriesFromStorage(uniqueCategories);
+      buildCategoryList();
+
+      buildDeckFromEnabledCategories();
       preloadNextCard();
       resetSetupFields();
+
+      cardFront.innerHTML = "Ultimate Drinking Cards";
+      cardBack.innerHTML = "";
     })
-    .catch((error) => console.error("Error loading cards:", error));
+    .catch((error) => {
+  console.error("Error loading cards:", error);
+  cardFront.innerHTML = `<div class="loading-text" style="color:#ff4747;">Failed to load cards. Check your connection and refresh.</div>`;
+});
+
+  function pickCardType() {
+    const r = Math.random();
+    if (r < RED_CHANCE) return "red";
+    if (r < RED_CHANCE + BLACK_CHANCE) return "black";
+    return "white";
+  }
 
   function generateCardContent(card) {
-    const inverted = Math.random() < 0.15;
+    const type = pickCardType();
+
+    const tripleBadge = type === "red"
+      ? `<div class="tripleBadge">×3!</div>`
+      : "";
+
     return {
+      type,
       content: `
-        <div class="instructionText" style="color: ${inverted ? "#ffffff" : "#000000"};">
-          ${card.Rule}
+        <div class="instructionText">
+          ${card.Rule} 
         </div>
+        ${tripleBadge}
         <div class="categoryText" style="color: ${card.Colour};">
           ${card.Category}
         </div>
       `,
-      backgroundColor: inverted ? "#000000" : "#ffffff",
-      textColor: inverted ? "#ffffff" : "#000000",
     };
   }
 
   function preloadNextCard() {
     if (cards.length === 0) {
-      cardBack.dataset.content = `
-        <div class="instructionText" style="color: #000;">
-          No more cards!
-        </div>
-      `;
-      cardBack.dataset.backgroundColor = "#ffffff";
-      cardBack.dataset.textColor = "#000000";
+    cardBack.dataset.content = `
+      <div class="emptyDeck">
+        <div class="emptyDeckEmoji">🎉</div>
+        <div class="emptyDeckTitle">Deck complete!</div>
+        <div class="emptyDeckSub">You've drawn every card in play.</div>
+      </div>
+    `;
+    cardBack.dataset.type = "white";
       cardBack.dataset.categoryColour = "#000000";
       return;
     }
 
     const randomIndex = Math.floor(Math.random() * cards.length);
     const newCard = cards.splice(randomIndex, 1)[0];
-    const { content, backgroundColor, textColor } = generateCardContent(newCard);
+    const { type, content } = generateCardContent(newCard);
 
     cardBack.dataset.content = content;
-    cardBack.dataset.backgroundColor = backgroundColor;
-    cardBack.dataset.textColor = textColor;
+    cardBack.dataset.type = type;
     cardBack.dataset.categoryColour = newCard.Colour;
   }
 
-  const INSTRUCTION_MAX_FONT_SIZE = 22;
-  const INSTRUCTION_MIN_FONT_SIZE = 15;
+  const INSTRUCTION_MAX_FONT_SIZE = 27;
+  const INSTRUCTION_MIN_FONT_SIZE = 13;
 
   function fitInstructionText(container) {
     const el = container.querySelector(".instructionText");
     if (!el) return;
     let fontSize = INSTRUCTION_MAX_FONT_SIZE;
     el.style.fontSize = fontSize + "px";
-    const maxHeight = container.clientHeight - 70;
+    const maxHeight = container.clientHeight - 60;
     let guard = 0;
     while (el.scrollHeight > maxHeight && fontSize > INSTRUCTION_MIN_FONT_SIZE && guard < 40) {
       fontSize -= 1;
@@ -1218,34 +1798,69 @@
     }
   }
 
-  function applyPreloadedContent(isFront = true) {
-    const target = isFront ? cardFront : cardBack;
-    target.innerHTML = cardBack.dataset.content || "";
-    target.style.backgroundColor = cardBack.dataset.backgroundColor || "#ffffff";
-    target.style.color = cardBack.dataset.textColor || "#000000";
+function applyPreloadedContent(isFront = true) {
+  const target = isFront ? cardFront : cardBack;
+  const type = cardBack.dataset.type || "white";
+  const glow = hexToRgba(cardBack.dataset.categoryColour || "#999999", 0.25);
 
-    const categoryTextElements = target.querySelectorAll('.categoryText');
-    categoryTextElements.forEach(element => {
-      setTimeout(() => {
-        element.style.color = cardBack.dataset.categoryColour || "#000000";
-      }, 250);
-    });
+  target.innerHTML = cardBack.dataset.content || "";
+  target.classList.remove("type-black", "type-red");
+  if (type === "black") target.classList.add("type-black");
+  if (type === "red") target.classList.add("type-red");
 
-    requestAnimationFrame(() => fitInstructionText(target));
+  coverCard.classList.remove("type-black", "type-red");
+  if (type === "black") coverCard.classList.add("type-black");
+  if (type === "red") coverCard.classList.add("type-red");
+
+  coverCard.style.setProperty("--category-glow", glow);
+  cardFront.style.setProperty("--category-glow", glow);
+  cardBack.style.setProperty("--category-glow", glow);
+
+  requestAnimationFrame(() => fitInstructionText(target));
+}
+
+  function playCardSound(type) {
+    let file = "AppFiles/Sounds/flip.mp3";
+    if (type === "black") file = "AppFiles/Sounds/black.mp3";
+    if (type === "red") file = "AppFiles/Sounds/red.mp3";
+    const audio = new Audio(file);
+    audio.play().catch(() => {});
   }
 
   function flipCard() {
     if (!gameStarted) {
-      const clickAudio = new Audio("click.mp3");
+      const clickAudio = new Audio("AppFiles/Sounds/click.mp3");
       clickAudio.play().catch(() => {});
       openSetupOverlay();
       return;
     }
 
-    const audio = new Audio("flip.mp3");
-    audio.play().catch(() => {});
+const upcomingType = cardBack.dataset.type || "white";
 
-    preloadNextCard();
+
+      const blackFlash = document.getElementById("blackFlash");
+      let blackFlashTimeout = null;
+      function triggerBlackFlash() {
+        blackFlash.classList.add("active");
+        if (blackFlashTimeout) clearTimeout(blackFlashTimeout);
+        blackFlashTimeout = setTimeout(() => blackFlash.classList.remove("active"), 220);
+      }
+      
+      const redFlash = document.getElementById("redFlash");
+      let redFlashTimeout = null;
+
+function triggerRedFlash() {
+  redFlash.classList.add("active");
+  if (redFlashTimeout) clearTimeout(redFlashTimeout);
+  redFlashTimeout = setTimeout(() => {
+    redFlash.classList.remove("active");
+  }, 180);
+}
+
+    // Count the card being revealed.
+    if (drawnCount < totalDrawsInPlay) {
+      drawnCount++;
+    }
 
     if (showingFront) {
       applyPreloadedContent(false);
@@ -1253,13 +1868,53 @@
       applyPreloadedContent(true);
     }
 
+    preloadNextCard();
+    updateCardCounter();
+
     coverCard.classList.toggle("flipped");
+    // after toggle, if we were showing front, we're now showing back
+    coverCard.classList.toggle("face-up", showingFront);
     showingFront = !showingFront;
+
+    playCardSound(upcomingType);
+
+    if (upcomingType === "red") {
+    triggerRedFlash();
+    }
+    if (upcomingType === "black") {
+    triggerBlackFlash();
+    }
+
+    // Haptics
+if (upcomingType === "red") {
+  vibrate([30, 40, 60]);
+} else if (upcomingType === "black") {
+  vibrate([40]);
+} else {
+  vibrate([12]);
+}
+
+// Screen-reader announcement
+const srAnnouncer = document.getElementById("srAnnouncer");
+if (srAnnouncer) {
+  const ruleText = (cardBack.dataset.content || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  srAnnouncer.textContent = `${upcomingType} card. ${ruleText}`;
+}
 
     advanceTurn();
   }
 
   coverCard.addEventListener("click", flipCard);
+
+  coverCard.addEventListener("keydown", (e) => {
+  if (e.key === " " || e.key === "Enter" || e.code === "Space") {
+    e.preventDefault();
+    flipCard();
+  }
+});
 
   // ---------- Rules modal ----------
   const showRulesLink = document.getElementById("showRulesLink");
@@ -1276,13 +1931,14 @@
       <li>Take it in turns tapping the card to draw a new one.</li>
       <li><span class="rule-card-tag white">White card</span> Perform the instruction shown on the card.</li>
       <li><span class="rule-card-tag black">Black card</span> Invert the instruction, then perform the inverted version.</li>
+      <li><span class="rule-card-tag red">Red card</span> Rarer than black cards &mdash; perform the instruction, but do it <strong>three times</strong>!</li>
     </ol>
     <h3>A note on inverted cards</h3>
     <ul>
       <li>Some inverted cards make more sense than others.</li>
       <li>Don't worry if a card isn't obviously invertible &mdash; just try it, stay chill, and have fun.</li>
     </ul>
-    <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, or change the theme at any time.</p>
+    <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, change the theme, or turn categories on/off at any time.</p>
   `;
 
   function escapeHTML(str) {
@@ -1314,12 +1970,12 @@
   }
 
   function buildAllCardsListHTML(searchTerm, categoryFilter) {
-    if (!allCards.length) {
+    if (!allDraws.length) {
       return `<p class="all-cards-empty">Cards are still loading &mdash; give it a moment and try again.</p>`;
     }
 
     const term = (searchTerm || "").trim().toLowerCase();
-    const filtered = allCards.filter((c) => {
+    const filtered = allDraws.filter((c) => {
       const matchesCategory = !categoryFilter || c.Category === categoryFilter;
       if (!matchesCategory) return false;
       if (!term) return true;
@@ -1344,7 +2000,7 @@
       })
       .join("");
 
-    return `<p class="all-cards-count">Showing ${filtered.length} of ${allCards.length} cards</p><ul class="all-cards-list">${rows}</ul>`;
+    return `<p class="all-cards-count">Showing ${filtered.length} of ${allDraws.length} cards</p><ul class="all-cards-list">${rows}</ul>`;
   }
 
   function displayEmbeddedRules() {
@@ -1395,6 +2051,16 @@
   rulesModal.addEventListener("click", (e) => {
     if (e.target === rulesModal) rulesModal.style.display = "none";
   });
+
+function vibrate(pattern) {
+  if (navigator.vibrate && !prefersReducedMotion) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+}
+  
+
+
   </script>
 
-</body></html>
+</body>
+</html>
