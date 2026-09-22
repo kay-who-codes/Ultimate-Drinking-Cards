@@ -438,7 +438,7 @@
 
   .card-back .instructionText,
   .card-front .instructionText {
-    font-size: 34px;
+    font-size: 26px;
     font-weight: 900;
     letter-spacing: -0.3px;
     line-height: 1.15;
@@ -448,7 +448,7 @@
 
   .card-back .categoryText,
   .card-front .categoryText {
-    font-size: 22px;
+    font-size: 17px;
     margin-top: 6%;
     text-align: center;
     font-weight: 800;
@@ -554,6 +554,26 @@
     background-color: var(--accent);
   }
 
+  #viewAllCardsButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: transparent;
+    color: var(--panel-text);
+    border: 2px solid var(--accent);
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-family: Tahoma, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  #viewAllCardsButton:hover {
+    background-color: var(--accent);
+    color: #ffffff;
+  }
+
   #rulesText h2 {
     margin-top: 0;
     font-size: 22px;
@@ -597,6 +617,69 @@
     color: #555;
     font-style: italic;
     margin-top: 10px;
+  }
+
+  .all-cards-list li {
+    margin-bottom: 10px;
+  }
+
+  .all-cards-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .all-cards-controls input[type="text"],
+  .all-cards-controls select {
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #000;
+    font-size: 14px;
+    font-family: Tahoma, sans-serif;
+  }
+
+  .all-cards-controls input[type="text"] {
+    flex: 2;
+    min-width: 140px;
+  }
+
+  .all-cards-controls select {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .all-cards-controls input[type="text"]:focus,
+  .all-cards-controls select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .all-cards-empty {
+    font-size: 14px;
+    color: #555;
+    font-style: italic;
+  }
+
+  .all-cards-count {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .all-cards-category-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #fff;
+    margin-right: 6px;
   }
 
   @media (max-width: 600px) {
@@ -746,6 +829,7 @@
   <div id="rulesModal" class="overlay">
     <div class="modal-content">
       <div id="rulesText"></div>
+      <button id="viewAllCardsButton">View All Cards</button>
       <button id="closeRulesButton">Close Rules</button>
     </div>
   </div>
@@ -770,8 +854,10 @@
   let currentRound = 1;
   let totalRounds = 5;
   let unlimitedRounds = false;
-  let gameStarted = false;
-  let trackingEnabled = true;
+  // App starts directly in "Just Cards" mode - no setup required to begin playing.
+  // Player/round tracking can be turned on later from the settings (⚙️) menu.
+  let gameStarted = true;
+  let trackingEnabled = false;
 
   const turnTracker = document.getElementById("turnTracker");
 
@@ -1115,7 +1201,7 @@
     cardBack.dataset.categoryColour = newCard.Colour;
   }
 
-  const INSTRUCTION_MAX_FONT_SIZE = 34;
+  const INSTRUCTION_MAX_FONT_SIZE = 22;
   const INSTRUCTION_MIN_FONT_SIZE = 15;
 
   function fitInstructionText(container) {
@@ -1179,7 +1265,10 @@
   const showRulesLink = document.getElementById("showRulesLink");
   const rulesModal = document.getElementById("rulesModal");
   const closeRulesButton = document.getElementById("closeRulesButton");
+  const viewAllCardsButton = document.getElementById("viewAllCardsButton");
   const rulesText = document.getElementById("rulesText");
+
+  let rulesViewMode = "rules";
 
   const embeddedRulesHTML = `
     <h2>How to Play</h2>
@@ -1196,14 +1285,107 @@
     <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, or change the theme at any time.</p>
   `;
 
+  function escapeHTML(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  function getUniqueCategories() {
+    const set = new Set(allCards.map((c) => c.Category || "").filter(Boolean));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }
+
+  function buildAllCardsControlsHTML() {
+    const categories = getUniqueCategories();
+    const options = categories
+      .map((cat) => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`)
+      .join("");
+    return `
+      <div class="all-cards-controls">
+        <input type="text" id="allCardsSearchInput" placeholder="Search cards...">
+        <select id="allCardsCategoryFilter">
+          <option value="">All Categories</option>
+          ${options}
+        </select>
+      </div>
+    `;
+  }
+
+  function buildAllCardsListHTML(searchTerm, categoryFilter) {
+    if (!allCards.length) {
+      return `<p class="all-cards-empty">Cards are still loading &mdash; give it a moment and try again.</p>`;
+    }
+
+    const term = (searchTerm || "").trim().toLowerCase();
+    const filtered = allCards.filter((c) => {
+      const matchesCategory = !categoryFilter || c.Category === categoryFilter;
+      if (!matchesCategory) return false;
+      if (!term) return true;
+      const rule = (c.Rule || "").toLowerCase();
+      const category = (c.Category || "").toLowerCase();
+      return rule.includes(term) || category.includes(term);
+    });
+
+    if (!filtered.length) {
+      return `<p class="all-cards-empty">No cards match your search.</p>`;
+    }
+
+    const rows = filtered
+      .map((c) => {
+        const colour = c.Colour || "#999999";
+        return `
+          <li>
+            <span class="all-cards-category-tag" style="background-color: ${colour};">${escapeHTML(c.Category || "")}</span>
+            ${escapeHTML(c.Rule || "")}
+          </li>
+        `;
+      })
+      .join("");
+
+    return `<p class="all-cards-count">Showing ${filtered.length} of ${allCards.length} cards</p><ul class="all-cards-list">${rows}</ul>`;
+  }
+
   function displayEmbeddedRules() {
     rulesText.innerHTML = embeddedRulesHTML;
+    rulesViewMode = "rules";
+    viewAllCardsButton.textContent = "View All Cards";
     rulesModal.style.display = "flex";
+  }
+
+  function displayAllCards() {
+    rulesText.innerHTML = `
+      <h2>All Cards</h2>
+      ${buildAllCardsControlsHTML()}
+      <div id="allCardsListContainer">${buildAllCardsListHTML("", "")}</div>
+    `;
+    rulesViewMode = "cards";
+    viewAllCardsButton.textContent = "Back to Rules";
+
+    const searchInput = document.getElementById("allCardsSearchInput");
+    const categoryFilter = document.getElementById("allCardsCategoryFilter");
+    const listContainer = document.getElementById("allCardsListContainer");
+
+    function refreshList() {
+      listContainer.innerHTML = buildAllCardsListHTML(searchInput.value, categoryFilter.value);
+    }
+
+    searchInput.addEventListener("input", refreshList);
+    categoryFilter.addEventListener("change", refreshList);
   }
 
   showRulesLink.addEventListener("click", (event) => {
     event.preventDefault();
     displayEmbeddedRules();
+  });
+
+  viewAllCardsButton.addEventListener("click", () => {
+    if (rulesViewMode === "rules") {
+      displayAllCards();
+    } else {
+      displayEmbeddedRules();
+    }
   });
 
   closeRulesButton.addEventListener("click", () => {
