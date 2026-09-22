@@ -1169,51 +1169,45 @@
 
   <script src="https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js"></script>
   
-  <script>
+<script>
   const coverCard = document.getElementById("coverCard");
   const cardFront = coverCard.querySelector(".card-front");
   const cardBack = coverCard.querySelector(".card-back");
 
-  // ---------- Data shapes ----------
-  // OLD: allCards = [{ Category, Rule, Colour }, ...]  (one entry per rule)
-  // NEW: allCards = [{ Category, Colour, Rules: [rule, rule, ...] }, ...] (one entry per category)
-  //
-  // Internally we now work with "draws": individual { Category, Colour, Rule } entries,
-  // reconstructed from the grouped data so all the existing game logic still works.
-  let cards = [];          // remaining draws in the current deck
-  let allCards = [];       // grouped category objects, straight from cards.json
-  let allDraws = [];       // flat list of every individual draw, for "View All Cards"
+  let cards = [];
+  let allCards = [];
+  let allDraws = [];
   let showingFront = true;
   const NORMAL_BLACK_CHANCE = 0.15;
   const NORMAL_RED_CHANCE = NORMAL_BLACK_CHANCE / 2;
   const CRAZY_BLACK_CHANCE = 0.33;
   const CRAZY_RED_CHANCE = CRAZY_BLACK_CHANCE / 1.5;
 
-  let difficulty = "normal";                // "normal" | "crazy"
+  let difficulty = "normal";
   let BLACK_CHANCE = NORMAL_BLACK_CHANCE;
   let RED_CHANCE = NORMAL_RED_CHANCE;
 
   const difficultyRow = document.getElementById("difficultyRow");
-const difficultyNormalBtn = document.getElementById("difficultyNormalBtn");
-const difficultyCrazyBtn = document.getElementById("difficultyCrazyBtn");
+  const difficultyNormalBtn = document.getElementById("difficultyNormalBtn");
+  const difficultyCrazyBtn = document.getElementById("difficultyCrazyBtn");
 
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function setDifficulty(mode) {
-  difficulty = mode;
-  difficultyNormalBtn.classList.toggle("active", mode === "normal");
-  difficultyCrazyBtn.classList.toggle("active", mode === "crazy");
-  if (mode === "crazy") {
-    BLACK_CHANCE = CRAZY_BLACK_CHANCE;
-    RED_CHANCE = CRAZY_RED_CHANCE;
-  } else {
-    BLACK_CHANCE = NORMAL_BLACK_CHANCE;
-    RED_CHANCE = NORMAL_RED_CHANCE;
+  function setDifficulty(mode) {
+    difficulty = mode;
+    difficultyNormalBtn.classList.toggle("active", mode === "normal");
+    difficultyCrazyBtn.classList.toggle("active", mode === "crazy");
+    if (mode === "crazy") {
+      BLACK_CHANCE = CRAZY_BLACK_CHANCE;
+      RED_CHANCE = CRAZY_RED_CHANCE;
+    } else {
+      BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+      RED_CHANCE = NORMAL_RED_CHANCE;
+    }
   }
-}
 
-difficultyNormalBtn.addEventListener("click", () => setDifficulty("normal"));
-difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
+  difficultyNormalBtn.addEventListener("click", () => setDifficulty("normal"));
+  difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
 
   let enabledCategories = new Set();
   const categoryColours = {};
@@ -1223,17 +1217,19 @@ difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
   let currentRound = 1;
   let totalRounds = 5;
   let unlimitedRounds = false;
-  let gameStarted = true;
+
+  // FIX: game no longer "started" by default — tapping the card before
+  // setup should open the setup overlay, so this must start false.
+  let gameStarted = false;
   let trackingEnabled = false;
 
-  let totalDrawsInPlay = 0;   // total draws in the current filtered deck
-  let drawnCount = 0;         // how many draws have been revealed
+  let totalDrawsInPlay = 0;
+  let drawnCount = 0;
 
   const turnTracker = document.getElementById("turnTracker");
   const cardCounter = document.getElementById("cardCounter");
 
-  // Flatten a grouped category object into one draw per rule.
-function groupToDraws(group) {
+  function groupToDraws(group) {
     const rules = Array.isArray(group.Rules) ? group.Rules : [];
     const colour = group.Colour || group.Color || group.color || group.colour || "#999999";
     return rules.map(rule => ({
@@ -1334,12 +1330,11 @@ function groupToDraws(group) {
     setupOverlay.style.display = "none";
   }
 
-  // Build the deck of individual draws from the enabled categories.
   function buildDeckFromEnabledCategories() {
     const enabledGroups = allCards.filter(c => enabledCategories.has(c.Category || ""));
     const source = (enabledGroups.length || allCards.length === 0)
       ? enabledGroups
-      : allCards; // safety net: if nothing enabled, use everything
+      : allCards;
     cards = source.flatMap(groupToDraws);
     totalDrawsInPlay = cards.length;
     drawnCount = -1;
@@ -1347,26 +1342,26 @@ function groupToDraws(group) {
   }
 
   const cardCounterNumber = document.getElementById("cardCounterNumber");
-const cardCounterSuffix = document.getElementById("cardCounterSuffix");
+  const cardCounterSuffix = document.getElementById("cardCounterSuffix");
 
-function updateCardCounter() {
-  if (!totalDrawsInPlay) {
-    cardCounterNumber.textContent = "";
-    cardCounterSuffix.textContent = "";
-    return;
-  }
-  const current = Math.min(drawnCount + 1, totalDrawsInPlay);
-  const newText = String(current);
+  function updateCardCounter() {
+    if (!totalDrawsInPlay) {
+      cardCounterNumber.textContent = "";
+      cardCounterSuffix.textContent = "";
+      return;
+    }
+    const current = Math.min(drawnCount + 1, totalDrawsInPlay);
+    const newText = String(current);
 
-  if (cardCounterNumber.textContent !== newText) {
-    cardCounterNumber.classList.add("changing");
-    setTimeout(() => {
-      cardCounterNumber.textContent = newText;
-      cardCounterSuffix.textContent = ` of ${totalDrawsInPlay}`;
-      cardCounterNumber.classList.remove("changing");
-    }, 180);
+    if (cardCounterNumber.textContent !== newText) {
+      cardCounterNumber.classList.add("changing");
+      setTimeout(() => {
+        cardCounterNumber.textContent = newText;
+        cardCounterSuffix.textContent = ` of ${totalDrawsInPlay}`;
+        cardCounterNumber.classList.remove("changing");
+      }, 180);
+    }
   }
-}
 
   startGameButton.addEventListener("click", () => {
     trackingEnabled = trackingModeSelected === "on";
@@ -1612,9 +1607,9 @@ function updateCardCounter() {
   }
 
   // ---------- Category settings ----------
-  const CATEGORY_PREF_VERSION = 4; // bump this to force a fresh default for everyone
+  const CATEGORY_PREF_VERSION = 4;
 
-function loadEnabledCategoriesFromStorage(allCategoryNames) {
+  function loadEnabledCategoriesFromStorage(allCategoryNames) {
     let stored = null;
     let storedVersion = 0;
     try {
@@ -1628,22 +1623,18 @@ function loadEnabledCategoriesFromStorage(allCategoryNames) {
       const storedSet = new Set(stored);
       enabledCategories = new Set(allCategoryNames.filter(c => storedSet.has(c)));
     } else {
-      // First run, or outdated stored preference: enable everything except "Spicy".
       enabledCategories = new Set(allCategoryNames.filter(c => !isSpicy(c)));
       saveEnabledCategoriesToStorage();
     }
-}
+  }
 
-function saveEnabledCategoriesToStorage() {
-    try {
-      localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
-      localStorage.setItem("udcEnabledCategoriesVersion", String(CATEGORY_PREF_VERSION));
-    } catch (e) {}
-}
-
+  // FIX: this was defined twice — the second copy (which didn't save the
+  // version key) was overriding this one, so stored prefs never looked
+  // "current" and got wiped back to defaults on every reload.
   function saveEnabledCategoriesToStorage() {
     try {
       localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
+      localStorage.setItem("udcEnabledCategoriesVersion", String(CATEGORY_PREF_VERSION));
     } catch (e) {}
   }
 
@@ -1704,10 +1695,8 @@ function saveEnabledCategoriesToStorage() {
   fetch("AppFiles/Data/cards.json")
     .then((response) => response.json())
     .then((data) => {
-      // NEW grouped shape: one entry per category, Rules is an array.
       allCards = [...data];
 
-      // Build category colours + flat draws from the grouped data.
       allDraws = [];
       data.forEach(group => {
         if (group.Category && !(group.Category in categoryColours)) {
@@ -1728,9 +1717,9 @@ function saveEnabledCategoriesToStorage() {
       cardBack.innerHTML = "";
     })
     .catch((error) => {
-  console.error("Error loading cards:", error);
-  cardFront.innerHTML = `<div class="loading-text" style="color:#ff4747;">Failed to load cards. Check your connection and refresh.</div>`;
-});
+      console.error("Error loading cards:", error);
+      cardFront.innerHTML = `<div class="loading-text" style="color:#ff4747;">Failed to load cards. Check your connection and refresh.</div>`;
+    });
 
   function pickCardType() {
     const r = Math.random();
@@ -1762,14 +1751,14 @@ function saveEnabledCategoriesToStorage() {
 
   function preloadNextCard() {
     if (cards.length === 0) {
-    cardBack.dataset.content = `
-      <div class="emptyDeck">
-        <div class="emptyDeckEmoji">🎉</div>
-        <div class="emptyDeckTitle">Deck complete!</div>
-        <div class="emptyDeckSub">You've drawn every card in play.</div>
-      </div>
-    `;
-    cardBack.dataset.type = "white";
+      cardBack.dataset.content = `
+        <div class="emptyDeck">
+          <div class="emptyDeckEmoji">🎉</div>
+          <div class="emptyDeckTitle">Deck complete!</div>
+          <div class="emptyDeckSub">You've drawn every card in play.</div>
+        </div>
+      `;
+      cardBack.dataset.type = "white";
       cardBack.dataset.categoryColour = "#000000";
       return;
     }
@@ -1800,26 +1789,26 @@ function saveEnabledCategoriesToStorage() {
     }
   }
 
-function applyPreloadedContent(isFront = true) {
-  const target = isFront ? cardFront : cardBack;
-  const type = cardBack.dataset.type || "white";
-  const glow = hexToRgba(cardBack.dataset.categoryColour || "#999999", 0.25);
+  function applyPreloadedContent(isFront = true) {
+    const target = isFront ? cardFront : cardBack;
+    const type = cardBack.dataset.type || "white";
+    const glow = hexToRgba(cardBack.dataset.categoryColour || "#999999", 0.25);
 
-  target.innerHTML = cardBack.dataset.content || "";
-  target.classList.remove("type-black", "type-red");
-  if (type === "black") target.classList.add("type-black");
-  if (type === "red") target.classList.add("type-red");
+    target.innerHTML = cardBack.dataset.content || "";
+    target.classList.remove("type-black", "type-red");
+    if (type === "black") target.classList.add("type-black");
+    if (type === "red") target.classList.add("type-red");
 
-  coverCard.classList.remove("type-black", "type-red");
-  if (type === "black") coverCard.classList.add("type-black");
-  if (type === "red") coverCard.classList.add("type-red");
+    coverCard.classList.remove("type-black", "type-red");
+    if (type === "black") coverCard.classList.add("type-black");
+    if (type === "red") coverCard.classList.add("type-red");
 
-  coverCard.style.setProperty("--category-glow", glow);
-  cardFront.style.setProperty("--category-glow", glow);
-  cardBack.style.setProperty("--category-glow", glow);
+    coverCard.style.setProperty("--category-glow", glow);
+    cardFront.style.setProperty("--category-glow", glow);
+    cardBack.style.setProperty("--category-glow", glow);
 
-  requestAnimationFrame(() => fitInstructionText(target));
-}
+    requestAnimationFrame(() => fitInstructionText(target));
+  }
 
   function playCardSound(type) {
     let file = "AppFiles/Sounds/flip.mp3";
@@ -1827,6 +1816,24 @@ function applyPreloadedContent(isFront = true) {
     if (type === "red") file = "AppFiles/Sounds/red.mp3";
     const audio = new Audio(file);
     audio.play().catch(() => {});
+  }
+
+  // FIX: hoisted out of flipCard so these elements/timeouts aren't
+  // re-created on every single card draw.
+  const blackFlash = document.getElementById("blackFlash");
+  let blackFlashTimeout = null;
+  function triggerBlackFlash() {
+    blackFlash.classList.add("active");
+    if (blackFlashTimeout) clearTimeout(blackFlashTimeout);
+    blackFlashTimeout = setTimeout(() => blackFlash.classList.remove("active"), 220);
+  }
+
+  const redFlash = document.getElementById("redFlash");
+  let redFlashTimeout = null;
+  function triggerRedFlash() {
+    redFlash.classList.add("active");
+    if (redFlashTimeout) clearTimeout(redFlashTimeout);
+    redFlashTimeout = setTimeout(() => redFlash.classList.remove("active"), 180);
   }
 
   function flipCard() {
@@ -1837,29 +1844,8 @@ function applyPreloadedContent(isFront = true) {
       return;
     }
 
-const upcomingType = cardBack.dataset.type || "white";
+    const upcomingType = cardBack.dataset.type || "white";
 
-
-      const blackFlash = document.getElementById("blackFlash");
-      let blackFlashTimeout = null;
-      function triggerBlackFlash() {
-        blackFlash.classList.add("active");
-        if (blackFlashTimeout) clearTimeout(blackFlashTimeout);
-        blackFlashTimeout = setTimeout(() => blackFlash.classList.remove("active"), 220);
-      }
-      
-      const redFlash = document.getElementById("redFlash");
-      let redFlashTimeout = null;
-
-function triggerRedFlash() {
-  redFlash.classList.add("active");
-  if (redFlashTimeout) clearTimeout(redFlashTimeout);
-  redFlashTimeout = setTimeout(() => {
-    redFlash.classList.remove("active");
-  }, 180);
-}
-
-    // Count the card being revealed.
     if (drawnCount < totalDrawsInPlay) {
       drawnCount++;
     }
@@ -1874,37 +1860,29 @@ function triggerRedFlash() {
     updateCardCounter();
 
     coverCard.classList.toggle("flipped");
-    // after toggle, if we were showing front, we're now showing back
-    coverCard.classList.toggle("face-up", showingFront);
     showingFront = !showingFront;
 
     playCardSound(upcomingType);
 
+    if (upcomingType === "red") triggerRedFlash();
+    if (upcomingType === "black") triggerBlackFlash();
+
     if (upcomingType === "red") {
-    triggerRedFlash();
-    }
-    if (upcomingType === "black") {
-    triggerBlackFlash();
+      vibrate([30, 40, 60]);
+    } else if (upcomingType === "black") {
+      vibrate([40]);
+    } else {
+      vibrate([12]);
     }
 
-    // Haptics
-if (upcomingType === "red") {
-  vibrate([30, 40, 60]);
-} else if (upcomingType === "black") {
-  vibrate([40]);
-} else {
-  vibrate([12]);
-}
-
-// Screen-reader announcement
-const srAnnouncer = document.getElementById("srAnnouncer");
-if (srAnnouncer) {
-  const ruleText = (cardBack.dataset.content || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  srAnnouncer.textContent = `${upcomingType} card. ${ruleText}`;
-}
+    const srAnnouncer = document.getElementById("srAnnouncer");
+    if (srAnnouncer) {
+      const ruleText = (cardBack.dataset.content || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      srAnnouncer.textContent = `${upcomingType} card. ${ruleText}`;
+    }
 
     advanceTurn();
   }
@@ -1912,11 +1890,11 @@ if (srAnnouncer) {
   coverCard.addEventListener("click", flipCard);
 
   coverCard.addEventListener("keydown", (e) => {
-  if (e.key === " " || e.key === "Enter" || e.code === "Space") {
-    e.preventDefault();
-    flipCard();
-  }
-});
+    if (e.key === " " || e.key === "Enter" || e.code === "Space") {
+      e.preventDefault();
+      flipCard();
+    }
+  });
 
   // ---------- Rules modal ----------
   const showRulesLink = document.getElementById("showRulesLink");
@@ -2054,15 +2032,9 @@ if (srAnnouncer) {
     if (e.target === rulesModal) rulesModal.style.display = "none";
   });
 
-function vibrate(pattern) {
-  if (navigator.vibrate && !prefersReducedMotion) {
-    try { navigator.vibrate(pattern); } catch (e) {}
+  function vibrate(pattern) {
+    if (navigator.vibrate && !prefersReducedMotion) {
+      try { navigator.vibrate(pattern); } catch (e) {}
+    }
   }
-}
-  
-
-
-  </script>
-
-</body>
-</html>
+</script>
