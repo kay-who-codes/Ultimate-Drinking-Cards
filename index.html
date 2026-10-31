@@ -28,6 +28,7 @@
     --panel-text: #000000;
     --btn-bg: #5b5b5b;
     --btn-text: #ffffff;
+    --accent-text: #ffffff;
 
     --font-new: 'CustomFont', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
@@ -220,6 +221,37 @@
     gap: 10px;
   }
 
+  /* Player row: name input + colour swatch */
+  .playerRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .playerRow .playerNameInput {
+    flex: 1;
+    min-width: 0;
+  }
+  .playerRow .playerColourInput {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .playerRow .playerColourInput:hover { border-color: #999; }
+  .playerRow .playerColourInput:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .playerRow .playerColourInput::-webkit-color-swatch-wrapper { padding: 0; }
+  .playerRow .playerColourInput::-webkit-color-swatch { border: none; border-radius: 6px; }
+  .playerRow .playerColourInput::-moz-color-swatch { border: none; border-radius: 6px; }
+
   .roundsRow {
     display: flex;
     align-items: center;
@@ -258,7 +290,7 @@
     border-radius: 10px;
     border: none;
     background-color: var(--accent);
-    color: #ffffff;
+    color: var(--accent-text, #ffffff);
     font-size: 15px;
     font-weight: bold;
     letter-spacing: 0.3px;
@@ -329,7 +361,7 @@
 
   .toggle-btn.active {
     background: var(--accent);
-    color: #ffffff;
+    color: var(--accent-text, #ffffff);
     box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
   }
 
@@ -396,15 +428,71 @@
   .theme-swatch.active::after {
     content: "✓";
     position: absolute;
-    inset: 0;
+    inset: auto 2px 2px auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 28px;
     font-weight: 900;
     color: #fff;
     text-shadow: 0 1px 2px rgba(0,0,0,0.6);
   }
+
+  .theme-swatch-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;   /* clicks still hit the swatch */
+}
+
+  /* ---------- Spooky animated background (Halloween theme) ---------- */
+#spookyBg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#spookyBg.active { opacity: 1; }
+
+.spookyEmoji {
+  position: absolute;
+  bottom: -12vh;
+  display: inline-block;
+  user-select: none;
+  will-change: transform;
+  animation-name: spookyRise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+#spookyBg.christmas .spookyEmoji {
+  bottom: auto;
+  top: -12vh;
+  animation-name: emojiFall;
+}
+
+@keyframes emojiFall {
+  0%   { transform: translateY(0)      rotate(0deg); }
+  50%  { transform: translateY(55vh)   rotate(12deg); }
+  100% { transform: translateY(120vh)  rotate(-6deg); }
+}
+
+@keyframes spookyRise {
+  0%   { transform: translateY(0)      rotate(0deg); }
+  50%  { transform: translateY(-55vh) rotate(12deg); }
+  100% { transform: translateY(-120vh) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #spookyBg { display: none; }
+}
 
   #themeMenu .menu-action {
     width: 100%;
@@ -425,13 +513,22 @@
     border-color: var(--accent);
   }
 
+  .category-bulk-row {
+    display: flex;
+    gap: 8px;
+  }
+  .category-bulk-row .menu-action {
+    margin-top: 0;
+  }
+
   .category-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 220px;
+    max-height: 240px;
     overflow-y: auto;
     padding-right: 2px;
+    margin-top: 8px;
   }
 
   .category-list label {
@@ -887,7 +984,6 @@ body:not(.in-discord) .kwc-repo-search input {
     font-size: 14px;
     font-family: var(--font-new);
     position: relative;
-    bottom: 50px;
   }
 
   .card-counter #cardCounterNumber {
@@ -1055,11 +1151,18 @@ body:not(.in-discord) .kwc-repo-search input {
           <label style="font-size:12px;">Card</label>
           <input type="color" id="customCardBgInput" value="#ffffff">
         </div>
-        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+                <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
           <label style="font-size:12px;">Panel</label>
           <input type="color" id="customPanelBgInput" value="#e3e3e3">
         </div>
       </div>
+
+    <div class="menuSection">
+      <h3>Discord Mode</h3>
+      <div class="roundsRow">
+        <label><input type="checkbox" id="discordModeCheckbox"> Enable Discord mode</label>
+      </div>
+    </div>
 
       <h3>Difficulty</h3>
   <div class="toggleButtonRow" id="difficultyRow">
@@ -1114,6 +1217,16 @@ body:not(.in-discord) .kwc-repo-search input {
             <label><input type="checkbox" id="unlimitedRoundsCheckbox"> Unlimited</label>
           </div>
         </div>
+
+        <div class="setup-field">                                   
+          <label>Turn Order</label>
+          <div class="roundsRow">
+            <label><input type="checkbox" id="randomiseOrderCheckbox"> Randomise turn order</label>
+          </div>   
+        </div>
+
+
+
       </div>
 
       <div class="setup-btn-row">
@@ -1159,6 +1272,8 @@ body:not(.in-discord) .kwc-repo-search input {
   <footer id="footer">
     Made by <a href="https://linktr.ee/kaywhocreates" target="_blank" rel="noopener noreferrer">Kay 🧡</a>
   </footer>
+
+    <script src="theme.js"></script>
 
 <script>
 const isDiscord =
@@ -1224,6 +1339,7 @@ difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
   let enabledCategories = new Set();
   const categoryColours = {};
 
+  // players now holds { name, colour } objects when tracking is enabled
   let players = [];
   let currentPlayerIndex = 0;
   let currentRound = 1;
@@ -1238,15 +1354,116 @@ difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
   const turnTracker = document.getElementById("turnTracker");
   const cardCounter = document.getElementById("cardCounter");
 
+    // ---------- Discord mode ----------
+  // When enabled, certain phrases in card rules are transformed for Discord play:
+  //   "Point"                    -> the card is removed from the deck entirely
+  //   "The player opposite"      -> replaced with a random player's name
+  //   "the player to your left"  -> "the previous player"
+  //   "the player to your right" -> "the next player"
+  const discordModeCheckbox = document.getElementById("discordModeCheckbox");
+
+  function loadDiscordModeFromStorage() {
+    try {
+      return localStorage.getItem("udcDiscordMode") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveDiscordModeToStorage() {
+    try {
+      localStorage.setItem("udcDiscordMode", discordModeCheckbox.checked ? "1" : "0");
+    } catch (e) {}
+  }
+
+  function getRandomPlayerName(excludeName) {
+    const pool = (Array.isArray(players) && players.length > 0) ? players : null;
+    if (!pool) return "[random player]";
+    const candidates = excludeName
+      ? pool.filter(p => p.name !== excludeName)
+      : pool;
+    const use = candidates.length ? candidates : pool;
+    return use[Math.floor(Math.random() * use.length)].name;
+  }
+
+  function isDiscordModeOn() {
+    return !!(discordModeCheckbox && discordModeCheckbox.checked);
+  }
+
+function shouldRemoveForDiscord(rule) {
+  const r = String(rule);
+  // Remove if it needs a physical environment, props, or spatial positioning.
+  return /\b(point|pointing|walk|room|floor|eye contact|clink)\b/i.test(r);
+}
+
+function applyDiscordTransforms(rule) {
+  let text = String(rule);
+  text = text.replace(/the player to your left/gi, "the previous player");
+  text = text.replace(/the player to your right/gi, "the next player");
+  text = text.replace(/the player opposite/gi, () => getRandomPlayerName());
+  return text;
+}
+
+  if (discordModeCheckbox) {
+    discordModeCheckbox.checked = loadDiscordModeFromStorage();
+
+    discordModeCheckbox.addEventListener("change", () => {
+      saveDiscordModeToStorage();
+      // Rebuild the flat list so "View All Cards" reflects the transform.
+      rebuildAllDraws();
+      // Rebuild the live deck so removals/rewrites take effect immediately.
+      buildDeckFromEnabledCategories();
+      preloadNextCard();
+    });
+  }
+
+  // Palette used to auto-assign distinct default colours to new player rows.
+  const PLAYER_COLOUR_PALETTE = [
+    "#FFEA2F", "#5BFFF4", "#FF7EFF", "#EB3A3A",
+    "#56FF56", "#63ACFF", "#E8FF67", "#FFAC3F",
+    "#9D53FF", "#D4D4DA"
+  ];
+
+  function nextPlayerColour() {
+    const used = new Set(
+      [...document.querySelectorAll(".playerColourInput")].map(i => i.value.toLowerCase())
+    );
+    const next = PLAYER_COLOUR_PALETTE.find(c => !used.has(c.toLowerCase()));
+    return next || PLAYER_COLOUR_PALETTE[
+      document.querySelectorAll(".playerColourInput").length % PLAYER_COLOUR_PALETTE.length
+    ];
+  }
+
+  function escapeHTML(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
   // Flatten a grouped category object into one draw per rule.
 function groupToDraws(group) {
     const rules = Array.isArray(group.Rules) ? group.Rules : [];
     const colour = group.Colour || group.Color || group.color || group.colour || "#999999";
-    return rules.map(rule => ({
-      Category: group.Category || "",
-      Colour: colour,
-      Rule: rule
-    }));
+    const discord = isDiscordModeOn();
+    return rules
+      .filter(rule => !(discord && shouldRemoveForDiscord(rule)))
+      .map(rule => ({
+        Category: group.Category || "",
+        Colour: colour,
+        Rule: discord ? applyDiscordTransforms(rule) : rule
+      }));
+  }
+
+  // Rebuild the flat list used by "View All Cards", honouring current Discord mode/players.
+  function rebuildAllDraws() {
+    allDraws = [];
+    allCards.forEach(group => {
+      if (group.Category && !(group.Category in categoryColours)) {
+        categoryColours[group.Category] = group.Colour || "#999999";
+      }
+      allDraws.push(...groupToDraws(group));
+    });
   }
 
   function updateTurnTracker() {
@@ -1254,17 +1471,24 @@ function groupToDraws(group) {
       turnTracker.innerHTML = "";
       return;
     }
+    const current = players[currentPlayerIndex];
     const diffBadge = difficulty === "crazy" ? ` · <span style="color:#ff4747;">CRAZY</span>` : "";
     const roundText = (unlimitedRounds ? `Round ${currentRound}` : `Round ${currentRound} of ${totalRounds}`) + diffBadge;
     turnTracker.innerHTML = `
       <div class="turnLabel">It's your turn</div>
-      <div class="turnName">${players[currentPlayerIndex]}</div>
+      <div class="turnName" style="color: ${current.colour || "#999999"};">${escapeHTML(current.name)}</div>
       <div class="roundLabel">${roundText}</div>
     `;
   }
 
   function advanceTurn() {
     if (!gameStarted || !trackingEnabled || players.length === 0) return;
+
+    if (randomiseOrderCheckbox.checked) {
+      currentPlayerIndex = Math.floor(Math.random() * players.length);
+      updateTurnTracker();
+      return;
+    }
     currentPlayerIndex++;
     if (currentPlayerIndex >= players.length) {
       currentPlayerIndex = 0;
@@ -1291,6 +1515,7 @@ function groupToDraws(group) {
   const trackingOnBtn = document.getElementById("trackingOnBtn");
   const trackingOffBtn = document.getElementById("trackingOffBtn");
   const trackingFields = document.getElementById("trackingFields");
+  const randomiseOrderCheckbox = document.getElementById("randomiseOrderCheckbox");
 
   let trackingModeSelected = "off";
 
@@ -1308,22 +1533,42 @@ function groupToDraws(group) {
   trackingOnBtn.addEventListener("click", () => setTrackingMode("on"));
   trackingOffBtn.addEventListener("click", () => setTrackingMode("off"));
 
-  function createPlayerRow(name = "") {
-    const row = document.createElement("input");
-    row.type = "text";
-    row.className = "playerNameInput";
-    row.placeholder = `Player ${playerNamesContainer.children.length + 1}`;
-    row.value = name;
+  // A player row = name input + colour swatch
+  function createPlayerRow(name = "", colour = "") {
+    const row = document.createElement("div");
+    row.className = "playerRow";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "playerNameInput";
+    nameInput.placeholder = `Player ${playerNamesContainer.children.length + 1}`;
+    nameInput.value = name;
+
+    const colourInput = document.createElement("input");
+    colourInput.type = "color";
+    colourInput.className = "playerColourInput";
+    colourInput.value = colour || nextPlayerColour();
+    colourInput.title = "Player colour";
+
+    row.appendChild(nameInput);
+    row.appendChild(colourInput);
     playerNamesContainer.appendChild(row);
   }
 
-  function resetSetupFields(prefillNames = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false) {
-    playerNamesContainer.innerHTML = "";
-    prefillNames.forEach(n => createPlayerRow(n));
+  // Accepts either an array of strings (old behaviour) or {name, colour} objects.
+  function resetSetupFields(prefill = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false, prefillRandomise = false) {    playerNamesContainer.innerHTML = "";
+    prefill.forEach(p => {
+      if (typeof p === "string") {
+        createPlayerRow(p);
+      } else if (p && typeof p === "object") {
+        createPlayerRow(p.name || "", p.colour || "");
+      }
+    });
     roundsInput.value = prefillRounds;
     unlimitedRoundsCheckbox.checked = prefillUnlimited;
     roundsInput.disabled = prefillUnlimited;
     setTrackingMode(prefillTracking ? "on" : "off");
+    randomiseOrderCheckbox.checked = prefillRandomise;
   }
 
   addPlayerButton.addEventListener("click", () => createPlayerRow());
@@ -1378,15 +1623,22 @@ function updateCardCounter() {
     trackingEnabled = trackingModeSelected === "on";
 
     if (trackingEnabled) {
-      const nameInputs = Array.from(document.querySelectorAll(".playerNameInput"));
-      const names = nameInputs.map((input, i) => input.value.trim() || `Player ${i + 1}`);
+      const rows = Array.from(document.querySelectorAll(".playerRow"));
+      const parsed = rows.map((row, i) => {
+        const nameInput = row.querySelector(".playerNameInput");
+        const colourInput = row.querySelector(".playerColourInput");
+        return {
+          name: (nameInput.value || "").trim() || `Player ${i + 1}`,
+          colour: colourInput.value || "#999999"
+        };
+      });
 
-      if (names.length < 1) {
+      if (parsed.length < 1) {
         alert("Add at least one player.");
         return;
       }
 
-      players = names;
+      players = parsed;
       currentPlayerIndex = 0;
       currentRound = 1;
       unlimitedRounds = unlimitedRoundsCheckbox.checked;
@@ -1400,225 +1652,13 @@ function updateCardCounter() {
     closeSetupOverlay();
     updateTurnTracker();
 
+    rebuildAllDraws();
     buildDeckFromEnabledCategories();
     preloadNextCard();
   });
-
-  // ---------- Theme menu ----------
-  const cogButton = document.getElementById("cogButton");
-  const themeMenu = document.getElementById("themeMenu");
-  const themeSwatchRow = document.getElementById("themeSwatchRow");
-  const editPlayersButton = document.getElementById("editPlayersButton");
-  const restartGameButton = document.getElementById("restartGameButton");
-  const categoryList = document.getElementById("categoryList");
-  const selectAllCategoriesButton = document.getElementById("selectAllCategoriesButton");
-  const deselectAllCategoriesButton = document.getElementById("deselectAllCategoriesButton");
-
-  const themes = [
-    { id: "mono",     label: "Mono",     bg: "#101010", accent: "#9a9a9a",
-      cardBg: "#ffffff", cardText: "#000000",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#E61111", cardRedText: "#ffffff",
-      panelBg: "#eeeeee", panelText: "#101010" },
-    { id: "classic",  label: "Classic",  bg: "#180606", accent: "#FF4747",
-      cardBg: "#FFE5E5", cardText: "#000000",
-      cardBlackBg: "#000000", cardBlackText: "#FFC6C6",
-      cardRedBg: "#E61111", cardRedText: "#FFF0F0",
-      panelBg: "#e3e3e3", panelText: "#000000" },
-    { id: "midnight", label: "Midnight", bg: "#0b0f2b", accent: "#5da9ff",
-      cardBg: "#eef3ff", cardText: "#0b0f2b",
-      cardBlackBg: "#050814", cardBlackText: "#CEDFFF",
-      cardRedBg: "#E61111", cardRedText: "#ffe3ec",
-      panelBg: "#e6ecff", panelText: "#0b0f2b" },
-    { id: "emerald",  label: "Emerald",  bg: "#0D1F0F", accent: "#3ddc84",
-      cardBg: "#EAFFEF", cardText: "#0d1f16",
-      cardBlackBg: "#04120a", cardBlackText: "#BEFFD8",
-      cardRedBg: "#E61111", cardRedText: "#ffe3e3",
-      panelBg: "#e2f5e9", panelText: "#0d1f16" },
-    { id: "plum",     label: "Plum",     bg: "#1e0f24", accent: "#c66bff",
-      cardBg: "#f6ecff", cardText: "#1e0f24",
-      cardBlackBg: "#100713", cardBlackText: "#EDD4FF",
-      cardRedBg: "#E61111", cardRedText: "#ffe1ef",
-      panelBg: "#efe1fb", panelText: "#1e0f24" },
-    { id: "sunset",   label: "Sunset",   bg: "#241205", accent: "#FF9A47",
-      cardBg: "#FFF3E6", cardText: "#241205",
-      cardBlackBg: "#130a03", cardBlackText: "#FFE2B7",
-      cardRedBg: "#E61111", cardRedText: "#ffe6e6",
-      panelBg: "#fdeedb", panelText: "#241205" },
-  ];
-
-  const customThemePanel = document.getElementById("customThemePanel");
-  const customBgInput = document.getElementById("customBgInput");
-  const customAccentInput = document.getElementById("customAccentInput");
-  const customCardBgInput = document.getElementById("customCardBgInput");
-  const customPanelBgInput = document.getElementById("customPanelBgInput");
-
-  function readableTextColor(hex) {
-    const c = hex.replace('#', '');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 150 ? "#000000" : "#ffffff";
-  }
-
-  function hexToRgba(hex, alpha = 1) {
-    if (typeof hex !== "string") return `rgba(153,153,153,${alpha})`;
-    const c = hex.replace('#', '').trim();
-    const full = c.length === 3 ? c.split('').map(x => x + x).join('') : c;
-    if (!/^[0-9a-fA-F]{6}$/.test(full)) return `rgba(153,153,153,${alpha})`;
-    const r = parseInt(full.substring(0, 2), 16);
-    const g = parseInt(full.substring(2, 4), 16);
-    const b = parseInt(full.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-
-  function applyTheme(themeId) {
-    if (themeId === "custom") {
-      customThemePanel.style.display = "block";
-      document.querySelectorAll(".theme-swatch").forEach(el => {
-        el.classList.toggle("active", el.dataset.themeId === "custom");
-      });
-      try { localStorage.setItem("udcTheme", "custom"); } catch (e) {}
-      return;
-    }
-    customThemePanel.style.display = "none";
-
-    const t = themes.find(t => t.id === themeId) || themes[0];
-    const root = document.documentElement;
-    root.style.setProperty("--bg", t.bg);
-    root.style.setProperty("--accent", t.accent);
-    root.style.setProperty("--card-bg", t.cardBg);
-    root.style.setProperty("--card-text", t.cardText);
-    root.style.setProperty("--card-black-bg", t.cardBlackBg);
-    root.style.setProperty("--card-black-text", t.cardBlackText);
-    root.style.setProperty("--card-red-bg", t.cardRedBg);
-    root.style.setProperty("--card-red-text", t.cardRedText);
-    root.style.setProperty("--panel-bg", t.panelBg);
-    root.style.setProperty("--panel-text", t.panelText);
-    document.querySelectorAll(".theme-swatch").forEach(el => {
-      el.classList.toggle("active", el.dataset.themeId === themeId);
-    });
-    try { localStorage.setItem("udcTheme", themeId); } catch (e) {}
-  }
-
-  function applyCustomTheme(save = true) {
-    const bg = customBgInput.value;
-    const accent = customAccentInput.value;
-    const cardBg = customCardBgInput.value;
-    const panelBg = customPanelBgInput.value;
-    const root = document.documentElement;
-    root.style.setProperty("--bg", bg);
-    root.style.setProperty("--accent", accent);
-    root.style.setProperty("--card-bg", cardBg);
-    root.style.setProperty("--card-text", readableTextColor(cardBg));
-    root.style.setProperty("--card-black-bg", "#000000");
-    root.style.setProperty("--card-black-text", "#ffffff");
-    root.style.setProperty("--card-red-bg", "#eb0e0e");
-    root.style.setProperty("--card-red-text", "#ffffff");
-    root.style.setProperty("--panel-bg", panelBg);
-    root.style.setProperty("--panel-text", readableTextColor(panelBg));
-    document.querySelectorAll(".theme-swatch").forEach(el => {
-      el.classList.toggle("active", el.dataset.themeId === "custom");
-    });
-    if (save) {
-      try {
-        localStorage.setItem("udcTheme", "custom");
-        localStorage.setItem("udcCustomColors", JSON.stringify({ bg, accent, cardBg, panelBg }));
-      } catch (e) {}
-    }
-  }
-
-  [customBgInput, customAccentInput, customCardBgInput, customPanelBgInput].forEach(input => {
-    input.addEventListener("input", () => applyCustomTheme(true));
-  });
-
-  function buildThemeSwatches() {
-    themeSwatchRow.innerHTML = "";
-    themes.forEach(t => {
-      const sw = document.createElement("div");
-      sw.className = "theme-swatch";
-      sw.dataset.themeId = t.id;
-      sw.title = t.label;
-      sw.style.background = `linear-gradient(135deg, ${t.bg} 50%, ${t.accent} 50%)`;
-      sw.addEventListener("click", () => applyTheme(t.id));
-      themeSwatchRow.appendChild(sw);
-    });
-
-    const customSw = document.createElement("div");
-    customSw.className = "theme-swatch";
-    customSw.dataset.themeId = "custom";
-    customSw.title = "Custom";
-    customSw.style.background = "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)";
-    customSw.addEventListener("click", () => applyTheme("custom"));
-    themeSwatchRow.appendChild(customSw);
-  }
-
-  cogButton.addEventListener("click", (e) => {
-    e.stopPropagation();
-    themeMenu.style.display = themeMenu.style.display === "block" ? "none" : "block";
-  });
-
-  document.addEventListener("click", (e) => {
-    if (themeMenu.style.display === "block" && !themeMenu.contains(e.target) && e.target !== cogButton) {
-      themeMenu.style.display = "none";
-    }
-  });
-
-  editPlayersButton.addEventListener("click", () => {
-    themeMenu.style.display = "none";
-    resetSetupFields(
-      players.length ? players : ["", ""],
-      Number.isFinite(totalRounds) ? totalRounds : 5,
-      unlimitedRounds,
-      trackingEnabled
-    );
-    openSetupOverlay();
-  });
-
-  restartGameButton.addEventListener("click", () => {
-    themeMenu.style.display = "none";
-    if (trackingEnabled && players.length === 0) {
-      resetSetupFields();
-      openSetupOverlay();
-      return;
-    }
-    currentPlayerIndex = 0;
-    currentRound = 1;
-    gameStarted = true;
-    buildDeckFromEnabledCategories();
-    preloadNextCard();
-    updateTurnTracker();
-  });
-
-  try {
-    const savedTheme = localStorage.getItem("udcTheme");
-    buildThemeSwatches();
-    if (savedTheme === "custom") {
-      const saved = JSON.parse(localStorage.getItem("udcCustomColors") || "null");
-      if (saved) {
-        customBgInput.value = saved.bg;
-        customAccentInput.value = saved.accent;
-        customCardBgInput.value = saved.cardBg;
-        customPanelBgInput.value = saved.panelBg;
-        applyCustomTheme(false);
-        customThemePanel.style.display = "block";
-        document.querySelectorAll(".theme-swatch").forEach(el => {
-          el.classList.toggle("active", el.dataset.themeId === "custom");
-        });
-      } else {
-        applyTheme("mono");
-      }
-    } else {
-      applyTheme(savedTheme || "mono");
-    }
-  } catch (e) {
-    buildThemeSwatches();
-    applyTheme("mono");
-  }
 
   // ---------- Category settings ----------
-  const CATEGORY_PREF_VERSION = 6; // bump this to force a fresh default for everyone
+  const CATEGORY_PREF_VERSION = 3; // bump this to force a fresh default for everyone
 
 function loadEnabledCategoriesFromStorage(allCategoryNames) {
     let stored = null;
@@ -1628,14 +1668,16 @@ function loadEnabledCategoriesFromStorage(allCategoryNames) {
       storedVersion = parseInt(localStorage.getItem("udcEnabledCategoriesVersion") || "0", 10) || 0;
     } catch (e) {}
 
-    const isSpicy = (c) => c.trim().toLowerCase() === "spicy";
+    // Only "Spicy" is off by default. Everything else is on.
+    const isOffByDefault = (c) => c.trim().toLowerCase() === "spicy";
 
     if (Array.isArray(stored) && storedVersion >= CATEGORY_PREF_VERSION) {
+      // Respect the user's saved choices, but only for categories that still exist.
       const storedSet = new Set(stored);
       enabledCategories = new Set(allCategoryNames.filter(c => storedSet.has(c)));
     } else {
       // First run, or outdated stored preference: enable everything except "Spicy".
-      enabledCategories = new Set(allCategoryNames.filter(c => !isSpicy(c)));
+      enabledCategories = new Set(allCategoryNames.filter(c => !isOffByDefault(c)));
       saveEnabledCategoriesToStorage();
     }
 }
@@ -1708,13 +1750,10 @@ function saveEnabledCategoriesToStorage() {
       allCards = [...data];
 
       // Build category colours + flat draws from the grouped data.
-      allDraws = [];
-      data.forEach(group => {
-        if (group.Category && !(group.Category in categoryColours)) {
-          categoryColours[group.Category] = group.Colour || "#999999";
-        }
-        allDraws.push(...groupToDraws(group));
-      });
+      allCards = [...data];
+
+      // Build category colours + flat draws from the grouped data.
+      rebuildAllDraws();
 
       const uniqueCategories = getUniqueCategories();
       loadEnabledCategoriesFromStorage(uniqueCategories);
@@ -1864,8 +1903,7 @@ function triggerRedFlash() {
       drawnCount++;
     }
 
-    if (showingFront) {
-      applyPreloadedContent(false);
+    if (showingFront) {       applyPreloadedContent(false);
     } else {
       applyPreloadedContent(true);
     }
@@ -1942,13 +1980,6 @@ if (srAnnouncer) {
     </ul>
     <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, change the theme, or turn categories on/off at any time.</p>
   `;
-
-  function escapeHTML(str) {
-    return String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
-  }
 
   function getUniqueCategories() {
     const set = new Set(allCards.map((c) => c.Category || "").filter(Boolean));

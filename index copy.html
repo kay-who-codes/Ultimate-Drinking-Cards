@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>UDC</title>
+
+  <link rel="icon" type="image/x-icon" href="AppFiles/Icons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="AppFiles/Logos/AppIcon192px.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="AppFiles/Logos/AppIcon512px.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1210">
+
+<style>
+
+
+  :root {
+    --bg: #131313;
+    --card-bg: #ffffff;
+    --card-text: #000000;
+    --card-black-bg: #000000;
+    --card-black-text: #ffffff;
+    --card-red-bg: #eb0e0e;
+    --card-red-text: #ffffff;
+    --accent: #999999;
+    --muted: #767676;
+    --panel-bg: #e3e3e3;
+    --panel-text: #000000;
+    --btn-bg: #5b5b5b;
+    --btn-text: #ffffff;
+    --accent-text: #ffffff;
+
+    --font-new: 'CustomFont', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  }
+
+  * { box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'CustomFont';
+    src: url('AppFiles/Fonts/UDC.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+  body {
+    background-color: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: background-color 0.3s;
+  }
+
+  #app {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    gap: 14px;
+    width: 100%;
+  }
+
+  /* Top bar / cog */
+  #topBar {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    z-index: 900;
+  }
+
+  #cogButton {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    width: 46px;
+    height: 46px;
+    margin-top: -10px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+  }
+  #cogButton:hover { background: rgba(255,255,255,0.18); transform: rotate(25deg); }
+
+  /* Turn tracker */
+  #turnTracker {
+    color: #ffffff;
+    font-family: Tahoma, sans-serif;
+    text-align: center;
+    min-height: 50px;
+  }
+  #turnTracker .turnLabel {
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  #turnTracker .turnName {
+    font-size: 26px;
+    font-weight: bold;
+    color: var(--accent);
+    animation: turnNameIn 0.4s ease-out;
+  }
+
+  @keyframes turnNameIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #turnTracker .roundLabel {
+    font-size: 13px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  /* Setup overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+
+  .setup-box {
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    padding: 36px 32px;
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    font-family: Tahoma, sans-serif;
+    text-align: center;
+    box-shadow:
+      0 20px 50px rgba(0,0,0,0.45),
+      0 2px 0 rgba(255,255,255,0.4) inset;
+    border: 1px solid rgba(0,0,0,0.06);
+    animation: setupBoxIn 0.28s ease-out;
+  }
+
+  @keyframes setupBoxIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .setup-box h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 25px;
+    letter-spacing: 0.2px;
+  }
+
+  .setup-box p.sub {
+    font-size: 13.5px;
+    color: #6b6b6b;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .setup-field {
+    text-align: left;
+    margin-bottom: 18px;
+  }
+
+  .setup-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    color: #555;
+  }
+
+  .setup-field input[type="text"],
+  .setup-field input[type="number"] {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 15px;
+    font-family: Tahoma, sans-serif;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .setup-field input[type="text"]:hover,
+  .setup-field input[type="number"]:hover {
+    border-color: #999;
+  }
+
+  .setup-field input[type="text"]:focus,
+  .setup-field input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  #playerNamesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Player row: name input + colour swatch */
+  .playerRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .playerRow .playerNameInput {
+    flex: 1;
+    min-width: 0;
+  }
+  .playerRow .playerColourInput {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .playerRow .playerColourInput:hover { border-color: #999; }
+  .playerRow .playerColourInput:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .playerRow .playerColourInput::-webkit-color-swatch-wrapper { padding: 0; }
+  .playerRow .playerColourInput::-webkit-color-swatch { border: none; border-radius: 6px; }
+  .playerRow .playerColourInput::-moz-color-swatch { border: none; border-radius: 6px; }
+
+  .roundsRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .roundsRow label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: normal;
+    text-transform: none;
+    font-size: 14px;
+    color: var(--panel-text);
+    cursor: pointer;
+  }
+
+  .setup-field input[type="radio"],
+  .setup-field input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .setup-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .setup-btn-row button,
+  .primary-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background-color: var(--accent);
+    color: var(--accent-text, #ffffff);
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .setup-btn-row button:hover,
+  .primary-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .setup-btn-row button:active,
+  .primary-btn:active {
+    transform: translateY(0);
+  }
+
+  .secondary-btn {
+    background-color: transparent !important;
+    color: #333 !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+  }
+
+  .small-add-btn {
+    padding: 9px;
+    border-radius: 8px;
+    border: 1px dashed #aaa;
+    background: rgba(0,0,0,0.02);
+    cursor: pointer;
+    font-size: 13px;
+    color: #444;
+    font-weight: 600;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .small-add-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .toggleButtonRow {
+    display: flex;
+    gap: 8px;
+    background: rgba(0,0,0,0.04);
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #555;
+    font-size: 13.5px;
+    font-weight: bold;
+    font-family: var(--font-new);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+
+  .toggle-btn:hover {
+    color: #222;
+  }
+
+  .toggle-btn.active {
+    background: var(--accent);
+    color: var(--accent-text, #ffffff);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  /* Theme / settings menu */
+  #themeMenu {
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    border-radius: 16px;
+    padding: 0;
+    width: 260px;
+    max-height: 75vh;
+    overflow-y: auto;
+    z-index: 950;
+    display: none;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45), 0 2px 0 rgba(255,255,255,0.4) inset;
+    border: 1px solid rgba(0,0,0,0.08);
+    font-family: var(--font-new);
+  }
+
+  #themeMenu .menuSection {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  #themeMenu .menuSection:last-child {
+    border-bottom: none;
+  }
+
+  #themeMenu h3 {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .theme-swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .theme-swatch {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(0,0,0,0.12);
+    position: relative;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, border-color 0.2s;
+  }
+  .theme-swatch:hover {
+    transform: scale(1.1);
+  }
+  .theme-swatch.active {
+    border-color: #333;
+    transform: scale(1.22);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  }
+  .theme-swatch.active::after {
+    content: "✓";
+    position: absolute;
+    inset: auto 2px 2px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+
+  .theme-swatch-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;   /* clicks still hit the swatch */
+}
+
+  /* ---------- Spooky animated background (Halloween theme) ---------- */
+#spookyBg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#spookyBg.active { opacity: 1; }
+
+.spookyEmoji {
+  position: absolute;
+  bottom: -12vh;
+  display: inline-block;
+  user-select: none;
+  will-change: transform;
+  animation-name: spookyRise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+#spookyBg.christmas .spookyEmoji {
+  bottom: auto;
+  top: -12vh;
+  animation-name: emojiFall;
+}
+
+@keyframes emojiFall {
+  0%   { transform: translateY(0)      rotate(0deg); }
+  50%  { transform: translateY(55vh)   rotate(12deg); }
+  100% { transform: translateY(120vh)  rotate(-6deg); }
+}
+
+@keyframes spookyRise {
+  0%   { transform: translateY(0)      rotate(0deg); }
+  50%  { transform: translateY(-55vh) rotate(12deg); }
+  100% { transform: translateY(-120vh) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #spookyBg { display: none; }
+}
+
+  #themeMenu .menu-action {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.03);
+    cursor: pointer;
+    font-family: var(--font-new);
+    font-size: 13px;
+    font-weight: 200;
+    color: var(--panel-text);
+    margin-top: 8px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  #themeMenu .menu-action:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-color: var(--accent);
+  }
+
+  .category-bulk-row {
+    display: flex;
+    gap: 8px;
+  }
+  .category-bulk-row .menu-action {
+    margin-top: 0;
+  }
+
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 2px;
+    margin-top: 8px;
+  }
+
+  .category-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: normal;
+    text-transform: none;
+    color: var(--panel-text);
+    cursor: pointer;
+  }
+
+  .category-swatch-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .category-empty {
+    font-size: 12px;
+    color: #777;
+    font-style: italic;
+  }
+
+  /* Card styles */
+  .card {
+    width: min(300px, 88vw);
+    height: min(400px, 56vh, 480px);
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px;
+    position: relative;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), border 0.3s;
+    z-index: 1;
+    flex-shrink: 0;
+  box-shadow:
+        0px 0px 5px 10px rgba(255,255,255,0.01),
+        0px 0px 0px 6px var(--category-glow, transparent);
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border 0.3s,
+    box-shadow 0.55s ease-out;
+  }
+
+  .card.type-black {
+    border: 2px solid #000000;
+  }
+  .card.type-red {
+    border: 2px solid var(--card-red-bg);
+  }
+
+  .card .card-front,
+  .card .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: left;
+    flex-direction: column;
+    border-radius: 15px;
+    padding: 35px;
+    font-family: var(--font-new);
+    overflow: hidden;
+    box-shadow:
+        0 0 30px 0px rgba(255,255,255,0.1),
+        0 0 28px 6px var(--category-glow, transparent);
+  }
+
+  .card .card-front {
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    text-align: left;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    font-family: var(--font-new);
+  }
+
+  .card .card-back {
+    transform: rotateY(180deg);
+    font-size: 24px;
+    text-align: left;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  @keyframes glowPulse {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 12px 2px var(--category-glow, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 34px 10px var(--category-glow, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 28px 6px var(--category-glow, transparent);
+  }
+}
+
+.card.revealing {
+  animation: glowPulse 0.7s ease-out;
+}
+
+  .card.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-back .instructionText,
+  .card-front .instructionText {
+    font-size: clamp(18px, 6vw, 26px);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+    margin-bottom: auto;
+    overflow-wrap: break-word;
+  }
+
+  .card-back .categoryText,
+  .card-front .categoryText {
+    font-size: 17px;
+    margin-top: 6%;
+    text-align: center;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-decoration: underline;
+  }
+
+  .card-back .tripleBadge,
+  .card-front .tripleBadge {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: rgba(255,255,255,0.85);
+    color: #8b0000;
+  }
+
+  #resetButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #131313;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  #resetButton:hover {
+    background-color: #dddddd;
+  }
+
+  .card .card-front.type-black,
+  .card .card-back.type-black {
+    background-color: var(--card-black-bg);
+    color: var(--card-black-text);
+  }
+  .card .card-front.type-black .instructionText,
+  .card .card-back.type-black .instructionText {
+    color: var(--card-black-text);
+  }
+  .card .card-front.type-black .categoryText,
+  .card .card-back.type-black .categoryText {
+    color: var(--accent);
+  }
+
+  .card .card-front.type-red,
+  .card .card-back.type-red {
+    background-color: var(--card-red-bg);
+    color: var(--card-red-text);
+  }
+  .card .card-front.type-red .instructionText,
+  .card .card-back.type-red .instructionText {
+    color: var(--card-red-text);
+  }
+  .card .card-front.type-red .categoryText,
+  .card .card-back.type-red .categoryText {
+    color: var(--card-red-text);
+  }
+
+  #footer {
+    position: fixed;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  #footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  #footer a:hover {
+    text-decoration: underline;
+  }
+
+  #rulesButtonContainer {
+    position: fixed;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    text-align: center;
+    padding: 40px;
+  }
+
+  #showRulesLink {
+    color: var(--muted);
+    font-size: 18px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  #showRulesLink:hover {
+    text-decoration: underline;
+  }
+
+  /* Rules modal - improved formatting */
+  .modal-content {
+    background-color: var(--panel-bg);
+    color: var(--panel-text);
+    padding: 24px;
+    border-radius: 12px;
+    border: 2px solid #ccc;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    font-family: Tahoma, sans-serif;
+  }
+
+  #closeRulesButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid black;
+  }
+
+  #closeRulesButton:hover {
+    background-color: var(--accent);
+  }
+
+  #viewAllCardsButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: transparent;
+    color: var(--panel-text);
+    border: 2px solid var(--accent);
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-family: Tahoma, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  #viewAllCardsButton:hover {
+    background-color: var(--accent);
+    color: #ffffff;
+  }
+
+  #rulesText h2 {
+    margin-top: 0;
+    font-size: 22px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
+  }
+
+  #rulesText h3 {
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 8px 0;
+    color: #333;
+  }
+
+  #rulesText ol,
+  #rulesText ul {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+
+  #rulesText li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .rule-card-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    margin-right: 4px;
+  }
+  .rule-card-tag.white { background-color: #999; color: #000; border: 1px solid #666; }
+  .rule-card-tag.black { background-color: #000; }
+  .rule-card-tag.red { background-color: #8b0000; }
+
+  #rulesText .tip {
+    font-size: 13px;
+    color: #555;
+    font-style: italic;
+    margin-top: 10px;
+  }
+
+  .all-cards-list li {
+    margin-bottom: 10px;
+  }
+
+  .all-cards-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .all-cards-controls input[type="text"],
+  .all-cards-controls select {
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #000;
+    font-size: 14px;
+    font-family: Tahoma, sans-serif;
+  }
+
+  .all-cards-controls input[type="text"] {
+    flex: 2;
+    min-width: 140px;
+  }
+
+  .all-cards-controls select {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .all-cards-controls input[type="text"]:focus,
+  .all-cards-controls select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .all-cards-empty {
+    font-size: 14px;
+    color: #555;
+    font-style: italic;
+  }
+
+  .all-cards-count {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .all-cards-category-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #fff;
+    margin-right: 6px;
+  }
+
+  @media (max-width: 600px) {
+    .modal-content {
+      padding: 15px;
+      max-width: 90%;
+      width: 100%;
+    }
+    #closeRulesButton {
+      padding: 8px 16px;
+    }
+    .card {
+      width: min(88vw, 320px);
+      height: min(58vh, 420px);
+    }
+    .card .card-front,
+    .card .card-back {
+      padding: 22px;
+    }
+  }
+
+  @media (max-height: 700px) {
+    .card {
+      height: min(50vh, 380px);
+    }
+  }
+
+    /* --- REPO SEARCH BAR - ALIGNED TO TOP LEFT (like the cog on top right) --- */
+#topBar {
+  background: transparent;
+}
+
+/* Repo search: show on web, hide in Discord */
+body.in-discord .kwc-repo-search {
+  display: none !important;
+}
+
+body:not(.in-discord) .kwc-repo-search {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: calc(16px + 46px + 10px);
+  right: auto;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  width: 155px;
+}
+
+/* Make only the text input shrink, leaving the icon and slash alone */
+body:not(.in-discord) .kwc-repo-search input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+  .card-counter {
+    color: var(--accent);
+    opacity: 0.25;
+    font-size: 14px;
+    font-family: var(--font-new);
+    position: relative;
+  }
+
+  .card-counter #cardCounterNumber {
+  display: inline-block;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.card-counter #cardCounterNumber.changing {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.black-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0) 25%, rgba(0,0,0,0.85) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.6s ease-out;
+}
+.black-flash.active {
+  opacity: 1;
+  transition: opacity 0.08s ease-in;
+}
+
+  .red-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(235, 14, 14, 0.45) 0%, rgba(235,14,14,0.75) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.85s ease-out;
+}
+
+.red-flash.active {
+  opacity: 1;
+  transition: opacity 0.05s ease-in;
+}
+
+#spinIcon {
+  position: fixed;
+  top: calc(11px + env(safe-area-inset-top, 0px));
+  left: 16px;
+  width: 46px;
+  height: 46px;
+  z-index: 901;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  animation: spinLoop 10s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#spinIcon img,
+#spinIcon svg {
+  display: block;
+  width: 39px;
+  height: 39px;
+  transform-origin: 50% 50%;
+}
+
+@keyframes spinLoop {
+  0%, 30% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  36% {
+    transform: rotate(90deg);
+    animation-timing-function: linear;
+  }
+  60% {
+    transform: rotate(90deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  66%, 100% {
+    transform: rotate(0deg);
+    animation-timing-function: linear;
+  }
+}
+
+.emptyDeck {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.emptyDeckEmoji { font-size: 56px; }
+.emptyDeckTitle {
+  font-family: var(--font-new);
+  font-size: 26px;
+  font-weight: 700;
+}
+.emptyDeckSub {
+  font-family: var(--font-new);
+  font-size: 15px;
+  opacity: 0.7;
+}
+
+.card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 6px;
+}
+
+.loading-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: var(--accent);
+  animation: spinSpinner 0.9s linear infinite;
+  margin: 0 auto 18px auto;
+}
+@keyframes spinSpinner {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-family: var(--font-new);
+  font-size: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+</style></head>
+
+
+<body>
+
+  <div id="blackFlash" class="black-flash"></div>
+  <div id="redFlash" class="red-flash"></div>
+
+  <div id="srAnnouncer" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);"></div>
+
+    <div id="spinIcon" aria-hidden="true">
+    <img src="AppFiles/Icons/UDC - Face.svg" alt="">
+  </div>
+
+  <div class="kwc-repo-search" id="kwc-repo-search"></div>
+
+  <div id="topBar">
+    <button id="cogButton" aria-label="Settings">⚙️</button>
+  </div>
+
+  <div id="themeMenu">
+
+    <div class="menuSection">
+      <h3>Theme</h3>
+      
+      <div class="theme-swatch-row" id="themeSwatchRow"></div>
+
+      <div id="customThemePanel" style="display:none; margin-top:12px;">
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Background</label>
+          <input type="color" id="customBgInput" value="#131313">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Accent</label>
+          <input type="color" id="customAccentInput" value="#999999">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Card</label>
+          <input type="color" id="customCardBgInput" value="#ffffff">
+        </div>
+                <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Panel</label>
+          <input type="color" id="customPanelBgInput" value="#e3e3e3">
+        </div>
+      </div>
+
+    <div class="menuSection">
+      <h3>Discord Mode</h3>
+      <div class="roundsRow">
+        <label><input type="checkbox" id="discordModeCheckbox"> Enable Discord mode</label>
+      </div>
+    </div>
+
+      <h3>Difficulty</h3>
+  <div class="toggleButtonRow" id="difficultyRow">
+    <button type="button" class="toggle-btn active" id="difficultyNormalBtn" data-difficulty="normal">Normal</button>
+    <button type="button" class="toggle-btn" id="difficultyCrazyBtn" data-difficulty="crazy">CRAZY</button>
+  </div>
+
+    </div>
+
+    <div class="menuSection">
+      <h3>Categories</h3>
+      <div class="category-bulk-row">
+        <button class="menu-action" id="selectAllCategoriesButton">Select All</button>
+        <button class="menu-action" id="deselectAllCategoriesButton">Deselect All</button>
+      </div>
+      <div class="category-list" id="categoryList">
+        <div class="category-empty">Loading categories&hellip;</div>
+      </div>
+    </div>
+
+    <div class="menuSection">
+      <button class="menu-action" id="editPlayersButton">Edit Players / Rounds</button>
+      <button class="menu-action" id="restartGameButton">Restart Game</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="setupOverlay">
+    <div class="setup-box">
+      <h2>Ultimate Drinking Cards</h2>
+      <p class="sub">Set up your game before you start</p>
+
+      <div class="setup-field">
+
+        <label>Player / Round Tracking</label>
+        <div class="toggleButtonRow" id="trackingModeRow">
+          <button type="button" class="toggle-btn active" id="trackingOffBtn" data-mode="off">Just Cards</button>
+          <button type="button" class="toggle-btn" id="trackingOnBtn" data-mode="on">Use Tracker</button>
+        </div>
+      </div>
+
+      <div id="trackingFields">
+        <div class="setup-field">
+          <label>Players</label>
+          <div id="playerNamesContainer"></div>
+          <button class="small-add-btn" id="addPlayerButton" style="margin-top:8px; width:100%;">+ Add Player</button>
+        </div>
+
+        <div class="setup-field">
+          <label>Rounds</label>
+          <div class="roundsRow">
+            <input type="number" id="roundsInput" min="1" value="5" style="width:80px;">
+            <label><input type="checkbox" id="unlimitedRoundsCheckbox"> Unlimited</label>
+          </div>
+        </div>
+
+        <div class="setup-field">                                   
+          <label>Turn Order</label>
+          <div class="roundsRow">
+            <label><input type="checkbox" id="randomiseOrderCheckbox"> Randomise turn order</label>
+          </div>   
+        </div>
+
+
+
+      </div>
+
+      <div class="setup-btn-row">
+        <button class="primary-btn" id="startGameButton">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="app">
+    <div id="turnTracker"></div>
+
+  <div id="cardCounter" class="card-counter">
+  <span id="cardCounterNumber"></span>
+  <span id="cardCounterSuffix"></span>
+</div>
+
+    <div class="card" id="coverCard" role="button" tabindex="0" aria-label="Draw next card">
+
+      <div class="card-front" id="cardFrontInitial">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading cards…</div>
+      </div>
+
+      <div class="card-back"></div>
+    </div>
+    <button id="resetButton" hidden="">Refresh</button>
+  </div>
+
+  <div id="rulesButtonContainer">
+    <a href="#" id="showRulesLink">View Game Rules</a>
+  </div>
+
+  <div id="rulesModal" class="overlay">
+    <div class="modal-content">
+      <div id="rulesText"></div>
+      <button id="viewAllCardsButton">View All Cards</button>
+      <button id="closeRulesButton">Close Rules</button>
+    </div>
+  </div>
+
+  <footer id="footer">
+    Made by <a href="https://linktr.ee/kaywhocreates" target="_blank" rel="noopener noreferrer">Kay 🧡</a>
+  </footer>
+
+    <script src="theme.js"></script>
+
+<script>
+const isDiscord =
+  window.location.hostname.includes("discordsays.com") ||
+  window.location.hostname.includes("discord.com") ||
+  document.referrer.includes("discord.com") ||
+  document.referrer.includes("discordsays.com");
+
+if (isDiscord) {
+  document.body.classList.add("in-discord");
+} else {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=4";
+  document.body.appendChild(s);
+}
+</script>
+
+  <script>
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const coverCard = document.getElementById("coverCard");
+  const cardFront = coverCard.querySelector(".card-front");
+  const cardBack = coverCard.querySelector(".card-back");
+
+  // ---------- Data shapes ----------
+  // OLD: allCards = [{ Category, Rule, Colour }, ...]  (one entry per rule)
+  // NEW: allCards = [{ Category, Colour, Rules: [rule, rule, ...] }, ...] (one entry per category)
+  //
+  // Internally we now work with "draws": individual { Category, Colour, Rule } entries,
+  // reconstructed from the grouped data so all the existing game logic still works.
+  let cards = [];          // remaining draws in the current deck
+  let allCards = [];       // grouped category objects, straight from cards.json
+  let allDraws = [];       // flat list of every individual draw, for "View All Cards"
+  let showingFront = true;
+  const NORMAL_BLACK_CHANCE = 0.15;
+  const NORMAL_RED_CHANCE = NORMAL_BLACK_CHANCE / 2;
+  const CRAZY_BLACK_CHANCE = 0.33;
+  const CRAZY_RED_CHANCE = CRAZY_BLACK_CHANCE / 1.5;
+
+  let difficulty = "normal";                // "normal" | "crazy"
+  let BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+  let RED_CHANCE = NORMAL_RED_CHANCE;
+
+  const difficultyRow = document.getElementById("difficultyRow");
+const difficultyNormalBtn = document.getElementById("difficultyNormalBtn");
+const difficultyCrazyBtn = document.getElementById("difficultyCrazyBtn");
+
+function setDifficulty(mode) {
+  difficulty = mode;
+  difficultyNormalBtn.classList.toggle("active", mode === "normal");
+  difficultyCrazyBtn.classList.toggle("active", mode === "crazy");
+  if (mode === "crazy") {
+    BLACK_CHANCE = CRAZY_BLACK_CHANCE;
+    RED_CHANCE = CRAZY_RED_CHANCE;
+  } else {
+    BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+    RED_CHANCE = NORMAL_RED_CHANCE;
+  }
+}
+
+difficultyNormalBtn.addEventListener("click", () => setDifficulty("normal"));
+difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
+
+  let enabledCategories = new Set();
+  const categoryColours = {};
+
+  // players now holds { name, colour } objects when tracking is enabled
+  let players = [];
+  let currentPlayerIndex = 0;
+  let currentRound = 1;
+  let totalRounds = 5;
+  let unlimitedRounds = false;
+  let gameStarted = true;
+  let trackingEnabled = false;
+
+  let totalDrawsInPlay = 0;   // total draws in the current filtered deck
+  let drawnCount = 0;         // how many draws have been revealed
+
+  const turnTracker = document.getElementById("turnTracker");
+  const cardCounter = document.getElementById("cardCounter");
+
+    // ---------- Discord mode ----------
+  // When enabled, certain phrases in card rules are transformed for Discord play:
+  //   "Point"                    -> the card is removed from the deck entirely
+  //   "The player opposite"      -> replaced with a random player's name
+  //   "the player to your left"  -> "the previous player"
+  //   "the player to your right" -> "the next player"
+  const discordModeCheckbox = document.getElementById("discordModeCheckbox");
+
+  function loadDiscordModeFromStorage() {
+    try {
+      return localStorage.getItem("udcDiscordMode") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveDiscordModeToStorage() {
+    try {
+      localStorage.setItem("udcDiscordMode", discordModeCheckbox.checked ? "1" : "0");
+    } catch (e) {}
+  }
+
+  function getRandomPlayerName(excludeName) {
+    const pool = (Array.isArray(players) && players.length > 0) ? players : null;
+    if (!pool) return "[random player]";
+    const candidates = excludeName
+      ? pool.filter(p => p.name !== excludeName)
+      : pool;
+    const use = candidates.length ? candidates : pool;
+    return use[Math.floor(Math.random() * use.length)].name;
+  }
+
+  function isDiscordModeOn() {
+    return !!(discordModeCheckbox && discordModeCheckbox.checked);
+  }
+
+function shouldRemoveForDiscord(rule) {
+  const r = String(rule);
+  // Remove if it needs a physical environment, props, or spatial positioning.
+  return /\b(point|pointing|walk|room|floor|eye contact|clink)\b/i.test(r);
+}
+
+function applyDiscordTransforms(rule) {
+  let text = String(rule);
+  text = text.replace(/the player to your left/gi, "the previous player");
+  text = text.replace(/the player to your right/gi, "the next player");
+  text = text.replace(/the player opposite/gi, () => getRandomPlayerName());
+  return text;
+}
+
+  if (discordModeCheckbox) {
+    discordModeCheckbox.checked = loadDiscordModeFromStorage();
+
+    discordModeCheckbox.addEventListener("change", () => {
+      saveDiscordModeToStorage();
+      // Rebuild the flat list so "View All Cards" reflects the transform.
+      rebuildAllDraws();
+      // Rebuild the live deck so removals/rewrites take effect immediately.
+      buildDeckFromEnabledCategories();
+      preloadNextCard();
+    });
+  }
+
+  // Palette used to auto-assign distinct default colours to new player rows.
+  const PLAYER_COLOUR_PALETTE = [
+    "#FFEA2F", "#5BFFF4", "#FF7EFF", "#EB3A3A",
+    "#56FF56", "#63ACFF", "#E8FF67", "#FFAC3F",
+    "#9D53FF", "#D4D4DA"
+  ];
+
+  function nextPlayerColour() {
+    const used = new Set(
+      [...document.querySelectorAll(".playerColourInput")].map(i => i.value.toLowerCase())
+    );
+    const next = PLAYER_COLOUR_PALETTE.find(c => !used.has(c.toLowerCase()));
+    return next || PLAYER_COLOUR_PALETTE[
+      document.querySelectorAll(".playerColourInput").length % PLAYER_COLOUR_PALETTE.length
+    ];
+  }
+
+  function escapeHTML(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  // Flatten a grouped category object into one draw per rule.
+function groupToDraws(group) {
+    const rules = Array.isArray(group.Rules) ? group.Rules : [];
+    const colour = group.Colour || group.Color || group.color || group.colour || "#999999";
+    const discord = isDiscordModeOn();
+    return rules
+      .filter(rule => !(discord && shouldRemoveForDiscord(rule)))
+      .map(rule => ({
+        Category: group.Category || "",
+        Colour: colour,
+        Rule: discord ? applyDiscordTransforms(rule) : rule
+      }));
+  }
+
+  // Rebuild the flat list used by "View All Cards", honouring current Discord mode/players.
+  function rebuildAllDraws() {
+    allDraws = [];
+    allCards.forEach(group => {
+      if (group.Category && !(group.Category in categoryColours)) {
+        categoryColours[group.Category] = group.Colour || "#999999";
+      }
+      allDraws.push(...groupToDraws(group));
+    });
+  }
+
+  function updateTurnTracker() {
+    if (!gameStarted || !trackingEnabled || players.length === 0) {
+      turnTracker.innerHTML = "";
+      return;
+    }
+    const current = players[currentPlayerIndex];
+    const diffBadge = difficulty === "crazy" ? ` · <span style="color:#ff4747;">CRAZY</span>` : "";
+    const roundText = (unlimitedRounds ? `Round ${currentRound}` : `Round ${currentRound} of ${totalRounds}`) + diffBadge;
+    turnTracker.innerHTML = `
+      <div class="turnLabel">It's your turn</div>
+      <div class="turnName" style="color: ${current.colour || "#999999"};">${escapeHTML(current.name)}</div>
+      <div class="roundLabel">${roundText}</div>
+    `;
+  }
+
+  function advanceTurn() {
+    if (!gameStarted || !trackingEnabled || players.length === 0) return;
+
+    if (randomiseOrderCheckbox.checked) {
+      currentPlayerIndex = Math.floor(Math.random() * players.length);
+      updateTurnTracker();
+      return;
+    }
+    currentPlayerIndex++;
+    if (currentPlayerIndex >= players.length) {
+      currentPlayerIndex = 0;
+      currentRound++;
+      if (!unlimitedRounds && currentRound > totalRounds) {
+        currentRound = totalRounds;
+        turnTracker.innerHTML = `
+          <div class="turnLabel">Game complete</div>
+          <div class="turnName" style="color: var(--accent);">🎉 Nice one!</div>
+          <div class="roundLabel">Tap ⚙️ to restart or change players</div>
+        `;
+        return;
+      }
+    }
+    updateTurnTracker();
+  }
+
+  const setupOverlay = document.getElementById("setupOverlay");
+  const playerNamesContainer = document.getElementById("playerNamesContainer");
+  const addPlayerButton = document.getElementById("addPlayerButton");
+  const roundsInput = document.getElementById("roundsInput");
+  const unlimitedRoundsCheckbox = document.getElementById("unlimitedRoundsCheckbox");
+  const startGameButton = document.getElementById("startGameButton");
+  const trackingOnBtn = document.getElementById("trackingOnBtn");
+  const trackingOffBtn = document.getElementById("trackingOffBtn");
+  const trackingFields = document.getElementById("trackingFields");
+  const randomiseOrderCheckbox = document.getElementById("randomiseOrderCheckbox");
+
+  let trackingModeSelected = "off";
+
+  function toggleTrackingFieldsVisibility() {
+    trackingFields.style.display = trackingModeSelected === "on" ? "block" : "none";
+  }
+
+  function setTrackingMode(mode) {
+    trackingModeSelected = mode;
+    trackingOnBtn.classList.toggle("active", mode === "on");
+    trackingOffBtn.classList.toggle("active", mode === "off");
+    toggleTrackingFieldsVisibility();
+  }
+
+  trackingOnBtn.addEventListener("click", () => setTrackingMode("on"));
+  trackingOffBtn.addEventListener("click", () => setTrackingMode("off"));
+
+  // A player row = name input + colour swatch
+  function createPlayerRow(name = "", colour = "") {
+    const row = document.createElement("div");
+    row.className = "playerRow";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "playerNameInput";
+    nameInput.placeholder = `Player ${playerNamesContainer.children.length + 1}`;
+    nameInput.value = name;
+
+    const colourInput = document.createElement("input");
+    colourInput.type = "color";
+    colourInput.className = "playerColourInput";
+    colourInput.value = colour || nextPlayerColour();
+    colourInput.title = "Player colour";
+
+    row.appendChild(nameInput);
+    row.appendChild(colourInput);
+    playerNamesContainer.appendChild(row);
+  }
+
+  // Accepts either an array of strings (old behaviour) or {name, colour} objects.
+  function resetSetupFields(prefill = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false, prefillRandomise = false) {    playerNamesContainer.innerHTML = "";
+    prefill.forEach(p => {
+      if (typeof p === "string") {
+        createPlayerRow(p);
+      } else if (p && typeof p === "object") {
+        createPlayerRow(p.name || "", p.colour || "");
+      }
+    });
+    roundsInput.value = prefillRounds;
+    unlimitedRoundsCheckbox.checked = prefillUnlimited;
+    roundsInput.disabled = prefillUnlimited;
+    setTrackingMode(prefillTracking ? "on" : "off");
+    randomiseOrderCheckbox.checked = prefillRandomise;
+  }
+
+  addPlayerButton.addEventListener("click", () => createPlayerRow());
+
+  unlimitedRoundsCheckbox.addEventListener("change", () => {
+    roundsInput.disabled = unlimitedRoundsCheckbox.checked;
+  });
+
+  function openSetupOverlay() {
+    setupOverlay.style.display = "flex";
+  }
+
+  function closeSetupOverlay() {
+    setupOverlay.style.display = "none";
+  }
+
+  // Build the deck of individual draws from the enabled categories.
+  function buildDeckFromEnabledCategories() {
+    const enabledGroups = allCards.filter(c => enabledCategories.has(c.Category || ""));
+    const source = (enabledGroups.length || allCards.length === 0)
+      ? enabledGroups
+      : allCards; // safety net: if nothing enabled, use everything
+    cards = source.flatMap(groupToDraws);
+    totalDrawsInPlay = cards.length;
+    drawnCount = -1;
+    updateCardCounter();
+  }
+
+  const cardCounterNumber = document.getElementById("cardCounterNumber");
+const cardCounterSuffix = document.getElementById("cardCounterSuffix");
+
+function updateCardCounter() {
+  if (!totalDrawsInPlay) {
+    cardCounterNumber.textContent = "";
+    cardCounterSuffix.textContent = "";
+    return;
+  }
+  const current = Math.min(drawnCount + 1, totalDrawsInPlay);
+  const newText = String(current);
+
+  if (cardCounterNumber.textContent !== newText) {
+    cardCounterNumber.classList.add("changing");
+    setTimeout(() => {
+      cardCounterNumber.textContent = newText;
+      cardCounterSuffix.textContent = ` of ${totalDrawsInPlay}`;
+      cardCounterNumber.classList.remove("changing");
+    }, 180);
+  }
+}
+
+  startGameButton.addEventListener("click", () => {
+    trackingEnabled = trackingModeSelected === "on";
+
+    if (trackingEnabled) {
+      const rows = Array.from(document.querySelectorAll(".playerRow"));
+      const parsed = rows.map((row, i) => {
+        const nameInput = row.querySelector(".playerNameInput");
+        const colourInput = row.querySelector(".playerColourInput");
+        return {
+          name: (nameInput.value || "").trim() || `Player ${i + 1}`,
+          colour: colourInput.value || "#999999"
+        };
+      });
+
+      if (parsed.length < 1) {
+        alert("Add at least one player.");
+        return;
+      }
+
+      players = parsed;
+      currentPlayerIndex = 0;
+      currentRound = 1;
+      unlimitedRounds = unlimitedRoundsCheckbox.checked;
+      totalRounds = unlimitedRounds ? Infinity : Math.max(1, parseInt(roundsInput.value, 10) || 1);
+    } else {
+      players = [];
+    }
+
+    gameStarted = true;
+
+    closeSetupOverlay();
+    updateTurnTracker();
+
+    rebuildAllDraws();
+    buildDeckFromEnabledCategories();
+    preloadNextCard();
+  });
+
+  // ---------- Category settings ----------
+  const CATEGORY_PREF_VERSION = 3; // bump this to force a fresh default for everyone
+
+function loadEnabledCategoriesFromStorage(allCategoryNames) {
+    let stored = null;
+    let storedVersion = 0;
+    try {
+      stored = JSON.parse(localStorage.getItem("udcEnabledCategories") || "null");
+      storedVersion = parseInt(localStorage.getItem("udcEnabledCategoriesVersion") || "0", 10) || 0;
+    } catch (e) {}
+
+    // Only "Spicy" is off by default. Everything else is on.
+    const isOffByDefault = (c) => c.trim().toLowerCase() === "spicy";
+
+    if (Array.isArray(stored) && storedVersion >= CATEGORY_PREF_VERSION) {
+      // Respect the user's saved choices, but only for categories that still exist.
+      const storedSet = new Set(stored);
+      enabledCategories = new Set(allCategoryNames.filter(c => storedSet.has(c)));
+    } else {
+      // First run, or outdated stored preference: enable everything except "Spicy".
+      enabledCategories = new Set(allCategoryNames.filter(c => !isOffByDefault(c)));
+      saveEnabledCategoriesToStorage();
+    }
+}
+
+function saveEnabledCategoriesToStorage() {
+    try {
+      localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
+      localStorage.setItem("udcEnabledCategoriesVersion", String(CATEGORY_PREF_VERSION));
+    } catch (e) {}
+}
+
+  function setAllCategories(enabled) {
+    const categories = getUniqueCategories();
+    enabledCategories = enabled ? new Set(categories) : new Set();
+    saveEnabledCategoriesToStorage();
+    buildCategoryList();
+    buildDeckFromEnabledCategories();
+  }
+
+  selectAllCategoriesButton.addEventListener("click", () => setAllCategories(true));
+  deselectAllCategoriesButton.addEventListener("click", () => setAllCategories(false));
+
+  function buildCategoryList() {
+    const categories = getUniqueCategories();
+    categoryList.innerHTML = "";
+
+    if (categories.length === 0) {
+      categoryList.innerHTML = `<div class="category-empty">No categories found.</div>`;
+      return;
+    }
+
+    categories.forEach(cat => {
+      const id = "cat-" + cat.replace(/[^a-z0-9]/gi, "_");
+      const wrapper = document.createElement("label");
+      wrapper.setAttribute("for", id);
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = id;
+      checkbox.checked = enabledCategories.has(cat);
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          enabledCategories.add(cat);
+        } else {
+          enabledCategories.delete(cat);
+        }
+        saveEnabledCategoriesToStorage();
+        buildDeckFromEnabledCategories();
+      });
+
+      const dot = document.createElement("span");
+      dot.className = "category-swatch-dot";
+      dot.style.backgroundColor = categoryColours[cat] || "#999999";
+
+      const text = document.createElement("span");
+      text.textContent = cat;
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(dot);
+      wrapper.appendChild(text);
+      categoryList.appendChild(wrapper);
+    });
+  }
+
+  // ---------- Card loading ----------
+  fetch("AppFiles/Data/cards.json")
+    .then((response) => response.json())
+    .then((data) => {
+      // NEW grouped shape: one entry per category, Rules is an array.
+      allCards = [...data];
+
+      // Build category colours + flat draws from the grouped data.
+      allCards = [...data];
+
+      // Build category colours + flat draws from the grouped data.
+      rebuildAllDraws();
+
+      const uniqueCategories = getUniqueCategories();
+      loadEnabledCategoriesFromStorage(uniqueCategories);
+      buildCategoryList();
+
+      buildDeckFromEnabledCategories();
+      preloadNextCard();
+      resetSetupFields();
+
+      cardFront.innerHTML = "Ultimate Drinking Cards";
+      cardBack.innerHTML = "";
+    })
+    .catch((error) => {
+  console.error("Error loading cards:", error);
+  cardFront.innerHTML = `<div class="loading-text" style="color:#ff4747;">Failed to load cards. Check your connection and refresh.</div>`;
+});
+
+  function pickCardType() {
+    const r = Math.random();
+    if (r < RED_CHANCE) return "red";
+    if (r < RED_CHANCE + BLACK_CHANCE) return "black";
+    return "white";
+  }
+
+  function generateCardContent(card) {
+    const type = pickCardType();
+
+    const tripleBadge = type === "red"
+      ? `<div class="tripleBadge">×3!</div>`
+      : "";
+
+    return {
+      type,
+      content: `
+        <div class="instructionText">
+          ${card.Rule} 
+        </div>
+        ${tripleBadge}
+        <div class="categoryText" style="color: ${card.Colour};">
+          ${card.Category}
+        </div>
+      `,
+    };
+  }
+
+  function preloadNextCard() {
+    if (cards.length === 0) {
+    cardBack.dataset.content = `
+      <div class="emptyDeck">
+        <div class="emptyDeckEmoji">🎉</div>
+        <div class="emptyDeckTitle">Deck complete!</div>
+        <div class="emptyDeckSub">You've drawn every card in play.</div>
+      </div>
+    `;
+    cardBack.dataset.type = "white";
+      cardBack.dataset.categoryColour = "#000000";
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * cards.length);
+    const newCard = cards.splice(randomIndex, 1)[0];
+    const { type, content } = generateCardContent(newCard);
+
+    cardBack.dataset.content = content;
+    cardBack.dataset.type = type;
+    cardBack.dataset.categoryColour = newCard.Colour;
+  }
+
+  const INSTRUCTION_MAX_FONT_SIZE = 27;
+  const INSTRUCTION_MIN_FONT_SIZE = 13;
+
+  function fitInstructionText(container) {
+    const el = container.querySelector(".instructionText");
+    if (!el) return;
+    let fontSize = INSTRUCTION_MAX_FONT_SIZE;
+    el.style.fontSize = fontSize + "px";
+    const maxHeight = container.clientHeight - 60;
+    let guard = 0;
+    while (el.scrollHeight > maxHeight && fontSize > INSTRUCTION_MIN_FONT_SIZE && guard < 40) {
+      fontSize -= 1;
+      el.style.fontSize = fontSize + "px";
+      guard++;
+    }
+  }
+
+function applyPreloadedContent(isFront = true) {
+  const target = isFront ? cardFront : cardBack;
+  const type = cardBack.dataset.type || "white";
+  const glow = hexToRgba(cardBack.dataset.categoryColour || "#999999", 0.25);
+
+  target.innerHTML = cardBack.dataset.content || "";
+  target.classList.remove("type-black", "type-red");
+  if (type === "black") target.classList.add("type-black");
+  if (type === "red") target.classList.add("type-red");
+
+  coverCard.classList.remove("type-black", "type-red");
+  if (type === "black") coverCard.classList.add("type-black");
+  if (type === "red") coverCard.classList.add("type-red");
+
+  coverCard.style.setProperty("--category-glow", glow);
+  cardFront.style.setProperty("--category-glow", glow);
+  cardBack.style.setProperty("--category-glow", glow);
+
+  requestAnimationFrame(() => fitInstructionText(target));
+}
+
+  function playCardSound(type) {
+    let file = "AppFiles/Sounds/flip.mp3";
+    if (type === "black") file = "AppFiles/Sounds/black.mp3";
+    if (type === "red") file = "AppFiles/Sounds/red.mp3";
+    const audio = new Audio(file);
+    audio.play().catch(() => {});
+  }
+
+  function flipCard() {
+    if (!gameStarted) {
+      const clickAudio = new Audio("AppFiles/Sounds/click.mp3");
+      clickAudio.play().catch(() => {});
+      openSetupOverlay();
+      return;
+    }
+
+const upcomingType = cardBack.dataset.type || "white";
+
+
+      const blackFlash = document.getElementById("blackFlash");
+      let blackFlashTimeout = null;
+      function triggerBlackFlash() {
+        blackFlash.classList.add("active");
+        if (blackFlashTimeout) clearTimeout(blackFlashTimeout);
+        blackFlashTimeout = setTimeout(() => blackFlash.classList.remove("active"), 220);
+      }
+      
+      const redFlash = document.getElementById("redFlash");
+      let redFlashTimeout = null;
+
+function triggerRedFlash() {
+  redFlash.classList.add("active");
+  if (redFlashTimeout) clearTimeout(redFlashTimeout);
+  redFlashTimeout = setTimeout(() => {
+    redFlash.classList.remove("active");
+  }, 180);
+}
+
+    // Count the card being revealed.
+    if (drawnCount < totalDrawsInPlay) {
+      drawnCount++;
+    }
+
+    if (showingFront) {       applyPreloadedContent(false);
+    } else {
+      applyPreloadedContent(true);
+    }
+
+    preloadNextCard();
+    updateCardCounter();
+
+    coverCard.classList.toggle("flipped");
+    // after toggle, if we were showing front, we're now showing back
+    coverCard.classList.toggle("face-up", showingFront);
+    showingFront = !showingFront;
+
+    playCardSound(upcomingType);
+
+    if (upcomingType === "red") {
+    triggerRedFlash();
+    }
+    if (upcomingType === "black") {
+    triggerBlackFlash();
+    }
+
+    // Haptics
+if (upcomingType === "red") {
+  vibrate([30, 40, 60]);
+} else if (upcomingType === "black") {
+  vibrate([40]);
+} else {
+  vibrate([12]);
+}
+
+// Screen-reader announcement
+const srAnnouncer = document.getElementById("srAnnouncer");
+if (srAnnouncer) {
+  const ruleText = (cardBack.dataset.content || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  srAnnouncer.textContent = `${upcomingType} card. ${ruleText}`;
+}
+
+    advanceTurn();
+  }
+
+  coverCard.addEventListener("click", flipCard);
+
+  coverCard.addEventListener("keydown", (e) => {
+  if (e.key === " " || e.key === "Enter" || e.code === "Space") {
+    e.preventDefault();
+    flipCard();
+  }
+});
+
+  // ---------- Rules modal ----------
+  const showRulesLink = document.getElementById("showRulesLink");
+  const rulesModal = document.getElementById("rulesModal");
+  const closeRulesButton = document.getElementById("closeRulesButton");
+  const viewAllCardsButton = document.getElementById("viewAllCardsButton");
+  const rulesText = document.getElementById("rulesText");
+
+  let rulesViewMode = "rules";
+
+  const embeddedRulesHTML = `
+    <h2>How to Play</h2>
+    <ol>
+      <li>Take it in turns tapping the card to draw a new one.</li>
+      <li><span class="rule-card-tag white">White card</span> Perform the instruction shown on the card.</li>
+      <li><span class="rule-card-tag black">Black card</span> Invert the instruction, then perform the inverted version.</li>
+      <li><span class="rule-card-tag red">Red card</span> Rarer than black cards &mdash; perform the instruction, but do it <strong>three times</strong>!</li>
+    </ol>
+    <h3>A note on inverted cards</h3>
+    <ul>
+      <li>Some inverted cards make more sense than others.</li>
+      <li>Don't worry if a card isn't obviously invertible &mdash; just try it, stay chill, and have fun.</li>
+    </ul>
+    <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, change the theme, or turn categories on/off at any time.</p>
+  `;
+
+  function getUniqueCategories() {
+    const set = new Set(allCards.map((c) => c.Category || "").filter(Boolean));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }
+
+  function buildAllCardsControlsHTML() {
+    const categories = getUniqueCategories();
+    const options = categories
+      .map((cat) => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`)
+      .join("");
+    return `
+      <div class="all-cards-controls">
+        <input type="text" id="allCardsSearchInput" placeholder="Search cards...">
+        <select id="allCardsCategoryFilter">
+          <option value="">All Categories</option>
+          ${options}
+        </select>
+      </div>
+    `;
+  }
+
+  function buildAllCardsListHTML(searchTerm, categoryFilter) {
+    if (!allDraws.length) {
+      return `<p class="all-cards-empty">Cards are still loading &mdash; give it a moment and try again.</p>`;
+    }
+
+    const term = (searchTerm || "").trim().toLowerCase();
+    const filtered = allDraws.filter((c) => {
+      const matchesCategory = !categoryFilter || c.Category === categoryFilter;
+      if (!matchesCategory) return false;
+      if (!term) return true;
+      const rule = (c.Rule || "").toLowerCase();
+      const category = (c.Category || "").toLowerCase();
+      return rule.includes(term) || category.includes(term);
+    });
+
+    if (!filtered.length) {
+      return `<p class="all-cards-empty">No cards match your search.</p>`;
+    }
+
+    const rows = filtered
+      .map((c) => {
+        const colour = c.Colour || "#999999";
+        return `
+          <li>
+            <span class="all-cards-category-tag" style="background-color: ${colour};">${escapeHTML(c.Category || "")}</span>
+            ${escapeHTML(c.Rule || "")}
+          </li>
+        `;
+      })
+      .join("");
+
+    return `<p class="all-cards-count">Showing ${filtered.length} of ${allDraws.length} cards</p><ul class="all-cards-list">${rows}</ul>`;
+  }
+
+  function displayEmbeddedRules() {
+    rulesText.innerHTML = embeddedRulesHTML;
+    rulesViewMode = "rules";
+    viewAllCardsButton.textContent = "View All Cards";
+    rulesModal.style.display = "flex";
+  }
+
+  function displayAllCards() {
+    rulesText.innerHTML = `
+      <h2>All Cards</h2>
+      ${buildAllCardsControlsHTML()}
+      <div id="allCardsListContainer">${buildAllCardsListHTML("", "")}</div>
+    `;
+    rulesViewMode = "cards";
+    viewAllCardsButton.textContent = "Back to Rules";
+
+    const searchInput = document.getElementById("allCardsSearchInput");
+    const categoryFilter = document.getElementById("allCardsCategoryFilter");
+    const listContainer = document.getElementById("allCardsListContainer");
+
+    function refreshList() {
+      listContainer.innerHTML = buildAllCardsListHTML(searchInput.value, categoryFilter.value);
+    }
+
+    searchInput.addEventListener("input", refreshList);
+    categoryFilter.addEventListener("change", refreshList);
+  }
+
+  showRulesLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    displayEmbeddedRules();
+  });
+
+  viewAllCardsButton.addEventListener("click", () => {
+    if (rulesViewMode === "rules") {
+      displayAllCards();
+    } else {
+      displayEmbeddedRules();
+    }
+  });
+
+  closeRulesButton.addEventListener("click", () => {
+    rulesModal.style.display = "none";
+  });
+
+  rulesModal.addEventListener("click", (e) => {
+    if (e.target === rulesModal) rulesModal.style.display = "none";
+  });
+
+function vibrate(pattern) {
+  if (navigator.vibrate && !prefersReducedMotion) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+}
+  
+
+
+  </script>
+
+</body>
+</html>
