@@ -1171,7 +1171,7 @@ if (isDiscord) {
   document.body.classList.add("in-discord");
 } else {
   const s = document.createElement("script");
-  s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=3";
+  s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=4";
   document.body.appendChild(s);
 }
 </script>
@@ -1618,7 +1618,7 @@ function updateCardCounter() {
   }
 
   // ---------- Category settings ----------
-  const CATEGORY_PREF_VERSION = 5; // bump this to force a fresh default for everyone
+  const CATEGORY_PREF_VERSION = 6; // bump this to force a fresh default for everyone
 
 function loadEnabledCategoriesFromStorage(allCategoryNames) {
     let stored = null;
