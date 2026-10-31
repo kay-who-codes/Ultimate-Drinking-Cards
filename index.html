@@ -855,38 +855,31 @@
   }
 
     /* --- REPO SEARCH BAR - ALIGNED TO TOP LEFT (like the cog on top right) --- */
-.kwc-repo-search {
-  position: fixed !important;
-  top: calc(16px + env(safe-area-inset-top, 0px)) !important;
-  left: calc(16px + 46px + 10px) !important;   /* icon width + gap */
-  right: auto !important;
-  bottom: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 900 !important;
-  display: flex !important;
-  align-items: center !important;
-  transform: none !important;
+#topBar {
+  background: transparent;
 }
 
-  /* Neutralize any injected inline/relative offsets from Header.js */
-  .kwc-repo-search * {
-    margin-left: 0 !important;
-  }
+/* Repo search: show on web, hide in Discord */
+body.in-discord .kwc-repo-search {
+  display: none !important;
+}
 
-  #kwc-repo-search {
-    position: fixed !important;
-    top: calc(16px + env(safe-area-inset-top, 0px)) !important;
-    left: calc(16px + 46px + 10px) !important;   /* icon width + gap */
-    right: auto !important;
-    transform: none !important;
-  }
+body:not(.in-discord) .kwc-repo-search {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: calc(16px + 46px + 10px);
+  right: auto;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  width: 155px;
+}
 
-  .kwc-bar {
-    background-color: var(--panel-bg);
-    color: var(--panel-text);
-    width: 115px;
-  }
+/* Make only the text input shrink, leaving the icon and slash alone */
+body:not(.in-discord) .kwc-repo-search input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
 
   .card-counter {
     color: var(--accent);
@@ -1038,7 +1031,7 @@
 
   <div class="kwc-repo-search" id="kwc-repo-search"></div>
 
-  <div id="topBar" class="kwc-bar">
+  <div id="topBar">
     <button id="cogButton" aria-label="Settings">⚙️</button>
   </div>
 
@@ -1168,39 +1161,21 @@
   </footer>
 
 <script>
+const isDiscord =
+  window.location.hostname.includes("discordsays.com") ||
+  window.location.hostname.includes("discord.com") ||
+  document.referrer.includes("discord.com") ||
+  document.referrer.includes("discordsays.com");
 
+if (isDiscord) {
+  document.body.classList.add("in-discord");
+} else {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=3";
+  document.body.appendChild(s);
+}
+</script>
 
-// Temp line
-document.body.insertAdjacentHTML("afterbegin",
-  '<div style="position:fixed;top:0;left:0;z-index:99999;background:black;color:lime;padding:10px;font-size:16px;">PATH IS: ' + window.location.pathname + '</div>'
-);
-
-
-  // Load Header.js only when NOT inside a Discord Activity iframe
-  (function () {
-    const isDiscordActivity = window.location !== window.parent.location
-      ? false // cross-origin, can't read parent — use Discord SDK instead
-      : false;
-
-    // Better: use the Discord SDK's presence, or check for the embedded query param
-    const params = new URLSearchParams(window.location.search);
-    const frameId = params.get("frame_id"); // Discord sets frame_id on Activity iframes
-
-    if (frameId) {
-      // Inside Discord: don't load the remote header, hide its container
-      const repoSearch = document.getElementById("kwc-repo-search");
-      if (repoSearch) repoSearch.remove();
-    } else {
-      const s = document.createElement("script");
-
-      // Cache Version Updater
-      s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=2";
-
-
-      document.body.appendChild(s);
-    }
-  })();
-</script>  
   <script>
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coverCard = document.getElementById("coverCard");
