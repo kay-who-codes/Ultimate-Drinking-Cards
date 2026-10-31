@@ -8,7 +8,6 @@
 By accessing or using Ultimate Drinking Cards ("the App"), you agree to these Terms. If you do not agree, do not use the App.
 
 ## 2. What the App Is
-https://github.com/kay-who-codes/Ultimate-Drinking-Cards/tree/main
 The App is a free, browser-based card game hosted on GitHub Pages and playable as a Discord Activity. It displays drinking-game prompts ("cards") on screen. **No alcohol is provided, sold, or supplied by the App.** You are solely responsible for your own consumption and behaviour.
 
 ## 3. Eligibility
