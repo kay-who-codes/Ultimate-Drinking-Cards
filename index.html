@@ -1170,8 +1170,9 @@
 <script>
 
 // Temp line
-document.title = window.location.pathname;
-
+document.body.insertAdjacentHTML("afterbegin",
+  '<div style="position:fixed;top:0;left:0;z-index:99999;background:black;color:lime;padding:10px;font-size:16px;">PATH IS: ' + window.location.pathname + '</div>'
+);
   // Load Header.js only when NOT inside a Discord Activity iframe
   (function () {
     const isDiscordActivity = window.location !== window.parent.location
