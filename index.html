@@ -1184,12 +1184,13 @@
       if (repoSearch) repoSearch.remove();
     } else {
       const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js";
+      s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=1";
       document.body.appendChild(s);
     }
   })();
 </script>  
   <script>
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coverCard = document.getElementById("coverCard");
   const cardFront = coverCard.querySelector(".card-front");
   const cardBack = coverCard.querySelector(".card-back");
@@ -1658,12 +1659,6 @@ function saveEnabledCategoriesToStorage() {
       localStorage.setItem("udcEnabledCategoriesVersion", String(CATEGORY_PREF_VERSION));
     } catch (e) {}
 }
-
-  function saveEnabledCategoriesToStorage() {
-    try {
-      localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
-    } catch (e) {}
-  }
 
   function setAllCategories(enabled) {
     const categories = getUniqueCategories();
