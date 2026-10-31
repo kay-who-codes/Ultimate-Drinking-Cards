@@ -1169,10 +1169,13 @@
 
 <script>
 
+
 // Temp line
 document.body.insertAdjacentHTML("afterbegin",
   '<div style="position:fixed;top:0;left:0;z-index:99999;background:black;color:lime;padding:10px;font-size:16px;">PATH IS: ' + window.location.pathname + '</div>'
 );
+
+
   // Load Header.js only when NOT inside a Discord Activity iframe
   (function () {
     const isDiscordActivity = window.location !== window.parent.location
@@ -1189,7 +1192,11 @@ document.body.insertAdjacentHTML("afterbegin",
       if (repoSearch) repoSearch.remove();
     } else {
       const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=1";
+
+      // Cache Version Updater
+      s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=2";
+
+
       document.body.appendChild(s);
     }
   })();
@@ -1636,7 +1643,7 @@ function updateCardCounter() {
   }
 
   // ---------- Category settings ----------
-  const CATEGORY_PREF_VERSION = 4; // bump this to force a fresh default for everyone
+  const CATEGORY_PREF_VERSION = 5; // bump this to force a fresh default for everyone
 
 function loadEnabledCategoriesFromStorage(allCategoryNames) {
     let stored = null;
