@@ -4,6 +4,31 @@
    Everyone sees the same card at the same time. Only the player whose turn it is
    (or the host) can draw. */
 (() => {
+  const VERSION = 'v6';
+
+  // Add ?online=0 to the page address to switch this whole script off (handy for ruling it out).
+  if (/[?&]online=0\b/.test(location.search)) { console.info('UDC online: disabled by ?online=0'); return; }
+
+  // Phones have no console, so show any error on screen. It never blocks taps, and fades after 20s.
+  window.__udcErrors = [];
+  function showError(what) {
+    try {
+      window.__udcErrors.push(what); console.error('UDC online:', what);
+      let b = document.getElementById('udcErrBanner');
+      if (!b) {
+        b = document.createElement('div'); b.id = 'udcErrBanner';
+        b.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:3000;background:#b00020;color:#fff;font:12px/1.3 Tahoma,sans-serif;padding:8px 10px;border-radius:8px;pointer-events:none;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:hidden';
+        document.body.appendChild(b);
+      }
+      b.textContent = 'Online script ' + VERSION + ' error:\n' + window.__udcErrors.slice(-3).join('\n');
+      b.style.display = 'block'; clearTimeout(b._t); b._t = setTimeout(() => { b.style.display = 'none'; }, 20000);
+    } catch (e) {}
+  }
+  window.addEventListener('error', e => { if (!e.filename || /udc-online/.test(e.filename)) showError((e.message || 'error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')); });
+  window.addEventListener('unhandledrejection', e => { const r = e.reason; showError('Promise: ' + ((r && (r.code || r.message)) || r)); });
+  try { init(); } catch (e) { showError('Startup: ' + (e && e.message || e)); }
+
+  function init() {
   const firebaseConfig = {
     apiKey: "AIzaSyA_VbUYyU3Ahe30heFDwpWbrgDvpAc_Sds",
     authDomain: "udc-game.firebaseapp.com",
@@ -87,6 +112,7 @@
         '<div class="setup-field"><label id="oCount"></label><div id="oRoster"></div></div>' +
         '<div class="setup-btn-row"><button id="oClose">Back to game</button><button class="secondary-btn" id="oLeave">Leave</button></div>';
     }
+    h += '<p class="sub" style="font-size:11px;opacity:.55;margin:14px 0 0">online script ' + VERSION + '</p>';
     box.innerHTML = h;
     paintRoster();
   }
@@ -398,4 +424,5 @@
       if (code) { say('Rejoined game ' + code); if (!m.started) { overlay.style.display = 'flex'; render(); } }
     } catch (x) { code = null; }
   })();
+  } // end init
 })();
