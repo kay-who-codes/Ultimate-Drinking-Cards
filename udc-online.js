@@ -3,16 +3,17 @@
    globals (players, flipCard, cardBack, allCards, ...). No other edits to index.html needed.
    Everyone sees the same card at the same time. Only the player whose turn it is
    (or the host) can draw. */
-const firebaseConfig = {
-  apiKey: "AIzaSyA_VbUYyU3Ahe30heFDwpWbrgDvpAc_Sds",
-  authDomain: "udc-game.firebaseapp.com",
-   databaseURL: "https://udc-game-default-rtdb.europe-west1.firebasedatabase.app/",
-  projectId: "udc-game",
-  storageBucket: "udc-game.firebasestorage.app",
-  messagingSenderId: "953983676607",
-  appId: "1:953983676607:web:686c36b8423294a13f960a"
-};
-
+/* udc-online.js: synchronised online multiplayer for Ultimate Drinking Cards. */
+(() => {
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_VbUYyU3Ahe30heFDwpWbrgDvpAc_Sds",
+    authDomain: "udc-game.firebaseapp.com",
+    databaseURL: "https://udc-game-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "udc-game",
+    storageBucket: "udc-game.firebasestorage.app",
+    messagingSenderId: "953983676607",
+    appId: "1:953983676607:web:686c36b8423294a13f960a"
+  };
 
   if (!window.firebase) { console.warn('UDC online: Firebase scripts not loaded'); return; }
   firebase.initializeApp(firebaseConfig);
