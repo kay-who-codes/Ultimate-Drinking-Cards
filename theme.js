@@ -1,372 +1,394 @@
-// theme.js — Theme menu: swatches, custom colour picker, and persistence via localStorage.
-// Extracted from the main inline script. Loaded before it, so its immediate-run code
-// (buildThemeSwatches/applyTheme calls) executes first; its click-handler callbacks
-// (editPlayersButton/restartGameButton) reference game-state functions defined in the
-// main script, which is fine since they only run later, on click.
-
-  // ---------- Theme menu ----------
-  const cogButton = document.getElementById("cogButton");
-  const themeMenu = document.getElementById("themeMenu");
-  const themeSwatchRow = document.getElementById("themeSwatchRow");
-  const editPlayersButton = document.getElementById("editPlayersButton");
-  const restartGameButton = document.getElementById("restartGameButton");
-  const categoryList = document.getElementById("categoryList");
-
-  // Every theme now also controls the black-card and red-card variants,
-  // so switching themes recolours the cards themselves, not just the UI chrome.
-  // animatedBg: "spooky" opts a theme into the drifting Halloween emoji layer.
-  const themes = [
-    { id: "classic",  label: "Classic",  bg: "#131313", accent: "#FFFDFD",
-      cardBg: "#ffffff", cardText: "#000000",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#e3e3e3", panelText: "#000000", accentText: "#000000" },
-    
-    { id: "mono",     label: "Mono",     bg: "#101010", accent: "#9a9a9a",
-      cardBg: "#ffffff", cardText: "#000000",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#eeeeee", panelText: "#101010", accentText: "#101010" },
-      
-    { id: "crimson", label: "Crimson", bg: "#180707", accent: "#FF4B4B",
-      cardBg: "#ffffff", cardText: "#000000",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#e3e3e3", panelText: "#160606", accentText: "#000000" },
-
-    { id: "sunset", label: "Sunset", bg: "#241205", accent: "#FF9A47",
-      cardBg: "#fff4e6", cardText: "#241205",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#FDE7DB", panelText: "#241205", accentText: "#241205" },
-
-    { id: "wheat", label: "Wheat", bg: "#232405", accent: "#EEFF00",
-      cardBg: "#FFFFE6", cardText: "#241205",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#fdeedb", panelText: "#242205", accentText: "#242305" },
-
-    { id: "acid", label: "Acid", bg: "#0d1f16", accent: "#3DDC52",
-      cardBg: "#e2f5e9", cardText: "#0d1f16",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#d1e8d9", panelText: "#0d1f16", accentText: "#0d1f16" },
-
-    { id: "seasalt", label: "Seasalt", bg: "#001a1a", accent: "#00FFD5",
-      cardBg: "#FFFFE6", cardText: "#241205",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#e4f2fb", panelText: "#001a1a", accentText: "#001a1a" },
-
-    { id: "midnight", label: "Midnight", bg: "#0b0f2b", accent: "#5da9ff",
-      cardBg: "#eef3ff", cardText: "#0b0f2b",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#e6ecff", panelText: "#0b0f2b", accentText: "#0b0f2b" },
-
-    { id: "plum", label: "Plum", bg: "#170F24", accent: "#9F6BFF",
-      cardBg: "#f6ecff", cardText: "#1e0f24",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#efe1fb", panelText: "#180F24", accentText: "#160F24" },
-
-    { id: "rose", label: "Rose", bg: "#240F22", accent: "#FF6BDA",
-      cardBg: "#FFECFA", cardText: "#1e0f24",
-      cardBlackBg: "#000000", cardBlackText: "#ffffff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#FBE1F7", panelText: "#240F22", accentText: "#240F1F" },
-
-
-
-
-    { id: "brewery", label: "Brewery", bg: "#221D04", accent: "#FFE341",
-      cardBg: "#FFFFE6", cardText: "#241205",
-      cardBlackBg: "#000000", cardBlackText: "#FFDF27",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#fdeedb", panelText: "#242305", accentText: "#242305",
-      animatedBg: "brewery" },
-
-    { id: "ocean", label: "Ocean", bg: "#04121f", accent: "#2ec4ff",
-      cardBg: "#eaf7ff", cardText: "#04121f",
-      cardBlackBg: "#000000", cardBlackText: "#9fe4ff",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#e4f2fb", panelText: "#04121f", 
-      animatedBg: "ocean"},
-
-    { id: "halloween", label: "Halloween", bg: "#0E0918", accent: "#6A05BD",
-      cardBg: "#DDFFDD", cardText: "#1a0d02",
-      cardBlackBg: "#000000", cardBlackText: "#FF7C10",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#f5e6d3", panelText: "#1a0d02", accentText: "#1a0d02",
-      animatedBg: "spooky" },
-    
-    { id: "christmas", label: "Christmas", bg: "#0C1313", accent: "#A9FF8F",
-      cardBg: "#FFDBDB", cardText: "#1a0d02",
-      cardBlackBg: "#000000", cardBlackText: "#52FF8C",
-      cardRedBg: "#DB0000", cardRedText: "#ffffff",
-      panelBg: "#f5f0e6", panelText: "#1a0d02",
-      animatedBg: "christmas" },
-
-  ];
-
-  const customThemePanel = document.getElementById("customThemePanel");
-  const customBgInput = document.getElementById("customBgInput");
-  const customAccentInput = document.getElementById("customAccentInput");
-  const customCardBgInput = document.getElementById("customCardBgInput");
-  const customPanelBgInput = document.getElementById("customPanelBgInput");
-
-  // Animated Theme Emojis
-const EMOJI_SETS = {
-  brewery:   ["🍺", "🍻", "🥂"],
-  ocean:     ["🌊", "🐠", "🐚", "🫧"],
-  spooky:    ["🕷️", "👻", "🕸️", "🎃", "🦇"],
-  christmas: ["❄️"],
-};
-const EMOJI_COUNT = 14;
-  let emojiContainer = null;
-let currentEmojiSet = null;
-
-function buildEmojiBackground(setName) {
-  const emojis = EMOJI_SETS[setName];
-  if (!emojis) return;
-
-  // Reuse the container, but repopulate if the set changed.
-  if (!emojiContainer) {
-    emojiContainer = document.createElement("div");
-    emojiContainer.id = "spookyBg";          // keep the id so existing CSS applies
-    emojiContainer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(emojiContainer);
-  }
-  if (currentEmojiSet === setName) return;   // already built for this set
-  currentEmojiSet = setName;
-
-  // Tag the container so per-set CSS (e.g. falling vs rising emoji) can match.
-  emojiContainer.classList.toggle("christmas", setName === "christmas");
-
-  emojiContainer.innerHTML = "";
-
-  emojiContainer.innerHTML = "";
-  for (let i = 0; i < EMOJI_COUNT; i++) {
-    const el = document.createElement("span");
-    el.className = "spookyEmoji";
-    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-
-    const left = Math.random() * 100;
-    const size = 22 + Math.random() * 46;
-    const blur = 1 + Math.random() * 3;
-    const duration = 14 + Math.random() * 18;
-    const delay = -Math.random() * duration;
-    const opacity = 0.18 + Math.random() * 0.22;
-
-    el.style.left = `${left}vw`;
-    el.style.fontSize = `${size}px`;
-    el.style.filter = `blur(${blur}px)`;
-    el.style.animationDuration = `${duration}s`;
-    el.style.animationDelay = `${delay}s`;
-    el.style.opacity = opacity.toFixed(2);
-
-    emojiContainer.appendChild(el);
-  }
-}
-
-function setEmojiBackground(setName) {
-  if (setName) {
-    buildEmojiBackground(setName);
-    if (emojiContainer) emojiContainer.classList.add("active");
-  } else if (emojiContainer) {
-    emojiContainer.classList.remove("active");
-  }
-}
-
-  function readableTextColor(hex) {
-    const c = hex.replace('#', '');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 150 ? "#000000" : "#ffffff";
-  }
-
-  function hexToRgba(hex, alpha = 1) {
-  if (typeof hex !== "string") return `rgba(153,153,153,${alpha})`;
-  const c = hex.replace('#', '').trim();
-  const full = c.length === 3 ? c.split('').map(x => x + x).join('') : c;
-  if (!/^[0-9a-fA-F]{6}$/.test(full)) return `rgba(153,153,153,${alpha})`;
-  const r = parseInt(full.substring(0, 2), 16);
-  const g = parseInt(full.substring(2, 4), 16);
-  const b = parseInt(full.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-  function applyTheme(themeId) {
-    if (themeId === "custom") {
-      customThemePanel.style.display = "block";
-      document.querySelectorAll(".theme-swatch").forEach(el => {
-        el.classList.toggle("active", el.dataset.themeId === "custom");
-      });
-      setEmojiBackground(false);
-      try { localStorage.setItem("udcTheme", "custom"); } catch (e) {}
-      return;
-    }
-    customThemePanel.style.display = "none";
-
-    const t = themes.find(t => t.id === themeId) || themes[0];
-    const root = document.documentElement;
-    root.style.setProperty("--bg", t.bg);
-    root.style.setProperty("--accent", t.accent);
-    root.style.setProperty("--accent-text", readableTextColor(t.accent));
-    root.style.setProperty("--card-bg", t.cardBg);
-    root.style.setProperty("--card-text", t.cardText);
-    root.style.setProperty("--card-black-bg", t.cardBlackBg);
-    root.style.setProperty("--card-black-text", t.cardBlackText);
-    root.style.setProperty("--card-red-bg", t.cardRedBg);
-    root.style.setProperty("--card-red-text", t.cardRedText);
-    root.style.setProperty("--panel-bg", t.panelBg);
-    root.style.setProperty("--panel-text", t.panelText);
-
-  // Only themes that opt in get the drifting emoji layer.
-  setEmojiBackground(t.animatedBg || null);
-
-    document.querySelectorAll(".theme-swatch").forEach(el => {
-      el.classList.toggle("active", el.dataset.themeId === themeId);
-    });
-    try { localStorage.setItem("udcTheme", themeId); } catch (e) {}
-  }
-
-  function applyCustomTheme(save = true) {
-    const bg = customBgInput.value;
-    const accent = customAccentInput.value;
-    const cardBg = customCardBgInput.value;
-    const panelBg = customPanelBgInput.value;
-    const root = document.documentElement;
-    root.style.setProperty("--bg", bg);
-    root.style.setProperty("--accent", accent);
-    root.style.setProperty("--accent-text", readableTextColor(accent));
-    root.style.setProperty("--card-bg", cardBg);
-    root.style.setProperty("--card-text", readableTextColor(cardBg));
-    root.style.setProperty("--card-black-bg", "#000000");
-    root.style.setProperty("--card-black-text", "#ffffff");
-    root.style.setProperty("--card-red-bg", "#8b0000");
-    root.style.setProperty("--card-red-text", "#ffffff");
-    root.style.setProperty("--panel-bg", panelBg);
-    root.style.setProperty("--panel-text", readableTextColor(panelBg));
-    setEmojiBackground(false);
-    document.querySelectorAll(".theme-swatch").forEach(el => {
-      el.classList.toggle("active", el.dataset.themeId === "custom");
-    });
-    if (save) {
-      try {
-        localStorage.setItem("udcTheme", "custom");
-        localStorage.setItem("udcCustomColors", JSON.stringify({ bg, accent, cardBg, panelBg }));
-      } catch (e) {}
-    }
-  }
-
-  [customBgInput, customAccentInput, customCardBgInput, customPanelBgInput].forEach(input => {
-    input.addEventListener("input", () => applyCustomTheme(true));
-  });
-
-function buildThemeSwatches() {
-  themeSwatchRow.innerHTML = "";
-
-  // Optional emoji shown on top of an animated theme's swatch.
-  const SWATCH_EMOJI = {
-    brewery: "🍺",
-    ocean: "🌊",
-    halloween: "🎃",
-    christmas: "🎄",
+/* udc-online.js: synchronised online multiplayer for Ultimate Drinking Cards.
+   Loaded as a normal <script> AFTER the main script, so it can use the game's own
+   globals (players, flipCard, cardBack, allCards, ...). No other edits to index.html needed.
+   Everyone sees the same card at the same time. Only the player whose turn it is
+   (or the host) can draw. */
+(() => {
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_VbUYyU3Ahe30heFDwpWbrgDvpAc_Sds",
+    authDomain: "udc-game.firebaseapp.com",
+    databaseURL: "https://udc-game-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "udc-game",
+    storageBucket: "udc-game.firebasestorage.app",
+    messagingSenderId: "953983676607",
+    appId: "1:953983676607:web:686c36b8423294a13f960a"
   };
 
-  themes.forEach(t => {
-    const sw = document.createElement("div");
-    sw.className = "theme-swatch";
-    sw.dataset.themeId = t.id;
-    sw.title = t.label;
-    sw.style.background = `radial-gradient(circle, ${t.accent} 0 90%, ${t.bg} 38%)`;
+  const MIN_PLAYERS = 2;        // set to 1 if you want to test alone
+  const HOST_GRACE_MS = 6000;   // how long a host must be offline before hosting passes on
 
-    const emoji = SWATCH_EMOJI[t.id];
-    if (emoji) {
-      const glyph = document.createElement("span");
-      glyph.className = "theme-swatch-emoji";
-      glyph.textContent = emoji;
-      glyph.setAttribute("aria-hidden", "true"); // title already names the theme
-      sw.appendChild(glyph);
-    }
+  if (!window.firebase) { console.warn('UDC online: Firebase scripts not loaded'); return; }
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    sw.addEventListener("click", () => applyTheme(t.id));
-    themeSwatchRow.appendChild(sw);
-  });
+  // ---- seeded randomness (same on every phone) ----
+  function xmur3(s) { let h = 1779033703 ^ s.length; for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); } return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return h >>> 0; }; }
+  function mulberry32(a) { return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const rngOf = s => mulberry32(xmur3(s)());
+  function shuffled(arr, rng) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  // Run fn with Math.random swapped for a seeded generator, so any randomness inside
+  // the game's own text transforms comes out identical on every phone.
+  function seededCall(rng, fn) { const orig = Math.random; Math.random = rng; try { return fn(); } finally { Math.random = orig; } }
 
-    const customSw = document.createElement("div");
-    customSw.className = "theme-swatch";
-    customSw.dataset.themeId = "custom";
-    customSw.title = "Custom";
-    customSw.style.background = "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)";
-    customSw.addEventListener("click", () => applyTheme("custom"));
-    themeSwatchRow.appendChild(customSw);
-  }
+  // ---- state ----
+  let uid = null, code = null, isHost = false, meta = null, metaSeen = false, started = false, active = false;
+  let roster = {}, order = [], baseDeck = [], curN = 0, lastN = 0, refs = [], phase = 'menu', msg = '';
+  let drawing = false, hostTimer = null, wake = null, stRef = null;
+  const cycles = new Map();
+  const ready = firebase.auth().signInAnonymously().then(c => { uid = c.user.uid; }).catch(e => { msg = 'Sign-in failed: ' + (e.code || e.message); render(); });
+  const root = () => db.ref('udc/' + code);
 
-  cogButton.addEventListener("click", (e) => {
-    e.stopPropagation();
-    themeMenu.style.display = themeMenu.style.display === "block" ? "none" : "block";
-  });
+  // ---- UI ----
+  const menu = document.getElementById('themeMenu');
+  const sec = document.createElement('div'); sec.className = 'menuSection';
+  const openBtn = document.createElement('button'); openBtn.className = 'menu-action'; openBtn.textContent = '🌐 Online game';
+  sec.appendChild(openBtn); menu.appendChild(sec);
 
-  document.addEventListener("click", (e) => {
-    if (themeMenu.style.display === "block" && !themeMenu.contains(e.target) && e.target !== cogButton) {
-      themeMenu.style.display = "none";
-    }
-  });
+  const overlay = document.createElement('div'); overlay.className = 'overlay';
+  overlay.innerHTML = '<div class="setup-box" id="udcOnlineBox"></div>';
+  document.body.appendChild(overlay);
+  const box = overlay.firstChild;
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000c;color:#fff;padding:8px 14px;border-radius:999px;font:700 13px Tahoma,sans-serif;z-index:1500;display:none;max-width:90vw;text-align:center';
+  document.body.appendChild(toast);
+  let toastT; function say(t) { toast.textContent = t; toast.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { toast.style.display = 'none'; }, 2600); }
 
-  editPlayersButton.addEventListener("click", () => {
-    themeMenu.style.display = "none";
-    resetSetupFields(
-      players.length ? players : ["", ""],
-      Number.isFinite(totalRounds) ? totalRounds : 5,
-      unlimitedRounds,
-      trackingEnabled,
-      randomiseOrderCheckbox.checked          // ADDED
-    );
-    openSetupOverlay();
-  });
+  openBtn.addEventListener('click', () => { menu.style.display = 'none'; overlay.style.display = 'flex'; render(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
 
-  restartGameButton.addEventListener("click", () => {
-    themeMenu.style.display = "none";
-    if (trackingEnabled && players.length === 0) {
-      resetSetupFields();
-      openSetupOverlay();
-      return;
-    }
-    currentPlayerIndex = 0;
-    currentRound = 1;
-    gameStarted = true;
-    buildDeckFromEnabledCategories();
-    preloadNextCard();
-    updateTurnTracker();
-  });
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const saved = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+  const keep = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
-  // Load saved theme (defaults to monochrome)
-  try {
-    const savedTheme = localStorage.getItem("udcTheme");
-    buildThemeSwatches();
-    if (savedTheme === "custom") {
-      const saved = JSON.parse(localStorage.getItem("udcCustomColors") || "null");
-      if (saved) {
-        customBgInput.value = saved.bg;
-        customAccentInput.value = saved.accent;
-        customCardBgInput.value = saved.cardBg;
-        customPanelBgInput.value = saved.panelBg;
-        applyCustomTheme(false);
-        customThemePanel.style.display = "block";
-        document.querySelectorAll(".theme-swatch").forEach(el => {
-          el.classList.toggle("active", el.dataset.themeId === "custom");
-        });
-      } else {
-        applyTheme("mono");
-      }
+  const byJoinTime = (a, b) => (a[1].t || 0) - (b[1].t || 0);
+  const onlineCount = () => Object.values(roster).filter(p => p && p.online !== false).length;
+
+  function render() {
+    let h = '<h2>🌐 Online game</h2>';
+    if (msg) h += '<p class="sub" style="color:#b00020">' + esc(msg) + '</p>';
+    if (phase === 'menu') {
+      h += '<p class="sub">Everyone plays on their own phone and sees the same cards.</p>' +
+        '<div class="setup-field"><label>Your name</label><div class="playerRow"><input type="text" class="playerNameInput" id="oName" maxlength="16" value="' + esc(saved('udcOnName')) + '"><input type="color" class="playerColourInput" id="oColour" value="' + (saved('udcOnColour') || '#5BFFF4') + '"></div></div>' +
+        '<div class="setup-btn-row"><button id="oHost">Host a game</button></div>' +
+        '<div class="setup-field" style="margin-top:18px"><label>Or join with a game code</label><div class="playerRow"><input type="text" id="oCode" maxlength="8" placeholder="CODE" autocapitalize="characters" style="text-transform:uppercase"><button class="primary-btn" id="oJoin" style="flex:0 0 auto;padding:11px 18px">Join</button></div></div>';
+    } else if (phase === 'lobby') {
+      h += '<p class="sub">Game code</p><div style="font-size:42px;font-weight:900;letter-spacing:.1em;margin-bottom:12px">' + esc(code) + '</div>';
+      h += '<div class="setup-field"><label id="oCount"></label><div id="oRoster"></div></div>';
+      if (isHost) {
+        h += '<div class="setup-field"><label>Rounds</label><div class="roundsRow"><input type="number" id="oRounds" min="1" value="5" style="width:80px"><label><input type="checkbox" id="oUnl"> Unlimited</label></div></div>' +
+          '<p class="sub">Uses your current categories, difficulty and Discord-mode settings. Change them in ⚙️ first.</p>' +
+          '<div class="setup-btn-row"><button id="oStart">Start game</button></div>';
+      } else h += '<p class="sub">Waiting for the host to start…</p>';
+      h += '<div class="setup-btn-row"><button class="secondary-btn" id="oLeave">Leave</button></div>';
     } else {
-      applyTheme(savedTheme || "mono");
+      h += '<p class="sub">Game <b>' + esc(code) + '</b>' + (isHost ? ' · you are the host (you can draw on anyone’s turn, e.g. if someone is away)' : '') + '</p>' +
+        '<div class="setup-field"><label id="oCount"></label><div id="oRoster"></div></div>' +
+        '<div class="setup-btn-row"><button id="oClose">Back to game</button><button class="secondary-btn" id="oLeave">Leave</button></div>';
     }
-  } catch (e) {
-    buildThemeSwatches();
-    applyTheme("mono");
+    box.innerHTML = h;
+    paintRoster();
   }
+
+  // Updates only the player list (and Start button), so typed inputs are never wiped.
+  function paintRoster() {
+    const list = document.getElementById('oRoster'), cnt = document.getElementById('oCount');
+    if (!list) return;
+    let rows;
+    if (phase === 'playing') rows = order.map((o, i) => ({ id: o.uid, name: o.name, colour: o.colour, p: roster[o.uid], turn: i === currentPlayerIndex }));
+    else rows = Object.entries(roster).sort(byJoinTime).map(([id, p]) => ({ id, name: p.name, colour: p.colour, p }));
+    list.innerHTML = rows.map(r => {
+      const off = !r.p || r.p.online === false;
+      return '<div style="text-align:left;padding:4px 0;font-weight:700;opacity:' + (off ? '.45' : '1') + ';color:' + esc(r.colour || '#999') + '">' +
+        (r.turn ? '▶ ' : '● ') + esc(r.name || '?') + (r.id === uid ? ' (you)' : '') + (meta && meta.host === r.id ? ' 👑' : '') + (off ? ' · offline' : '') + '</div>';
+    }).join('');
+    if (cnt) cnt.textContent = (phase === 'playing' ? 'Players' : 'Players here') + ' (' + rows.length + ')';
+    const st = document.getElementById('oStart');
+    if (st) { const ok = onlineCount() >= MIN_PLAYERS; st.disabled = !ok; st.textContent = ok ? 'Start game' : 'Need ' + MIN_PLAYERS + '+ players'; }
+  }
+
+  box.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'oCode') { const b = document.getElementById('oJoin'); if (b) b.click(); } });
+
+  box.addEventListener('click', async e => {
+    const btn = e.target.closest('button'); const id = btn && btn.id; if (!id) return;
+    if (id === 'oClose') overlay.style.display = 'none';
+    if (id === 'oLeave') await leave();
+    if (id === 'oHost' || id === 'oJoin') {
+      const name = (document.getElementById('oName').value || '').trim() || 'Player';
+      const colour = document.getElementById('oColour').value;
+      keep('udcOnName', name); keep('udcOnColour', colour);
+      if (id === 'oJoin') code = (document.getElementById('oCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      await enter(id === 'oHost' ? 'host' : 'join', name, colour);
+    }
+    if (id === 'oStart') await startGame(btn);
+  });
+
+  // ---- joining / hosting ----
+  const randomCode = () => { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 5; i++) c += A[Math.floor(Math.random() * A.length)]; return c; };
+
+  async function enter(mode, name, colour) {
+    await ready; if (!uid) return;
+    msg = '';
+    if (mode === 'host') {
+      let ok = false;
+      for (let k = 0; k < 6 && !ok; k++) {
+        code = randomCode();
+        try {
+          // Only create the game if that code is free, so a live game is never overwritten.
+          const res = await root().child('meta').transaction(cur => cur ? undefined : { host: uid, started: false, createdAt: Date.now() });
+          ok = res.committed;
+        } catch (x) { msg = 'Could not create game (' + (x.code || x.message) + ')'; code = null; return render(); }
+      }
+      if (!ok) { msg = 'Could not find a free game code, try again.'; code = null; return render(); }
+      isHost = true;
+    } else {
+      if (!code) { msg = 'Type the game code first.'; return render(); }
+      let m;
+      try { m = (await root().child('meta').once('value')).val(); } catch (x) { msg = 'Could not reach the game (' + (x.code || x.message) + ')'; code = null; return render(); }
+      if (!m) { msg = 'No game found with that code.'; code = null; return render(); }
+      if (m.started && !(m.order || []).some(o => o.uid === uid)) { msg = 'That game has already started.'; code = null; return render(); }
+      isHost = m.host === uid;
+    }
+    const me = root().child('players/' + uid);
+    try {
+      const ex = (await me.once('value')).val();
+      if (ex) await me.update({ name, colour, online: true });
+      else await me.set({ name, colour, online: true, t: firebase.database.ServerValue.TIMESTAMP });
+    } catch (x) { msg = 'Could not join (' + (x.code || x.message) + ')'; code = null; return render(); }
+    keep('udcOnSession', code);
+    phase = 'lobby'; attach(); presence(); render();
+  }
+
+  // Marks you offline (not removed) when the phone sleeps or loses signal, and back online on reconnect.
+  function presence() {
+    const me = root().child('players/' + uid), c = db.ref('.info/connected');
+    c.on('value', s => { if (s.val() === true) me.onDisconnect().update({ online: false }).then(() => me.update({ online: true })).catch(() => {}); });
+    refs.push(c);
+  }
+
+  async function leave() {
+    const c = code;
+    detach();
+    try {
+      if (c && uid) {
+        const r = db.ref('udc/' + c), alone = Object.keys(roster).filter(i => i !== uid).length === 0;
+        if (alone) await r.remove();                                         // last one out closes the game
+        else if (started) await r.child('players/' + uid + '/online').set(false); // keep your seat so you can rejoin
+        else await r.child('players/' + uid).remove();
+      }
+    } catch (x) {}
+    keep('udcOnSession', '');
+    location.reload();
+  }
+
+  function detach() { clearTimeout(hostTimer); refs.forEach(r => { try { r.off(); } catch (x) {} }); refs = []; }
+
+  async function startGame(btn) {
+    if (!isHost || onlineCount() < MIN_PLAYERS) return;
+    const cats = [...enabledCategories], disc = isDiscordModeOn();
+    const raw = buildRaw(new Set(cats), disc);
+    if (!raw.length) { msg = 'No cards in the selected categories. Pick some in ⚙️ first.'; return render(); }
+    const unl = document.getElementById('oUnl').checked;
+    const rounds = Math.max(1, parseInt(document.getElementById('oRounds').value, 10) || 5);
+    const sorted = Object.entries(roster).filter(([, p]) => p.online !== false).sort(byJoinTime);
+    const seed = Math.random().toString(36).slice(2);
+    btn.disabled = true;
+    try {
+      await root().child('meta').transaction(cur => (cur && !cur.started) ? Object.assign({}, cur, {
+        started: true, seed, cats, diff: difficulty, discord: disc, rounds, unlimited: unl, sig: deckSig(raw),
+        order: sorted.map(([id, p]) => ({ uid: id, name: p.name, colour: p.colour }))
+      }) : undefined);
+    } catch (x) { msg = 'Could not start (' + (x.code || x.message) + ')'; render(); }
+  }
+
+  // ---- sync ----
+  function attach() {
+    const r = root();
+    const on = (ref, fn) => { ref.on('value', fn, x => { msg = x.code || x.message; render(); }); refs.push(ref); };
+    on(r.child('players'), s => {
+      const prev = roster; roster = s.val() || {};
+      if (started) for (const id in roster) {
+        if (id === uid || !prev[id]) continue;
+        if (prev[id].online !== false && roster[id].online === false) say(roster[id].name + ' disconnected');
+        else if (prev[id].online === false && roster[id].online !== false) say(roster[id].name + ' is back');
+      }
+      paintRoster(); checkHost();
+    });
+    on(r.child('meta'), s => {
+      const m = s.val();
+      if (!m) {
+        if (metaSeen) { say('This game was closed'); keep('udcOnSession', ''); setTimeout(() => location.reload(), 1500); }
+        return;
+      }
+      metaSeen = true; meta = m;
+      const wasHost = isHost; isHost = m.host === uid;
+      if (m.started && !started) startLocal(m);
+      else if (!m.started && started) resetToLobby();   // host restarted the game
+      else if (wasHost !== isHost) { if (isHost) say('You are now the host 👑'); render(); }
+      else paintRoster();
+      checkHost();
+    });
+  }
+
+  // If the host's phone has been offline for a while, the earliest remaining player takes over.
+  function checkHost() {
+    clearTimeout(hostTimer);
+    if (!meta || !meta.host) return;
+    const h = roster[meta.host];
+    if (h && h.online !== false) return;
+    hostTimer = setTimeout(async () => {
+      const old = meta && meta.host, cur = roster[old];
+      if (!old || (cur && cur.online !== false)) return;
+      const inGame = id => !started || order.some(o => o.uid === id);
+      const cands = Object.entries(roster).filter(([id, p]) => p.online !== false && inGame(id)).sort(byJoinTime);
+      if (!cands.length || cands[0][0] !== uid) return;
+      try { await root().child('meta/host').transaction(c => c === old ? uid : undefined); } catch (x) {}
+    }, HOST_GRACE_MS);
+  }
+
+  // ---- deck (identical on every phone) ----
+  function buildRaw(cats, discord) {
+    const raw = allCards.filter(g => cats.has(g.Category || '')).flatMap(g =>
+      (Array.isArray(g.Rules) ? g.Rules : []).filter(rule => !(discord && shouldRemoveForDiscord(rule)))
+        .map(rule => ({ Category: g.Category || '', Colour: g.Colour || g.Color || g.colour || '#999999', Rule: rule })));
+    raw.sort((a, b) => a.Category < b.Category ? -1 : a.Category > b.Category ? 1 : a.Rule < b.Rule ? -1 : a.Rule > b.Rule ? 1 : 0);
+    return raw;
+  }
+  const deckSig = raw => raw.length + ':' + xmur3(raw.map(c => c.Category + '\u0001' + c.Rule).join('\u0002'))().toString(36);
+
+  // Each pass through the deck is reshuffled with its own seed, so repeats don't come in the same order.
+  function deckFor(cycle) {
+    if (!cycles.has(cycle)) { if (cycles.size > 4) cycles.clear(); cycles.set(cycle, shuffled(baseDeck, rngOf(meta.seed + '|deck|' + cycle))); }
+    return cycles.get(cycle);
+  }
+
+  // Card n is a pure function of (seed, n): nothing but the counter needs to travel over the network.
+  function cardFor(n) {
+    const len = baseDeck.length, card = deckFor(Math.floor((n - 1) / len))[(n - 1) % len];
+    const r = rngOf(meta.seed + '|type|' + n)();
+    const type = r < RED_CHANCE ? 'red' : r < RED_CHANCE + BLACK_CHANCE ? 'black' : 'white';
+    const rule = meta.discord ? seededCall(rngOf(meta.seed + '|rule|' + n), () => applyDiscordTransforms(card.Rule)) : card.Rule;
+    const content = '<div class="instructionText">' + rule + '</div>' + (type === 'red' ? '<div class="tripleBadge">×3!</div>' : '') +
+      '<div class="categoryText" style="color: ' + card.Colour + ';">' + card.Category + '</div>';
+    return { type, content, colour: card.Colour };
+  }
+
+  function startLocal(m) {
+    started = true; active = true; phase = 'playing';
+    order = m.order || [];
+    enabledCategories = new Set(m.cats || []);
+    setDifficulty(m.diff || 'normal');
+    discordModeCheckbox.checked = !!m.discord;
+    randomiseOrderCheckbox.checked = false;
+    players = order.map(p => ({ name: p.name, colour: p.colour }));
+    trackingEnabled = true; gameStarted = true; currentPlayerIndex = 0; currentRound = 1;
+    unlimitedRounds = !!m.unlimited; totalRounds = unlimitedRounds ? Infinity : m.rounds;
+    baseDeck = buildRaw(new Set(m.cats || []), !!m.discord);
+    buildDeckFromEnabledCategories();   // so the "N of total" counter uses the host's categories, not this phone's own
+    closeSetupOverlay(); rebuildAllDraws(); updateTurnTracker();
+    overlay.style.display = 'none';
+    if (m.sig && m.sig !== deckSig(baseDeck)) {
+      msg = 'Your card list differs from the host’s (different app version?). Refresh this page, or cards may not match.';
+      overlay.style.display = 'flex';
+    }
+    render(); keepAwake();
+    if (stRef) { try { stRef.off(); } catch (x) {} }
+    const st = root().child('state'); stRef = st;
+    st.on('value', s => applyState(s.val())); refs.push(st);
+  }
+
+  // Everyone drops back to the lobby with a clean local game, ready for the host to start again.
+  function resetToLobby() {
+    if (stRef) { try { stRef.off(); } catch (x) {} stRef = null; }
+    started = false; active = false; phase = 'lobby'; drawing = false;
+    lastN = curN = 0; cycles.clear(); baseDeck = []; order = [];
+    players = []; trackingEnabled = false; gameStarted = false; currentPlayerIndex = 0; currentRound = 1;
+    coverCard.classList.remove('flipped', 'face-up', 'type-black', 'type-red');
+    cardFront.classList.remove('type-black', 'type-red');
+    showingFront = true;
+    cardFront.innerHTML = 'Ultimate Drinking Cards'; cardBack.innerHTML = '';
+    buildDeckFromEnabledCategories(); preloadNextCard(); updateTurnTracker();
+    msg = ''; overlay.style.display = 'flex'; render();
+    say(isHost ? 'Game restarted' : 'The host restarted the game');
+  }
+
+  // The menu's Restart / Edit Players buttons only know about local state, so in an online
+  // game we catch them first (capture phase on the menu) and handle them here instead.
+  menu.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('#restartGameButton, #editPlayersButton');
+    if (!b || !code) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    menu.style.display = 'none';
+    if (b.id === 'editPlayersButton') return say('In online games, players join from their own phones');
+    if (!active) return say('The game hasn’t started yet');
+    if (!isHost) return say('Only the host can restart the game');
+    if (!confirm('Restart the game for everyone? You’ll all go back to the lobby.')) return;
+    try { await root().update({ 'meta/started': false, state: null }); }
+    catch (x) { say('Could not restart: ' + (x.code || x.message)); }
+  }, true);
+
+  function applyState(s) {
+    if (!s || !s.n || s.n <= lastN || !baseDeck.length) return;
+    const n = s.n, len = order.length || 1;
+    lastN = curN = n;
+    // Turn and round come straight from the counter, so a phone that rejoins late lands in the right place.
+    currentPlayerIndex = (n - 1) % len; currentRound = Math.floor((n - 1) / len) + 1;
+    const c = cardFor(n);
+    cardBack.dataset.content = c.content; cardBack.dataset.type = c.type; cardBack.dataset.categoryColour = c.colour;
+    flipCard();                         // plays the normal flip, sounds, flashes, and advances the turn
+    paintRoster();
+  }
+
+  const finished = () => !unlimitedRounds && curN >= totalRounds * players.length;
+  const canDraw = () => isHost || (order[currentPlayerIndex] && order[currentPlayerIndex].uid === uid);
+
+  async function draw() {
+    if (drawing) return;
+    if (!baseDeck.length) return say('No cards in the selected categories.');
+    drawing = true;
+    const n = curN + 1;
+    try {
+      const res = await root().child('state').transaction(cur => ((cur && cur.n) || 0) === n - 1 ? { n, by: uid } : undefined);
+      if (!res.committed) say('Someone just drew, hang on…');
+    } catch (x) { say('Could not draw: ' + (x.code || x.message)); }
+    finally { drawing = false; }
+  }
+
+  // Intercept taps on the card while an online game is running.
+  function intercept(e) {
+    const inLobby = !!code && phase === 'lobby';
+    if (!active && !inLobby) return;
+    if (e.type === 'keydown' && !(e.key === ' ' || e.key === 'Enter' || e.code === 'Space')) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if (inLobby) { overlay.style.display = 'flex'; render(); return say('Waiting for the host to start'); }
+    if (finished()) return say('Game complete! 🎉');
+    if (!canDraw()) return say('It’s ' + (players[currentPlayerIndex] ? players[currentPlayerIndex].name : 'someone else') + '’s turn');
+    draw();
+  }
+  coverCard.addEventListener('click', intercept, true);
+  coverCard.addEventListener('keydown', intercept, true);
+
+  // ---- keep the screen on during play ----
+  async function keepAwake() {
+    try {
+      if (navigator.wakeLock && document.visibilityState === 'visible' && !wake) {
+        wake = await navigator.wakeLock.request('screen');
+        wake.addEventListener('release', () => { wake = null; });
+      }
+    } catch (x) {}
+  }
+  document.addEventListener('visibilitychange', () => { if (active) keepAwake(); });
+
+  // ---- rejoin after a refresh / app switch ----
+  (async function resume() {
+    const c = saved('udcOnSession'); if (!c) return;
+    await ready; if (!uid) return;
+    try {
+      code = c;
+      const m = (await root().child('meta').once('value')).val();
+      const mine = m && (await root().child('players/' + uid).once('value')).val();
+      if (!m || !mine) { code = null; keep('udcOnSession', ''); return; }
+      await enter('join', mine.name, mine.colour);
+      if (code) { say('Rejoined game ' + code); if (!m.started) { overlay.style.display = 'flex'; render(); } }
+    } catch (x) { code = null; }
+  })();
+})();
