@@ -33,7 +33,9 @@
   // ---- state ----
   let uid = null, code = null, isHost = false, meta = null, metaSeen = false, started = false, active = false;
   let roster = {}, order = [], baseDeck = [], curN = 0, lastN = 0, refs = [], phase = 'menu', msg = '';
-  let drawing = false, hostTimer = null, wake = null;
+  let drawing = false, hostTimer = null, wake = null, stRef = null, starting = false;
+  // Resolves once the main script has loaded cards.json (gives up after ~15s).
+  const cardsReady = () => new Promise(res => { let t = 0; (function chk() { if (allCards.length || t++ > 150) res(); else setTimeout(chk, 100); })(); });
   const cycles = new Map();
   const ready = firebase.auth().signInAnonymously().then(c => { uid = c.user.uid; }).catch(e => { msg = 'Sign-in failed: ' + (e.code || e.message); render(); });
   const root = () => db.ref('udc/' + code);
@@ -221,7 +223,11 @@
       }
       metaSeen = true; meta = m;
       const wasHost = isHost; isHost = m.host === uid;
-      if (m.started && !started) startLocal(m);
+      if (m.started && !started) {
+        // On a refresh this can fire before cards.json has loaded, so wait for it first.
+        if (!starting) { starting = true; cardsReady().then(() => { starting = false; if (!started && meta && meta.started) startLocal(meta); }); }
+      }
+      else if (!m.started && started) resetToLobby();   // host restarted the game
       else if (wasHost !== isHost) { if (isHost) say('You are now the host 👑'); render(); }
       else paintRoster();
       checkHost();
@@ -282,6 +288,7 @@
     trackingEnabled = true; gameStarted = true; currentPlayerIndex = 0; currentRound = 1;
     unlimitedRounds = !!m.unlimited; totalRounds = unlimitedRounds ? Infinity : m.rounds;
     baseDeck = buildRaw(new Set(m.cats || []), !!m.discord);
+    buildDeckFromEnabledCategories();   // so the "N of total" counter uses the host's categories, not this phone's own
     closeSetupOverlay(); rebuildAllDraws(); updateTurnTracker();
     overlay.style.display = 'none';
     if (m.sig && m.sig !== deckSig(baseDeck)) {
@@ -289,14 +296,46 @@
       overlay.style.display = 'flex';
     }
     render(); keepAwake();
-    const st = root().child('state');
+    if (stRef) { try { stRef.off(); } catch (x) {} }
+    const st = root().child('state'); stRef = st;
     st.on('value', s => applyState(s.val())); refs.push(st);
   }
+
+  // Everyone drops back to the lobby with a clean local game, ready for the host to start again.
+  function resetToLobby() {
+    if (stRef) { try { stRef.off(); } catch (x) {} stRef = null; }
+    started = false; active = false; phase = 'lobby'; drawing = false;
+    lastN = curN = 0; cycles.clear(); baseDeck = []; order = [];
+    players = []; trackingEnabled = false; gameStarted = false; currentPlayerIndex = 0; currentRound = 1;
+    coverCard.classList.remove('flipped', 'face-up', 'type-black', 'type-red');
+    cardFront.classList.remove('type-black', 'type-red');
+    showingFront = true;
+    cardFront.innerHTML = 'Ultimate Drinking Cards'; cardBack.innerHTML = '';
+    buildDeckFromEnabledCategories(); preloadNextCard(); updateTurnTracker();
+    msg = ''; overlay.style.display = 'flex'; render();
+    say(isHost ? 'Game restarted' : 'The host restarted the game');
+  }
+
+  // The menu's Restart / Edit Players buttons only know about local state, so in an online
+  // game we catch them first (capture phase on the menu) and handle them here instead.
+  menu.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('#restartGameButton, #editPlayersButton');
+    if (!b || !code) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    menu.style.display = 'none';
+    if (b.id === 'editPlayersButton') return say('In online games, players join from their own phones');
+    if (!active) return say('The game hasn’t started yet');
+    if (!isHost) return say('Only the host can restart the game');
+    if (!confirm('Restart the game for everyone? You’ll all go back to the lobby.')) return;
+    try { await root().update({ 'meta/started': false, state: null }); }
+    catch (x) { say('Could not restart: ' + (x.code || x.message)); }
+  }, true);
 
   function applyState(s) {
     if (!s || !s.n || s.n <= lastN || !baseDeck.length) return;
     const n = s.n, len = order.length || 1;
     lastN = curN = n;
+    drawnCount = Math.max(-1, n - 2);   // so the "N of total" counter is right even after a rejoin
     // Turn and round come straight from the counter, so a phone that rejoins late lands in the right place.
     currentPlayerIndex = (n - 1) % len; currentRound = Math.floor((n - 1) / len) + 1;
     const c = cardFor(n);
@@ -322,9 +361,11 @@
 
   // Intercept taps on the card while an online game is running.
   function intercept(e) {
-    if (!active) return;
+    const inLobby = !!code && phase === 'lobby';
+    if (!active && !inLobby) return;
     if (e.type === 'keydown' && !(e.key === ' ' || e.key === 'Enter' || e.code === 'Space')) return;
     e.stopImmediatePropagation(); e.preventDefault();
+    if (inLobby) { overlay.style.display = 'flex'; render(); return say('Waiting for the host to start'); }
     if (finished()) return say('Game complete! 🎉');
     if (!canDraw()) return say('It’s ' + (players[currentPlayerIndex] ? players[currentPlayerIndex].name : 'someone else') + '’s turn');
     draw();
@@ -347,6 +388,7 @@
   (async function resume() {
     const c = saved('udcOnSession'); if (!c) return;
     await ready; if (!uid) return;
+    await cardsReady();
     try {
       code = c;
       const m = (await root().child('meta').once('value')).val();
