@@ -6,10 +6,10 @@
 (() => {
   const firebaseConfig = {
     apiKey: "AIzaSyAzZaIWxPTIT8Q07cuH-clasTDxvI2Bmd4",
-    authDomain: "cah-game-2aa1d.firebaseapp.com",
-    databaseURL: "https://cah-game-2aa1d-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "cah-game-2aa1d",
-    storageBucket: "cah-game-2aa1d.firebasestorage.app",
+    authDomain: "udc-game-default.firebasedatabase.app",
+    databaseURL: "https://udc-game-default-rtdb.europe-west1.firebasedatabase.app/",
+    projectId: "udc-game",
+    storageBucket: "udc-game.firebasestorage.app",
     messagingSenderId: "1077370275060",
     appId: "1:1077370275060:web:04073c4ef1bb1ece2a4aa1"
   };
