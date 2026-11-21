@@ -1,34 +1,50 @@
-/* udc-online.js v7: synchronised online multiplayer for Ultimate Drinking Cards.
+/* udc-online.js v9: synchronised online multiplayer for Ultimate Drinking Cards.
    Loaded as a normal <script> AFTER the main script, so it can use the game's own
-   globals (players, flipCard, cardBack, allCards, ...). No other edits to index.html needed.
+   globals (players, flipCard, cardBack, allCards, ...).
    Everyone sees the same card at the same time. Only the player whose turn it is
    (or the host) can draw. Spectators can watch but never draw.
+   v9 adds: late joiners (added at the start of a round), live emoji reactions (long-press to
+   change), stale-room cleanup, and smarter drink counting (everyone drinks / finish / waterfall).
    Pair this with database.rules.json (publish it in the Firebase console / CLI). */
 (() => {
   const VERSION = 'v9';
 
   // QR code script(s) saved next to index.html. Tried in order until one exposes a known QR API.
   // Change/add your real filename here if it is not one of these.
-  const QR_SCRIPTS = ['qrcode.min.js', 'qrcode.js'];
+  const QR_SCRIPTS = ['qrcode.js', 'qrcode.min.js'];
 
+  // Rooms older than this are swept away when someone hosts a new game.
+  const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 
   // ---- drink tally: reading drinks out of card text ----
   // Black cards are inverted ("Take a drink" is no longer what you do), so by default they are not counted.
   // Set to true to count black cards as written.
   const BLACK_CARDS_COUNT = false;
+  const FINISH_VALUE = 1, WATERFALL_VALUE = 1;   // how many drinks "finish your drink" / "waterfall" count as
   const NUM_WORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
   const NUM_PAT = '(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\\d{1,2})';
   const DRINK_PAT = '\\s+(?:more\\s+)?(?:(?:big|large|small|full|long|quick|huge|good|massive)\\s+)?(?:drinks?|swigs?)\\b';
   const TAKE_RE = new RegExp('\\b(?:take|takes|have|has)\\s+' + NUM_PAT + DRINK_PAT, 'gi');
   const GIVE_RE = new RegExp('\\b(?:issue|issues|give|gives|hand out|hands out|assign|assigns|distribute|distributes|dish out|dishes out)\\s+(?:out\\s+)?' + NUM_PAT + DRINK_PAT, 'gi');
+  const EVERYONE = '(?:everyone|everybody|all players|the whole (?:group|table|room))';
+  const MODAL = '(?:(?:must|has to|have to|needs to|should)\\s+)?';
+  // "Everyone drinks" / "Everybody takes two drinks" (not "everyone drinks if ...")
+  const EVERYONE_RE = new RegExp('\\b' + EVERYONE + '\\s+' + MODAL + '(?:(?:takes?|has|have)\\s+' + NUM_PAT + DRINK_PAT + '|drinks?\\b(?!\\s+(?:if|when|unless|whenever|except)))', 'gi');
+  // "Finish your drink" / "Everyone must chug their beer"
+  const FINISH_RE = new RegExp('(\\b' + EVERYONE + '\\s+' + MODAL + ')?\\b(?:finish|finishes|down|downs|chug|chugs|sink|sinks|neck|necks)\\s+(?:your|their|his|her|the|a)\\s+(?:whole\\s+|entire\\s+)?(?:drink|glass|beer|cup|can)\\b', 'gi');
+  const WATERFALL_RE = /\bwaterfall\b/gi;
   function numOf(x) { x = String(x).toLowerCase(); return Object.prototype.hasOwnProperty.call(NUM_WORDS, x) ? NUM_WORDS[x] : (parseInt(x, 10) || 0); }
-  // "Take a drink" / "Take two drinks" -> take; "Issue 2 drinks" / "Give out three drinks" -> give.
+  // "Take a drink" -> take; "Issue 2 drinks" -> give; "Everyone drinks" / "Waterfall" -> all (every player).
   function parseDrinks(rule) {
-    const t = String(rule).replace(/<[^>]*>/g, ' ');
-    let take = 0, give = 0, m;
+    let t = String(rule).replace(/<[^>]*>/g, ' ');
+    let take = 0, give = 0, all = 0, m;
+    // Strip the "everyone" cases first so TAKE_RE doesn't count them again for the drawer.
+    t = t.replace(EVERYONE_RE, (_, n) => { all += n ? numOf(n) : 1; return ' '; });
+    t = t.replace(FINISH_RE, (_, ev) => { if (ev) all += FINISH_VALUE; else take += FINISH_VALUE; return ' '; });
+    t = t.replace(WATERFALL_RE, () => { all += WATERFALL_VALUE; return ' '; });
     TAKE_RE.lastIndex = 0; while ((m = TAKE_RE.exec(t))) take += numOf(m[1]);
     GIVE_RE.lastIndex = 0; while ((m = GIVE_RE.exec(t))) give += numOf(m[1]);
-    return { take, give };
+    return { take, give, all };
   }
 
   // Add ?online=0 to the page address to switch this whole script off (handy for ruling it out).
@@ -105,6 +121,7 @@
   let roster = {}, order = [], baseDeck = [], curN = 0, lastN = 0, refs = [], phase = 'menu', msg = '';
   let drawing = false, hostTimer = null, wake = null, stRef = null, starting = false;
   let blocked = false, latestState = null, qrRole = 'play', resultsOpen = false;
+  let baseOrder = [], extraSegs = [], reactSeen = null;
   const baseTitle = document.title;
   const amSpectator = () => !!(roster[uid] && roster[uid].spectator);
   // Resolves once the main script has loaded cards.json (gives up after ~15s).
@@ -112,6 +129,22 @@
   const cycles = new Map();
   const ready = firebase.auth().signInAnonymously().then(c => { uid = c.user.uid; }).catch(e => { msg = 'Sign-in failed: ' + (e.code || e.message); render(); });
   const root = () => db.ref('udc/' + code);
+
+  // ---- turn order as "segments" (lets late joiners be added without breaking the seeded sync) ----
+  // Segment 1 is the host's start order. Each late-join adds a segment starting at card `from`.
+  // Card n's player is a pure function of (segments, n), like everything else.
+  const toArr = x => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);
+  const normSegs = x => toArr(x).map(s => ({ from: s.from, r0: s.r0 || 0, order: toArr(s.order) }));
+  const segList = () => [{ from: 1, r0: 0, order: baseOrder }].concat(extraSegs);
+  function segFor(n) { let s = segList()[0]; segList().forEach(x => { if (x.from <= n) s = x; }); return s; }
+  const whoAt = n => { const s = segFor(n); return s.order.length ? s.order[(n - s.from) % s.order.length] : null; };
+  const inGameUid = id => segList().some(s => s.order.some(o => o.uid === id));
+  // Sets order/players/turn/round for the NEXT card, given n cards already drawn.
+  function syncTurn(n) {
+    const s = segFor(n + 1), len = s.order.length || 1, k = n + 1 - s.from;
+    order = s.order; players = order.map(p => ({ name: p.name, colour: p.colour }));
+    currentPlayerIndex = k % len; currentRound = s.r0 + Math.floor(k / len) + 1;
+  }
 
   // ---- UI ----
   const menu = document.getElementById('themeMenu');
@@ -122,6 +155,7 @@
   const css = document.createElement('style');
   css.textContent =
     '@keyframes udcTurnPulse{0%,100%{outline-color:transparent}50%{outline-color:var(--accent)}}' +
+    '@keyframes udcFloat{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translateY(-55vh) scale(1.3);opacity:0}}' +
     '#coverCard.udc-yourturn{outline:3px solid var(--accent);outline-offset:6px;animation:udcTurnPulse 1.2s ease-in-out infinite}' +
     '@media (prefers-reduced-motion:reduce){#coverCard.udc-yourturn{animation:none;outline-color:var(--accent)}}';
   document.head.appendChild(css);
@@ -148,6 +182,120 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const saved = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
   const keep = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+  // ---- reaction bar: 4 emojis, long-press one to swap it for any emoji you like ----
+  const DEFAULT_REACTIONS = ['🍻', '🥴', '😂', '💀'];
+  const MAX_EMOJI_LEN = 16;   // a family/flag/skin-tone emoji can be several characters long
+  let reactions = (() => {
+    try {
+      const a = JSON.parse(saved('udcReactions') || 'null');
+      if (Array.isArray(a) && a.length === 4 && a.every(x => typeof x === 'string' && x && x.length <= MAX_EMOJI_LEN)) return a;
+    } catch (e) {}
+    return DEFAULT_REACTIONS.slice();
+  })();
+
+  const reactBar = mkBar('position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);gap:6px;padding:6px 10px;background:rgba(0,0,0,.55);border-radius:999px;z-index:1200;backdrop-filter:blur(6px);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation');
+  function renderReactBar() {
+    reactBar.innerHTML = '';
+    reactions.forEach((e, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.dataset.i = i; b.textContent = e;
+      b.setAttribute('aria-label', 'React ' + e + ' (hold to change)');
+      b.style.cssText = 'font-size:22px;background:none;border:0;padding:4px 6px;cursor:pointer;color:inherit';
+      reactBar.appendChild(b);
+    });
+  }
+  renderReactBar();
+
+  let lastSent = 0;
+  function sendReaction(emoji) {
+    if (!code || !uid) return;
+    const now = Date.now(); if (now - lastSent < 800) return; lastSent = now;
+    root().child('react/' + uid).set({ e: emoji, t: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+  }
+
+  // -- long-press to edit --
+  let pressT = null, pressXY = null, longFired = false;
+  const clearPress = () => { clearTimeout(pressT); pressT = null; };
+  reactBar.addEventListener('pointerdown', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    longFired = false; pressXY = [ev.clientX, ev.clientY]; clearPress();
+    pressT = setTimeout(() => {
+      longFired = true;
+      try { vibrate([30]); } catch (x) {}
+      openEmojiEditor(+b.dataset.i);
+    }, 500);
+  });
+  reactBar.addEventListener('pointermove', ev => {
+    if (pressT && pressXY && Math.hypot(ev.clientX - pressXY[0], ev.clientY - pressXY[1]) > 12) clearPress();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => reactBar.addEventListener(t, clearPress));
+  reactBar.addEventListener('contextmenu', ev => ev.preventDefault());
+  reactBar.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (longFired) { longFired = false; return; }   // the release after a long-press is not a tap
+    sendReaction(reactions[+b.dataset.i]);
+  });
+
+  // -- the little editor that appears above the bar --
+  const editor = document.createElement('div');
+  editor.style.cssText = 'position:fixed;left:50%;bottom:calc(74px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:none;gap:8px;align-items:center;padding:10px 12px;background:rgba(0,0,0,.88);color:#fff;border-radius:14px;z-index:1250;font:700 13px Tahoma,sans-serif;max-width:92vw';
+  editor.innerHTML = '<span>Tap the box, then pick an emoji</span>' +
+    '<input id="oEmIn" type="text" autocomplete="off" aria-label="New emoji" style="width:64px;font-size:22px;text-align:center;border-radius:8px;border:0;padding:4px">' +
+    '<button type="button" id="oEmReset" style="background:none;border:1px solid #fff6;color:#fff;border-radius:8px;padding:4px 8px;cursor:pointer">Reset</button>' +
+    '<button type="button" id="oEmX" aria-label="Close" style="background:none;border:0;color:#fff;font-size:16px;cursor:pointer">✕</button>';
+  document.body.appendChild(editor);
+  const emInput = editor.querySelector('#oEmIn');
+  let editIdx = -1;
+
+  const graphemes = s => (window.Intl && Intl.Segmenter)
+    ? Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s), x => x.segment)
+    : Array.from(s);
+  const isEmoji = g => g.length <= MAX_EMOJI_LEN && /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(g);
+
+  function openEmojiEditor(i) {
+    editIdx = i; emInput.value = ''; editor.style.display = 'flex';
+    setTimeout(() => { try { emInput.focus(); } catch (x) {} }, 50);
+  }
+  function closeEmojiEditor() { editIdx = -1; editor.style.display = 'none'; emInput.blur(); }
+  function setReaction(i, e) {
+    reactions[i] = e; keep('udcReactions', JSON.stringify(reactions));
+    renderReactBar(); closeEmojiEditor();
+  }
+  emInput.addEventListener('input', ev => {
+    if (ev.isComposing || editIdx < 0) return;
+    const g = graphemes(emInput.value).find(isEmoji);
+    if (g) { setReaction(editIdx, g); say('Changed to ' + g); }
+    else if (emInput.value.trim()) { emInput.value = ''; say('That isn’t an emoji'); }
+  });
+  editor.querySelector('#oEmReset').addEventListener('click', () => { if (editIdx >= 0) setReaction(editIdx, DEFAULT_REACTIONS[editIdx]); });
+  editor.querySelector('#oEmX').addEventListener('click', closeEmojiEditor);
+  document.addEventListener('pointerdown', ev => {
+    if (editIdx >= 0 && !editor.contains(ev.target) && !reactBar.contains(ev.target)) closeEmojiEditor();
+  });
+
+  const showReactBar = () => {
+    const on = active && !blocked;
+    reactBar.style.display = on ? 'flex' : 'none';
+    if (!on) closeEmojiEditor();
+  };
+
+  // -- showing everyone's reactions --
+  function floatReaction(emoji, name) {
+    if (prefersReducedMotion) return say(name + ' ' + emoji);
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:' + (10 + Math.random() * 80) + '%;z-index:1300;pointer-events:none;text-align:center;font:700 11px Tahoma,sans-serif;color:#fff;text-shadow:0 1px 3px #000;animation:udcFloat 2.4s ease-out forwards';
+    d.innerHTML = '<div style="font-size:38px;line-height:1">' + esc(emoji) + '</div>' + esc(name);
+    document.body.appendChild(d); setTimeout(() => d.remove(), 2500);
+  }
+  function onReact(all) {
+    const first = reactSeen === null; if (first) reactSeen = {};   // the first snapshot only seeds, so old reactions never replay
+    for (const id in all) {
+      const r = all[id]; if (!r || typeof r.t !== 'number' || typeof r.e !== 'string') continue;
+      if (!first && r.t > (reactSeen[id] || 0) && roster[id]) floatReaction(r.e.slice(0, MAX_EMOJI_LEN), id === uid ? 'You' : roster[id].name);
+      reactSeen[id] = r.t;
+    }
+  }
 
   const byJoinTime = (a, b) => (a[1].t || 0) - (b[1].t || 0);
   const onlineCount = () => Object.values(roster).filter(p => p && p.online !== false && !p.spectator).length;
@@ -221,7 +369,7 @@
         return true;
       }
       case 'constructor':
-        new window.QRCode(wrap, { text, width: 200, height: 200, correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined });
+        new window.QRCode(wrap, { text, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined });
         return true;
       case 'kazuhiko': {
         const q = window.qrcode(0, 'M'); q.addData(text); q.make();
@@ -295,21 +443,24 @@
   // ---- end of game: drinks tally ----
   // Every phone can recompute every card from (seed, n), so the tally needs no extra data on the network.
   function tallyDrinks() {
-    const len = order.length || 1;
-    const rows = order.map(o => ({ uid: o.uid, name: o.name, colour: o.colour, cards: 0, take: 0, give: 0, total: 0 }));
-    let reds = 0, blacks = 0;
+    const rows = [], by = {};
+    segList().forEach(s => s.order.forEach(o => {
+      if (!by[o.uid]) { by[o.uid] = { uid: o.uid, name: o.name, colour: o.colour, from: s.from, cards: 0, take: 0, give: 0, total: 0 }; rows.push(by[o.uid]); }
+    }));
+    let reds = 0, blacks = 0, shared = 0;
     for (let n = 1; n <= curN; n++) {
-      const c = cardFor(n), r = rows[(n - 1) % len];
+      const c = cardFor(n), o = whoAt(n), r = o && by[o.uid];
       if (!r) continue;
       r.cards++;
       if (c.type === 'red') reds++;
       if (c.type === 'black') { blacks++; if (!BLACK_CARDS_COUNT) continue; }
-      const mult = c.type === 'red' ? 3 : 1;
-      const d = parseDrinks(c.rule);
+      const mult = c.type === 'red' ? 3 : 1, d = parseDrinks(c.rule);
       r.take += d.take * mult; r.give += d.give * mult;
+      // "Everyone drinks": every player who was in the game at that card pays.
+      if (d.all) { shared++; rows.forEach(x => { if (x.from <= n) x.take += d.all * mult; }); }
     }
     rows.forEach(r => { r.total = r.take + r.give; });
-    return { rows, reds, blacks, cards: curN, total: rows.reduce((a, r) => a + r.total, 0) };
+    return { rows, reds, blacks, shared, cards: curN, total: rows.reduce((a, r) => a + r.total, 0) };
   }
 
   function resultsHTML() {
@@ -336,6 +487,7 @@
     const notes = [];
     if (t.reds) notes.push(t.reds + ' red card' + (t.reds === 1 ? '' : 's') + ' counted ×3');
     if (t.blacks && !BLACK_CARDS_COUNT) notes.push(t.blacks + ' inverted (black) card' + (t.blacks === 1 ? '' : 's') + ' not counted');
+    if (t.shared) notes.push(t.shared + ' “everyone drinks” card' + (t.shared === 1 ? '' : 's') + ' counted for all players');
     if (notes.length) h += '<p class="sub" style="font-size:12px;margin:0 0 4px">' + esc(notes.join(' · ')) + '</p>';
     h += '<div class="setup-btn-row">' + (done && isHost ? '<button id="oAgain">Play again</button>' : '') + '<button id="oResBack" class="' + (done && isHost ? 'secondary-btn' : '') + '">' + (done ? 'Close' : 'Back') + '</button></div>' +
       '<div class="setup-btn-row"><button class="secondary-btn" id="oLeave">Leave</button></div>' +
@@ -374,6 +526,7 @@
           '<div class="setup-btn-row"><button id="oUpdate">Update cards</button><button class="secondary-btn" id="oReload">Reload page</button></div>';
       }
       h += '<div class="setup-field"><label id="oCount"></label><div id="oRoster"></div></div>' +
+        '<div id="oLate"></div>' +
         (curN > 0 && !blocked ? '<div class="setup-btn-row"><button id="oResults">🍻 Drinks tally</button></div>' : '') +
         '<div id="oShareBox"></div>' +
         '<div class="setup-btn-row"><button id="oClose">Back to game</button><button class="secondary-btn" id="oLeave">Leave</button></div>';
@@ -401,6 +554,21 @@
       esc(p.name || '?') + (id === uid ? ' (you)' : '') + (p.online === false ? ' · offline' : '') + '</div>').join('');
     list.innerHTML = html;
     if (cnt) cnt.textContent = (phase === 'playing' ? 'Players' : 'Players here') + ' (' + rows.length + ')' + (specs.length ? ' · ' + specs.length + ' watching' : '');
+
+    // People who joined a game already in progress wait here until the host adds them at the start of a round.
+    const late = document.getElementById('oLate');
+    if (late) {
+      const pend = phase === 'playing' ? Object.entries(roster).filter(([id, p]) => p && !p.spectator && p.online !== false && !inGameUid(id)).sort(byJoinTime) : [];
+      if (!pend.length) late.innerHTML = '';
+      else {
+        const ls = segList().slice(-1)[0], k = (curN + 1 - ls.from) % ls.order.length, rem = k === 0 ? 0 : ls.order.length - k, ok = rem === 0 && !finished();
+        late.innerHTML = '<div class="setup-field"><label>⏳ Waiting to join (' + pend.length + ')</label>' +
+          pend.map(([id, p]) => '<div style="text-align:left;padding:3px 0;font-weight:700;color:' + esc(p.colour || '#999') + '">' + esc(p.name || '?') + (id === uid ? ' (you)' : '') + '</div>').join('') +
+          (isHost ? '<div class="setup-btn-row"><button id="oAdmit"' + (ok ? '' : ' disabled') + '>' + (ok ? 'Add to game now' : 'Add after this round (' + rem + ' card' + (rem === 1 ? '' : 's') + ' to go)') + '</button></div>'
+                  : '<p class="sub">The host can let you in at the start of the next round.</p>') + '</div>';
+      }
+    }
+
     const st = document.getElementById('oStart');
     if (st) { const ok = onlineCount() >= MIN_PLAYERS; st.disabled = !ok; st.textContent = ok ? 'Start game' : 'Need ' + MIN_PLAYERS + '+ players'; }
   }
@@ -426,6 +594,7 @@
       await enter(id === 'oHost' ? 'host' : id === 'oWatch' ? 'watch' : 'join', name, colour);
     }
     else if (id === 'oStart') await startGame(btn);
+    else if (id === 'oAdmit') await admitLate();
     else if (id === 'oQrPlay' || id === 'oQrWatch') { qrRole = id === 'oQrWatch' ? 'watch' : 'play'; paintShare(); }
     else if (id === 'oCopy') copyLink(buildUrl(roleNow()));
     else if (id === 'oShare') shareLink(buildUrl(roleNow()));
@@ -439,11 +608,24 @@
   // ---- joining / hosting ----
   const randomCode = () => { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 5; i++) c += A[Math.floor(Math.random() * A.length)]; return c; };
 
+  // Rooms can't be listed (database rules), so each host registers its room in /udcIndex
+  // and sweeps any that have expired.
+  async function sweepOldRooms() {
+    try {
+      const old = await db.ref('udcIndex').orderByValue().endAt(Date.now() - ROOM_TTL_MS).limitToFirst(25).once('value');
+      const codes = []; old.forEach(c => { codes.push(c.key); });
+      await Promise.all(codes.map(async c => {
+        try { await db.ref('udc/' + c).remove(); await db.ref('udcIndex/' + c).remove(); } catch (x) {}
+      }));
+    } catch (x) {}
+  }
+
   // mode: 'host' | 'join' (as player) | 'watch' (as spectator)
   async function enter(mode, name, colour) {
     await ready; if (!uid) return;
     msg = '';
     const spectate = mode === 'watch';
+    let late = false;
     if (mode === 'host') {
       let ok = false;
       for (let k = 0; k < 6 && !ok; k++) {
@@ -456,12 +638,20 @@
       }
       if (!ok) { msg = 'Could not find a free game code, try again.'; code = null; return render(); }
       isHost = true;
+      db.ref('udcIndex/' + code).set(Date.now()).catch(() => {});
+      sweepOldRooms();
     } else {
       if (!code) { msg = 'Type the game code first.'; return render(); }
       let m;
       try { m = (await root().child('meta').once('value')).val(); } catch (x) { msg = 'Could not reach the game (' + (x.code || x.message) + ')'; code = null; return render(); }
       if (!m) { msg = 'No game found with that code.'; code = null; return render(); }
-      if (m.started && !spectate && !(m.order || []).some(o => o.uid === uid)) { msg = 'That game has already started. Tap “Watch only” to spectate.'; code = null; return render(); }
+      if (m.started && !spectate && !(m.order || []).some(o => o.uid === uid)) {
+        // Not in the starting line-up: either already added by the host later, or a late joiner who waits to be added.
+        try {
+          const stv = (await root().child('state').once('value')).val();
+          late = !toArr(stv && stv.segs).some(s => toArr(s.order).some(o => o.uid === uid));
+        } catch (x) { late = true; }
+      }
       isHost = m.host === uid;
     }
     const me = root().child('players/' + uid);
@@ -473,6 +663,7 @@
     keep('udcOnSession', code);
     pendingInvite = null;
     phase = 'lobby'; attach(); presence(); render();
+    if (late) say('Game in progress. The host can let you in at the next round.');
   }
 
   // Marks you offline (not removed) when the phone sleeps or loses signal, and back online on reconnect.
@@ -488,7 +679,7 @@
     try {
       if (c && uid) {
         const r = db.ref('udc/' + c), alone = Object.keys(roster).filter(i => i !== uid).length === 0;
-        if (alone) await r.remove();                                         // last one out closes the game
+        if (alone) { await r.remove(); db.ref('udcIndex/' + c).remove().catch(() => {}); }   // last one out closes the game
         else if (started) await r.child('players/' + uid + '/online').set(false); // keep your seat so you can rejoin
         else await r.child('players/' + uid).remove();
       }
@@ -518,6 +709,24 @@
     } catch (x) { msg = 'Could not start (' + (x.code || x.message) + ')'; render(); }
   }
 
+  // Host only: add everyone waiting to join, at the start of a round.
+  async function admitLate() {
+    const n = curN;
+    const ids = Object.entries(roster).filter(([id, p]) => p && !p.spectator && p.online !== false && !inGameUid(id)).sort(byJoinTime);
+    if (!isHost || !ids.length) return;
+    const add = ids.map(([id, p]) => ({ uid: id, name: p.name, colour: p.colour }));
+    try {
+      // Same transaction target as draws, so a join and a draw can never both win.
+      const res = await root().child('state').transaction(cur => {
+        if (((cur && cur.n) || 0) !== n) return undefined;
+        const extras = toArr(cur && cur.segs), l = [{ from: 1, r0: 0, order: baseOrder }].concat(extras), s = l[l.length - 1], k = n + 1 - s.from;
+        if (k % s.order.length !== 0) return undefined;   // only at the start of a round
+        return Object.assign({}, cur || {}, { n, segs: extras.concat([{ from: n + 1, r0: s.r0 + k / s.order.length, order: s.order.concat(add) }]) });
+      });
+      say(res.committed ? 'Added ' + add.map(a => a.name).join(', ') : 'A card was just drawn, try again');
+    } catch (x) { say('Could not add players: ' + (x.code || x.message)); }
+  }
+
   // ---- sync ----
   function attach() {
     const r = root();
@@ -531,6 +740,7 @@
       }
       paintRoster(); checkHost();
     });
+    on(r.child('react'), s => onReact(s.val() || {}));
     on(r.child('meta'), s => {
       const m = s.val();
       if (!m) {
@@ -559,7 +769,7 @@
     hostTimer = setTimeout(async () => {
       const old = meta && meta.host, cur = roster[old];
       if (!old || (cur && cur.online !== false)) return;
-      const inGame = id => !started || order.some(o => o.uid === id);
+      const inGame = id => !started || inGameUid(id);
       const cands = Object.entries(roster).filter(([id, p]) => p && p.online !== false && !p.spectator && inGame(id)).sort(byJoinTime);
       if (!cands.length || cands[0][0] !== uid) return;
       try { await root().child('meta/host').transaction(c => c === old ? uid : undefined); } catch (x) {}
@@ -598,13 +808,12 @@
 
   function startLocal(m) {
     started = true; active = true; phase = 'playing'; blocked = false;
-    order = m.order || [];
+    baseOrder = toArr(m.order); extraSegs = [];
     enabledCategories = new Set(m.cats || []);
     setDifficulty(m.diff || 'normal');
     discordModeCheckbox.checked = !!m.discord;
     randomiseOrderCheckbox.checked = false;
-    players = order.map(p => ({ name: p.name, colour: p.colour }));
-    trackingEnabled = true; gameStarted = true; currentPlayerIndex = 0; currentRound = 1;
+    trackingEnabled = true; gameStarted = true; syncTurn(0);
     unlimitedRounds = !!m.unlimited; totalRounds = unlimitedRounds ? Infinity : m.rounds;
     baseDeck = buildRaw(new Set(m.cats || []), !!m.discord);
     buildDeckFromEnabledCategories();   // so the "N of total" counter uses the host's categories, not this phone's own
@@ -613,13 +822,21 @@
     overlay.style.display = 'none';
     blocked = !!(m.sig && m.sig !== deckSig(baseDeck));
     warnBar.style.display = blocked ? 'block' : 'none';
+    showReactBar();
     if (blocked) overlay.style.display = 'flex';
     render(); keepAwake();
     if (stRef) { try { stRef.off(); } catch (x) {} }
     const st = root().child('state'); stRef = st;
     st.on('value', s => {
       latestState = s.val();
-      if (latestState) applyState(latestState);
+      const segsNow = normSegs(latestState && latestState.segs), wasIn = inGameUid(uid);
+      if (JSON.stringify(segsNow) !== JSON.stringify(extraSegs)) {   // the host added late joiners
+        extraSegs = segsNow; syncTurn(curN);
+        if (!finished()) updateTurnTracker();
+        if (!wasIn && inGameUid(uid)) say('You’ve been added to the game 🎉');
+        paintRoster(); clearNudge(); setTimeout(nudge, 300);
+      }
+      if (latestState && latestState.n) applyState(latestState);
       else { clearNudge(); setTimeout(() => { if (!curN) nudge(); }, 500); }   // nothing drawn yet: first player's turn
     });
     refs.push(st);
@@ -636,7 +853,7 @@
       baseDeck = buildRaw(new Set(meta.cats || []), !!meta.discord);
       cycles.clear();
       if (meta.sig === deckSig(baseDeck)) {
-        blocked = false; msg = ''; warnBar.style.display = 'none';
+        blocked = false; msg = ''; warnBar.style.display = 'none'; showReactBar();
         buildDeckFromEnabledCategories(); buildCategoryList(); lockSettings(true);
         overlay.style.display = 'none';
         say('Cards updated');
@@ -652,13 +869,13 @@
   function resetToLobby() {
     if (stRef) { try { stRef.off(); } catch (x) {} stRef = null; }
     started = false; active = false; phase = 'lobby'; drawing = false; blocked = false; latestState = null;
-    lastN = curN = 0; cycles.clear(); baseDeck = []; order = [];
+    lastN = curN = 0; cycles.clear(); baseDeck = []; order = []; baseOrder = []; extraSegs = []; reactSeen = null;
     players = []; trackingEnabled = false; gameStarted = false; currentPlayerIndex = 0; currentRound = 1;
     coverCard.classList.remove('flipped', 'face-up', 'type-black', 'type-red');
     cardFront.classList.remove('type-black', 'type-red');
     showingFront = true;
     cardFront.innerHTML = 'Ultimate Drinking Cards'; cardBack.innerHTML = '';
-    resultsOpen = false; clearNudge(); warnBar.style.display = 'none'; lockSettings(false);
+    resultsOpen = false; clearNudge(); warnBar.style.display = 'none'; lockSettings(false); showReactBar();
     buildDeckFromEnabledCategories(); preloadNextCard(); updateTurnTracker();
     msg = ''; overlay.style.display = 'flex'; render();
     say(isHost ? 'Game restarted' : 'The host restarted the game');
@@ -686,20 +903,24 @@
   function applyState(s) {
     if (!s || !s.n || s.n <= lastN || !baseDeck.length || blocked) return;
     clearNudge();
-    const n = s.n, len = order.length || 1;
+    const n = s.n;
     lastN = curN = n;
     drawnCount = Math.max(-1, n - 2);   // so the "N of total" counter is right even after a rejoin
-    // Turn and round come straight from the counter, so a phone that rejoins late lands in the right place.
-    currentPlayerIndex = (n - 1) % len; currentRound = Math.floor((n - 1) / len) + 1;
+    syncTurn(n - 1);                    // the player who drew card n; flipCard() then advances the turn
     const c = cardFor(n);
     cardBack.dataset.content = c.content; cardBack.dataset.type = c.type; cardBack.dataset.categoryColour = c.colour;
     flipCard();                         // plays the normal flip, sounds, flashes, and advances the turn
+    if (!finished()) { syncTurn(n); updateTurnTracker(); }   // correct player and round, even across a late join
     paintRoster();
     setTimeout(() => { if (curN === n) nudge(); }, 750);   // after the flip, tell the next player it's their turn
     if (finished()) setTimeout(() => { if (curN === n && !blocked) { resultsOpen = true; overlay.style.display = 'flex'; render(); } }, 2200);   // let the last card land first
   }
 
-  const finished = () => !unlimitedRounds && curN >= totalRounds * players.length;
+  const finished = () => {
+    if (unlimitedRounds || !meta) return false;
+    const l = segList(), s = l[l.length - 1];
+    return curN >= s.from - 1 + (meta.rounds - s.r0) * s.order.length;
+  };
   const canDraw = () => !amSpectator() && (isHost || (order[currentPlayerIndex] && order[currentPlayerIndex].uid === uid));
 
   async function draw() {
@@ -709,8 +930,9 @@
     clearNudge();
     const n = curN + 1;
     try {
-      const next = order.length ? order[n % order.length].uid : uid;   // who may draw card n+1
-      const res = await root().child('state').transaction(cur => ((cur && cur.n) || 0) === n - 1 ? { n, prev: n - 1, by: uid, next } : undefined);
+      const nx = whoAt(n + 1), next = nx ? nx.uid : uid;   // who may draw card n+1
+      // Object.assign keeps anything else stored on state (the late-joiner segments).
+      const res = await root().child('state').transaction(cur => ((cur && cur.n) || 0) === n - 1 ? Object.assign({}, cur || {}, { n, prev: n - 1, by: uid, next }) : undefined);
       if (!res.committed) say('Someone just drew, hang on…');
     } catch (x) { say('Could not draw: ' + (x.code || x.message)); }
     finally { drawing = false; }
@@ -725,6 +947,7 @@
     if (inLobby) { overlay.style.display = 'flex'; render(); return say('Waiting for the host to start'); }
     if (blocked) { overlay.style.display = 'flex'; render(); return say('Update your cards first'); }
     if (amSpectator()) return say('You’re watching. Only players can draw.');
+    if (!inGameUid(uid)) return say('Waiting for the host to let you in');
     if (finished()) return say('Game complete! 🎉');
     if (!canDraw()) return say('It’s ' + (players[currentPlayerIndex] ? players[currentPlayerIndex].name : 'someone else') + '’s turn');
     draw();
