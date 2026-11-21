@@ -389,8 +389,7 @@
   #themeMenu .menu-action[data-deck-preset]:hover:not(:disabled) {
     background: var(--button-bg);
     border-color: var(--button-border);
-    filter: brightness(1.15);
-    transform: scale(1.03);
+    filter: brightness(0.96);
   }
 
   #udcOnlineBox #oStart:disabled {
@@ -491,6 +490,18 @@
     box-shadow: none;
   }
 
+  .drink-estimate {
+    text-align: left;
+    color: var(--menu-glass-muted, #bbb);
+    font: 13px/1.5 Tahoma, sans-serif;
+    margin: 0 0 16px;
+  }
+
+  .drink-estimate strong {
+    display: block;
+    color: var(--menu-glass-text, #eee);
+  }
+
   /* Theme / settings menu */
   #themeMenu {
     position: fixed;
@@ -530,7 +541,7 @@
     text-transform: uppercase;
     letter-spacing: 0.8px;
     font-weight: 700;
-    color: color-mix(in srgb, var(--accent, #ffffff) 93%, #ffffff 93%);
+    color: var(--menu-glass-muted);
   }
 
   #themeMenu :is(.category-list label, .roundsRow label, .category-empty) {
@@ -544,11 +555,6 @@
 
   #themeMenu .toggle-btn {
     color: var(--menu-glass-muted);
-  }
-
-#themeMenu .toggle-btn:hover {
-  transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.04);
   }
 
   #themeMenu .toggle-btn.active {
@@ -676,9 +682,7 @@
   }
 
   #themeMenu .menu-action:not([data-deck-preset]):hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.03);
-    cursor: pointer;
+    background: rgba(255, 255, 255, 0.12);
   }
 
   .category-bulk-row {
@@ -1399,6 +1403,10 @@ body:not(.in-discord) .kwc-repo-search input {
             <label><input type="checkbox" id="randomiseOrderCheckbox"> Randomise turn order</label>
           </div>   
         </div>
+        <p class="drink-estimate">
+          <strong>END (Estimated Number of Drinks)</strong>
+          <span id="setupDrinkEstimate" aria-live="polite"></span>
+        </p>
 
 
 
@@ -1706,6 +1714,28 @@ function groupToDraws(group) {
 
   let trackingModeSelected = "off";
 
+  function formatDrinkEstimate(playerCount, rounds) {
+    if (playerCount < 1) return "Add a player to see an estimate.";
+
+    const drinksPerRound = (49 + 45 * Math.sqrt(playerCount - 1)) / 100;
+    const perRound = rounds === Infinity;
+    const estimate = drinksPerRound * (perRound ? 1 : rounds);
+    const format = value => perRound ? value.toFixed(1) : String(Math.round(value));
+    return "About " + format(estimate) + " per player · " +
+      format(estimate * playerCount) + " total" + (perRound ? " per round" : "");
+  }
+
+  function setupRoundCount() {
+    return Math.max(1, parseInt(roundsInput.value, 10) || 1);
+  }
+
+  function paintSetupDrinkEstimate() {
+    const playerCount = playerNamesContainer.children.length;
+    const perRound = unlimitedRoundsCheckbox.checked || randomiseOrderCheckbox.checked;
+    document.getElementById("setupDrinkEstimate").textContent =
+      formatDrinkEstimate(playerCount, perRound ? Infinity : setupRoundCount());
+  }
+
   function toggleTrackingFieldsVisibility() {
     trackingFields.style.display = trackingModeSelected === "on" ? "block" : "none";
   }
@@ -1715,6 +1745,7 @@ function groupToDraws(group) {
     trackingOnBtn.classList.toggle("active", mode === "on");
     trackingOffBtn.classList.toggle("active", mode === "off");
     toggleTrackingFieldsVisibility();
+    if (mode === "on") paintSetupDrinkEstimate();
   }
 
   trackingOnBtn.addEventListener("click", () => setTrackingMode("on"));
@@ -1755,14 +1786,21 @@ function groupToDraws(group) {
     roundsInput.value = prefillRounds;
     unlimitedRoundsCheckbox.checked = prefillUnlimited;
     roundsInput.disabled = prefillUnlimited;
-    setTrackingMode(prefillTracking ? "on" : "off");
     randomiseOrderCheckbox.checked = prefillRandomise;
+    setTrackingMode(prefillTracking ? "on" : "off");
   }
 
-  addPlayerButton.addEventListener("click", () => createPlayerRow());
+  addPlayerButton.addEventListener("click", () => {
+    createPlayerRow();
+    paintSetupDrinkEstimate();
+  });
+
+  roundsInput.addEventListener("input", paintSetupDrinkEstimate);
+  randomiseOrderCheckbox.addEventListener("change", paintSetupDrinkEstimate);
 
   unlimitedRoundsCheckbox.addEventListener("change", () => {
     roundsInput.disabled = unlimitedRoundsCheckbox.checked;
+    paintSetupDrinkEstimate();
   });
 
   function openSetupOverlay() {
@@ -1830,7 +1868,7 @@ function updateCardCounter() {
       currentPlayerIndex = 0;
       currentRound = 1;
       unlimitedRounds = unlimitedRoundsCheckbox.checked;
-      totalRounds = unlimitedRounds ? Infinity : Math.max(1, parseInt(roundsInput.value, 10) || 1);
+      totalRounds = unlimitedRounds ? Infinity : setupRoundCount();
     } else {
       players = [];
     }
@@ -2281,7 +2319,7 @@ function vibrate(pattern) {
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="udc-online.js?v=18"></script>
+<script src="udc-online.js?v=25"></script>
   
 </body>
 </html>

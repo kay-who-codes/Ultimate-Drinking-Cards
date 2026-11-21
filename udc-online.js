@@ -1,6 +1,6 @@
 /* udc-online.js: Ultimate Drinking Cards online multiplayer */
 (() => {
-  const VERSION = 'v19';
+  const VERSION = 'v25';
   const QR_SCRIPTS = ['qrcode.min.js', 'qrcode.js'];
 
   const BLACK_CARDS_COUNT = false;
@@ -222,16 +222,56 @@
       '#udcOnlineBox.udc-lobby{box-sizing:border-box;width:100%;max-width:640px}' +
       '.udcLobbyInvite{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}' +
       '.udcLobbySettings summary{cursor:pointer;font-weight:700;color:var(--muted);margin:8px 0}' +
-      '@media(max-width:440px){.udcLobbyInvite{grid-template-columns:1fr}}' +
+      '#udcOnlineBox{box-sizing:border-box}' +
+      '#oShareBox{min-width:0}' +
+      '#oShareBox .setup-btn-row,#oShareBox .toggleButtonRow{flex-wrap:wrap}' +
+      '#oShareBox button{min-width:0;overflow-wrap:anywhere}' +
+      '.udcQRImage{box-sizing:border-box;width:220px;max-width:100%;min-width:0;background:#fff;padding:10px;border-radius:12px;line-height:0}' +
+      '.udcQRImage :is(canvas,img,svg){display:block;width:100%!important;height:auto!important;aspect-ratio:1}' +
+      '#oQR{display:flex;justify-content:center;overflow-wrap:anywhere;font-size:12px}' +
+      '#oQrDisclosure{margin-top:10px}' +
+      '#oQrDisclosure summary{cursor:pointer;margin-bottom:8px}' +
+      '@media(max-width:600px){#udcOnlineBox{padding:20px 16px}.udcLobbyInvite{grid-template-columns:minmax(0,1fr)}}' +
       '#udcRoomInvite{position:relative;z-index:20;color:var(--panel-text)}' +
       '#udcRoomCode{border:1px solid var(--accent);border-radius:999px;padding:6px 14px;background:var(--panel-bg);color:inherit;font:700 14px Tahoma,sans-serif;cursor:pointer}' +
-      '#udcRoomQRPanel{position:fixed;inset:0;box-sizing:border-box;width:264px;max-width:calc(100vw - 24px);max-height:calc(100% - 24px);margin:auto;padding:0;border:0;border-radius:16px;background:var(--panel-bg);color:var(--panel-text);text-align:center;box-shadow:0 12px 40px #0008}' +
-      '#udcRoomQRPanel::backdrop{background:rgba(0,0,0,.72)}' +
+      '#udcRoomQRPanel{position:fixed;inset:0;box-sizing:border-box;width:264px;max-width:calc(100vw - 24px);max-height:calc(100% - 24px);margin:auto;padding:0;border:1px solid var(--menu-glass-border,#ffffff24);border-radius:20px;background:var(--menu-glass-tint,#eeeeee0a);color:var(--menu-glass-text,#eee);text-align:center;box-shadow:0 20px 50px #0007;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color-scheme:dark}' +
+      '#udcRoomQRPanel::backdrop{background:rgba(0,0,0,.85);animation:udcDimIn .24s ease-out both}' +
+      '@keyframes udcDimIn{from{opacity:0}to{opacity:1}}' +
+      '@media(prefers-reduced-motion:reduce){#udcRoomQRPanel::backdrop{animation:none}}' +
       '#udcRoomQRPanel form{padding:16px}' +
       '#udcRoomQRTitle{margin:0 0 12px;font:700 20px Tahoma,sans-serif}' +
-      '#udcRoomQRClose{display:block;margin:12px auto 0;padding:6px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--panel-bg);color:inherit;cursor:pointer}' +
+      '#udcRoomQRClose{display:block;margin:12px auto 0;padding:6px 14px;border:1px solid var(--accent);border-radius:999px;background:var(--menu-glass-tint,#eeeeee0a);color:inherit;cursor:pointer}' +
       '#udcRoomQR{display:flex;justify-content:center;font-size:13px}' +
       '#udcRoomJoinLink{display:inline-block;margin-top:6px;color:inherit}';
+    css.textContent += `
+      #udcOnlineBox .udc-results .udc-results-you,
+      #udcOnlineBox .udc-results .udc-results-score { color: #fff; }
+      #udcOnlineBox .udc-results button { box-shadow: none; }
+      #udcOnlineBox .udc-results #oGameSettings {
+        background: #363e49;
+        color: #fff;
+        border: 1px solid #8592a1;
+      }
+      #udcOnlineBox .udc-results #oLeave.udc-results-leave {
+        background: #ffc4c4;
+        color: #531b20;
+        border: 1px solid #dc9196;
+      }
+      #udcOnlineBox .udc-results button:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      @media (hover: hover) {
+        #udcOnlineBox .udc-results button:hover:not(:disabled) {
+          filter: brightness(1.15);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #udcOnlineBox .udc-results button { transition: none; }
+        #udcOnlineBox .udc-results button:hover { transform: none; }
+      }
+    `;
     document.head.appendChild(css);
 
     const overlay = document.createElement('div');
@@ -592,13 +632,27 @@
     async function sendReaction(emoji) {
       if (!code || !active || !connected || !uid) return;
       try {
-        await root().child('react/' + uid).set({
+        const room = code;
+        const sender = uid;
+        const reactions = root().child('react');
+        await reactions.child(sender).set({
           e: emoji,
+          id: reactions.push().key,
           t: firebase.database.ServerValue.TIMESTAMP
         });
+        // The sender displays the acknowledged write once, outside Firebase's
+        // listener, which also receives the optimistic local timestamp.
+        if (code === room && active && uid === sender) {
+          showPlayerReaction(sender, emoji);
+        }
       } catch (e) {
         say('Reaction not sent');
       }
+    }
+
+    function showPlayerReaction(id, emoji) {
+      const player = roster[id] || order.find(p => p.uid === id);
+      showReaction(emoji, player?.name || 'Player', player?.colour);
     }
 
     function listenReactions() {
@@ -611,22 +665,18 @@
         initialSnapshot = false;
         const values = snapshot.val() || {};
         for (const [id, entry] of Object.entries(values)) {
-          if (!entry || typeof entry.e !== 'string') continue;
+          if (id === uid || !entry || typeof entry.e !== 'string') continue;
 
           const stamp = Number(entry.t) || 0;
           const previous = reactionSeen.get(id);
-          reactionSeen.set(
-            id,
-            Math.max(stamp, previous || 0)
-          );
+          const pressId = typeof entry.id === 'string' ? entry.id : null;
+          const isNew = pressId
+            ? pressId !== previous?.id
+            : stamp > (previous?.stamp || 0);
 
-          if (
-            showNewReactions &&
-            stamp > (previous || 0) &&
-            Date.now() - stamp < 8000
-          ) {
-            const player = roster[id] || order.find(p => p.uid === id);
-            showReaction(entry.e, player?.name || 'Player', player?.colour);
+          reactionSeen.set(id, { id: pressId, stamp: Math.max(stamp, previous?.stamp || 0) });
+          if (showNewReactions && isNew && Date.now() - stamp < 8000) {
+            showPlayerReaction(id, entry.e);
           }
         }
       };
@@ -772,6 +822,15 @@
       return lobbyDraft;
     }
 
+    function paintLobbyDrinkEstimate() {
+      const estimate = document.getElementById('oDrinkEstimate');
+      if (!estimate || typeof formatDrinkEstimate !== 'function') return;
+      const draft = getLobbyDraft();
+      estimate.textContent = formatDrinkEstimate(
+        onlineCount(), draft.unlimited ? Infinity : roundCount(draft.rounds)
+      );
+    }
+
     function lobbySettingsHTML() {
       const draft = getLobbyDraft();
       const categories = getUniqueCategories();
@@ -796,7 +855,12 @@
         '<button type="button" id="oCompetitive">Competitive</button></div>' +
         '<details id="oCategories"><summary>Categories</summary>' +
         '<div class="category-list">' + (categoryOptions || 'Loading categories…') +
-        '</div></details></div>';
+        '</div></details>' +
+        (typeof formatDrinkEstimate === 'function'
+          ? '<p class="drink-estimate"><strong>END (Estimated Number of Drinks)</strong>' +
+            '<span id="oDrinkEstimate" aria-live="polite"></span></p>'
+          : '') +
+        '</div>';
     }
 
     const roleNow = () =>
@@ -880,8 +944,7 @@
     function drawQR(el, text) {
       el.innerHTML = '';
       const wrap = document.createElement('div');
-      wrap.style.cssText =
-        'background:#fff;padding:10px;border-radius:12px;line-height:0';
+      wrap.className = 'udcQRImage';
       el.appendChild(wrap);
 
       switch (qrApi()) {
@@ -913,11 +976,6 @@
           wrap.innerHTML = q.createSvgTag
             ? q.createSvgTag(4, 0)
             : q.createImgTag(4, 0);
-          const c = wrap.firstElementChild;
-          if (c) {
-            c.style.width = '200px';
-            c.style.height = '200px';
-          }
           return true;
         }
         case 'qrious': {
@@ -947,19 +1005,33 @@
           '<button type="button" class="toggle-btn' +
           (qrRole === 'watch' ? ' active' : '') +
           '" id="oQrWatch">Spectators</button></div>') +
-        '<div id="oQR" style="display:flex;justify-content:center;min-height:60px;font-size:12px">Loading QR code…</div>' +
+        '<details id="oQrDisclosure"' + (lobbyQROpen ? ' open' : '') + '>' +
+        '<summary>Invite QR code</summary><div id="oQR"></div></details>' +
         '<div class="setup-btn-row" style="margin-top:10px">' +
         '<button id="oCopy">Copy link</button>' +
         '<button id="oShare">Share</button></div></div>';
     }
+
+    let lobbyQROpen = !window.matchMedia('(max-width: 600px)').matches;
 
     function paintShare() {
       const holder = document.getElementById('oShareBox');
       if (!holder || !code) return;
 
       holder.innerHTML = shareHTML();
+      const disclosure = holder.querySelector('#oQrDisclosure');
       const el = holder.querySelector('#oQR');
-      renderInviteQR(el, buildUrl(roleNow()), 'Use Copy link or Share.');
+      const renderQR = () => {
+        if (disclosure.open && !el.hasChildNodes()) {
+          renderInviteQR(el, buildUrl(roleNow()), 'Use Copy link or Share.');
+        }
+      };
+      disclosure.addEventListener('toggle', () => {
+        if (!disclosure.isConnected) return;
+        lobbyQROpen = disclosure.open;
+        renderQR();
+      });
+      renderQR();
     }
 
     async function renderInviteQR(el, url, fallback, visible = () => true) {
@@ -992,6 +1064,7 @@
         return;
       } else return;
 
+      paintLobbyDrinkEstimate();
       clearTimeout(shareT);
       shareT = setTimeout(paintShare, 300);
     }
@@ -1094,6 +1167,14 @@
       };
     }
 
+    function resultPlayerName(player) {
+      const name = esc(player.name || '?');
+      const colour = player.colour;
+      if (typeof colour !== 'string' || !/^#[0-9a-f]{6}$/i.test(colour)) return name;
+      return '<span style="display:inline-block;color:' + colour +
+        ';filter:brightness(1.35)">' + name + '</span>';
+    }
+
     function resultsHTML() {
       const t = tallyDrinks();
       const done = finished();
@@ -1104,7 +1185,8 @@
       const max = sorted.length ? sorted[0].total : 0;
 
       let h =
-        '<h2>' + (done ? '🏁 Game over' : '🍻 Drinks so far') +
+        '<section class="udc-results" aria-labelledby="udcResultsTitle">' +
+        '<h2 id="udcResultsTitle">' + (done ? '🏁 Game over' : '🍻 Drinks so far') +
         '</h2>' +
         '<p class="sub">' + t.cards + ' card' +
         (t.cards === 1 ? '' : 's') + ' drawn</p>' +
@@ -1122,9 +1204,9 @@
           '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' +
           esc(r.colour || '#999') +
           ';margin-right:7px"></span>' +
-          esc(r.name || '?') +
-          (r.uid === uid ? ' (you)' : '') +
-          '</span><span style="font-size:20px">' +
+          resultPlayerName(r) +
+          (r.uid === uid ? ' <span class="udc-results-you">(you)</span>' : '') +
+          '</span><span class="udc-results-score" style="font-size:20px">' +
           r.total + '</span></div>' +
           '<div style="height:6px;border-radius:3px;background:rgba(0,0,0,.1);margin:5px 0">' +
           '<div style="height:100%;width:' + pct +
@@ -1141,10 +1223,10 @@
       if (max > 0) {
         const top = sorted
           .filter(r => r.total === max)
-          .map(r => r.name)
+          .map(resultPlayerName)
           .join(' & ');
         h += '<p class="sub" style="margin:6px 0 4px">' +
-          '<b>Most drinks:</b> ' + esc(top) +
+          '<b>Most drinks:</b> ' + top +
           ' (' + max + ')</p>';
       } else if (t.cards) {
         h += '<p class="sub" style="margin:6px 0 4px">' +
@@ -1168,17 +1250,14 @@
       h += '<div class="setup-btn-row">' +
         (done && isHost
           ? '<button id="oAgain">Play again</button>' +
-            '<button id="oGameSettings" class="secondary-btn">Go to game settings</button>'
+            '<button id="oGameSettings">Go to game settings</button>'
           : '') +
-        '<button id="oResBack" class="' +
-        (done ? (isHost ? 'secondary-btn' : '') : 'udc-back-to-game') +
-        '">' + (done ? 'Close' : 'Back to game') +
-        '</button></div>' +
-        '<div class="setup-btn-row">' +
-        '<button id="oLeave">Leave</button>' +
+        (done
+          ? '<button id="oLeave" class="udc-results-leave">Leave</button>'
+          : '<button id="oResBack" class="udc-back-to-game">Back to game</button>') +
         '</div>' +
         '<p class="sub" style="font-size:11px;opacity:.55;margin:14px 0 0">' +
-        'online script ' + VERSION + '</p>';
+        'online script ' + VERSION + '</p></section>';
 
       return h;
     }
@@ -1377,6 +1456,7 @@
 
       const st = document.getElementById('oStart');
       if (st) {
+        paintLobbyDrinkEstimate();
         const ok = onlineCount() >= MIN_PLAYERS;
         st.disabled = !ok;
         st.textContent = ok
