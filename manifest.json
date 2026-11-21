@@ -1,0 +1,14 @@
+{
+  "name": "Ultimate Drinking Cards",
+  "short_name": "UDC",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1210",
+  "theme_color": "#0d1210",
+  "icons": [
+    { "src": "AppFiles/Logos/AppIcon192px.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "AppFiles/Logos/AppIcon512px.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
