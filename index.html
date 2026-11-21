@@ -1155,6 +1155,7 @@ body:not(.in-discord) .kwc-repo-search input {
           <input type="color" id="customPanelBgInput" value="#e3e3e3">
         </div>
       </div>
+    </div>
 
     <div class="menuSection">
       <h3>Discord Mode</h3>
@@ -1163,12 +1164,12 @@ body:not(.in-discord) .kwc-repo-search input {
       </div>
     </div>
 
+    <div class="menuSection">
       <h3>Difficulty</h3>
-  <div class="toggleButtonRow" id="difficultyRow">
+      <div class="toggleButtonRow" id="difficultyRow">
     <button type="button" class="toggle-btn active" id="difficultyNormalBtn" data-difficulty="normal">Normal</button>
     <button type="button" class="toggle-btn" id="difficultyCrazyBtn" data-difficulty="crazy">CRAZY</button>
   </div>
-
     </div>
 
     <div class="menuSection">
@@ -1295,6 +1296,17 @@ if (isDiscord) {
   const coverCard = document.getElementById("coverCard");
   const cardFront = coverCard.querySelector(".card-front");
   const cardBack = coverCard.querySelector(".card-back");
+
+
+  // Screen flashes: declared once here instead of on every card flip.
+  const blackFlash = document.getElementById("blackFlash");
+  const redFlash = document.getElementById("redFlash");
+  const flashTimers = {};
+  function flash(el, ms) {
+    el.classList.add("active");
+    clearTimeout(flashTimers[el.id]);
+    flashTimers[el.id] = setTimeout(() => el.classList.remove("active"), ms);
+  }
 
   // ---------- Data shapes ----------
   // OLD: allCards = [{ Category, Rule, Colour }, ...]  (one entry per rule)
@@ -1555,7 +1567,8 @@ function groupToDraws(group) {
   }
 
   // Accepts either an array of strings (old behaviour) or {name, colour} objects.
-  function resetSetupFields(prefill = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false, prefillRandomise = false) {    playerNamesContainer.innerHTML = "";
+  function resetSetupFields(prefill = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false, prefillRandomise = false) {
+    playerNamesContainer.innerHTML = "";
     prefill.forEach(p => {
       if (typeof p === "string") {
         createPlayerRow(p);
@@ -1745,14 +1758,8 @@ function saveEnabledCategoriesToStorage() {
   fetch("AppFiles/Data/cards.json")
     .then((response) => response.json())
     .then((data) => {
-      // NEW grouped shape: one entry per category, Rules is an array.
       allCards = [...data];
-
-      // Build category colours + flat draws from the grouped data.
-      allCards = [...data];
-
-      // Build category colours + flat draws from the grouped data.
-      rebuildAllDraws();
+      rebuildAllDraws();   // builds category colours + the flat list of draws
 
       const uniqueCategories = getUniqueCategories();
       loadEnabledCategoriesFromStorage(uniqueCategories);
@@ -1878,34 +1885,12 @@ function applyPreloadedContent(isFront = true) {
 const upcomingType = cardBack.dataset.type || "white";
 
 
-      const blackFlash = document.getElementById("blackFlash");
-      let blackFlashTimeout = null;
-      function triggerBlackFlash() {
-        blackFlash.classList.add("active");
-        if (blackFlashTimeout) clearTimeout(blackFlashTimeout);
-        blackFlashTimeout = setTimeout(() => blackFlash.classList.remove("active"), 220);
-      }
-      
-      const redFlash = document.getElementById("redFlash");
-      let redFlashTimeout = null;
-
-function triggerRedFlash() {
-  redFlash.classList.add("active");
-  if (redFlashTimeout) clearTimeout(redFlashTimeout);
-  redFlashTimeout = setTimeout(() => {
-    redFlash.classList.remove("active");
-  }, 180);
-}
-
     // Count the card being revealed.
     if (drawnCount < totalDrawsInPlay) {
       drawnCount++;
     }
 
-    if (showingFront) {       applyPreloadedContent(false);
-    } else {
-      applyPreloadedContent(true);
-    }
+    applyPreloadedContent(!showingFront);
 
     preloadNextCard();
     updateCardCounter();
@@ -1918,10 +1903,10 @@ function triggerRedFlash() {
     playCardSound(upcomingType);
 
     if (upcomingType === "red") {
-    triggerRedFlash();
+    flash(redFlash, 180);
     }
     if (upcomingType === "black") {
-    triggerBlackFlash();
+    flash(blackFlash, 220);
     }
 
     // Haptics
@@ -2097,7 +2082,7 @@ function vibrate(pattern) {
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="udc-online.js?v=8"></script>
+<script src="udc-online.js?v=9"></script>
   
 </body>
 </html>

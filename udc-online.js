@@ -5,7 +5,7 @@
    (or the host) can draw. Spectators can watch but never draw.
    Pair this with database.rules.json (publish it in the Firebase console / CLI). */
 (() => {
-  const VERSION = 'v8';
+  const VERSION = 'v9';
 
   // QR code script(s) saved next to index.html. Tried in order until one exposes a known QR API.
   // Change/add your real filename here if it is not one of these.
