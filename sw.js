@@ -1,6 +1,6 @@
 /* sw.js: makes Ultimate Drinking Cards installable and playable offline (Just Cards mode).
    Bump CACHE_VERSION whenever you change any precached file. */
-const CACHE_VERSION = 'udc-v1';
+const CACHE_VERSION = 'udc-v2';
 const CORE = `${CACHE_VERSION}-core`;
 const RUNTIME = `${CACHE_VERSION}-runtime`;
 
@@ -9,7 +9,7 @@ const PRECACHE = [
   'index.html',
   'theme.js',
   'udc-online.js',
-  'qrcode.min.js',
+  'qrcode.js',
   'manifest.json',
   'AppFiles/Data/cards.json',
   'AppFiles/Icons/favicon.ico',
