@@ -5,11 +5,31 @@
    (or the host) can draw. Spectators can watch but never draw.
    Pair this with database.rules.json (publish it in the Firebase console / CLI). */
 (() => {
-  const VERSION = 'v7';
+  const VERSION = 'v8';
 
   // QR code script(s) saved next to index.html. Tried in order until one exposes a known QR API.
   // Change/add your real filename here if it is not one of these.
   const QR_SCRIPTS = ['qrcode.min.js', 'qrcode.js'];
+
+
+  // ---- drink tally: reading drinks out of card text ----
+  // Black cards are inverted ("Take a drink" is no longer what you do), so by default they are not counted.
+  // Set to true to count black cards as written.
+  const BLACK_CARDS_COUNT = false;
+  const NUM_WORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+  const NUM_PAT = '(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\\d{1,2})';
+  const DRINK_PAT = '\\s+(?:more\\s+)?(?:(?:big|large|small|full|long|quick|huge|good|massive)\\s+)?(?:drinks?|swigs?)\\b';
+  const TAKE_RE = new RegExp('\\b(?:take|takes|have|has)\\s+' + NUM_PAT + DRINK_PAT, 'gi');
+  const GIVE_RE = new RegExp('\\b(?:issue|issues|give|gives|hand out|hands out|assign|assigns|distribute|distributes|dish out|dishes out)\\s+(?:out\\s+)?' + NUM_PAT + DRINK_PAT, 'gi');
+  function numOf(x) { x = String(x).toLowerCase(); return Object.prototype.hasOwnProperty.call(NUM_WORDS, x) ? NUM_WORDS[x] : (parseInt(x, 10) || 0); }
+  // "Take a drink" / "Take two drinks" -> take; "Issue 2 drinks" / "Give out three drinks" -> give.
+  function parseDrinks(rule) {
+    const t = String(rule).replace(/<[^>]*>/g, ' ');
+    let take = 0, give = 0, m;
+    TAKE_RE.lastIndex = 0; while ((m = TAKE_RE.exec(t))) take += numOf(m[1]);
+    GIVE_RE.lastIndex = 0; while ((m = GIVE_RE.exec(t))) give += numOf(m[1]);
+    return { take, give };
+  }
 
   // Add ?online=0 to the page address to switch this whole script off (handy for ruling it out).
   if (/[?&]online=0\b/.test(location.search)) { console.info('UDC online: disabled by ?online=0'); return; }
@@ -84,7 +104,7 @@
   let uid = null, code = null, isHost = false, meta = null, metaSeen = false, started = false, active = false;
   let roster = {}, order = [], baseDeck = [], curN = 0, lastN = 0, refs = [], phase = 'menu', msg = '';
   let drawing = false, hostTimer = null, wake = null, stRef = null, starting = false;
-  let blocked = false, latestState = null, qrRole = 'play';
+  let blocked = false, latestState = null, qrRole = 'play', resultsOpen = false;
   const baseTitle = document.title;
   const amSpectator = () => !!(roster[uid] && roster[uid].spectator);
   // Resolves once the main script has loaded cards.json (gives up after ~15s).
@@ -272,7 +292,59 @@
     document.title = baseTitle;
   }
 
+  // ---- end of game: drinks tally ----
+  // Every phone can recompute every card from (seed, n), so the tally needs no extra data on the network.
+  function tallyDrinks() {
+    const len = order.length || 1;
+    const rows = order.map(o => ({ uid: o.uid, name: o.name, colour: o.colour, cards: 0, take: 0, give: 0, total: 0 }));
+    let reds = 0, blacks = 0;
+    for (let n = 1; n <= curN; n++) {
+      const c = cardFor(n), r = rows[(n - 1) % len];
+      if (!r) continue;
+      r.cards++;
+      if (c.type === 'red') reds++;
+      if (c.type === 'black') { blacks++; if (!BLACK_CARDS_COUNT) continue; }
+      const mult = c.type === 'red' ? 3 : 1;
+      const d = parseDrinks(c.rule);
+      r.take += d.take * mult; r.give += d.give * mult;
+    }
+    rows.forEach(r => { r.total = r.take + r.give; });
+    return { rows, reds, blacks, cards: curN, total: rows.reduce((a, r) => a + r.total, 0) };
+  }
+
+  function resultsHTML() {
+    const t = tallyDrinks(), done = finished();
+    const sorted = t.rows.slice().sort((a, b) => b.total - a.total || String(a.name).localeCompare(String(b.name)));
+    const max = sorted.length ? sorted[0].total : 0;
+    let h = '<h2>' + (done ? '🏁 Game over' : '🍻 Drinks so far') + '</h2>' +
+      '<p class="sub">' + t.cards + ' card' + (t.cards === 1 ? '' : 's') + ' drawn</p>' +
+      '<div style="font-size:60px;font-weight:900;line-height:1">' + t.total + '</div>' +
+      '<div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#555;margin:2px 0 18px">Total drinks</div>';
+    h += sorted.map(r => {
+      const pct = max ? Math.round(100 * r.total / max) : 0;
+      return '<div style="text-align:left;margin-bottom:12px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700">' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + esc(r.colour || '#999') + ';margin-right:7px"></span>' + esc(r.name || '?') + (r.uid === uid ? ' (you)' : '') + '</span>' +
+        '<span style="font-size:20px">' + r.total + '</span></div>' +
+        '<div style="height:6px;border-radius:3px;background:rgba(0,0,0,.1);margin:5px 0"><div style="height:100%;width:' + pct + '%;border-radius:3px;background:' + esc(r.colour || '#999') + '"></div></div>' +
+        '<div style="font-size:12px;color:#555">🍺 Take ' + r.take + ' · 🎯 Issue ' + r.give + ' · ' + r.cards + ' card' + (r.cards === 1 ? '' : 's') + '</div></div>';
+    }).join('');
+    if (max > 0) {
+      const top = sorted.filter(r => r.total === max).map(r => r.name).join(' & ');
+      h += '<p class="sub" style="margin:6px 0 4px"><b>Most drinks:</b> ' + esc(top) + ' (' + max + ')</p>';
+    } else if (t.cards) h += '<p class="sub" style="margin:6px 0 4px">No drink cards have turned up yet.</p>';
+    const notes = [];
+    if (t.reds) notes.push(t.reds + ' red card' + (t.reds === 1 ? '' : 's') + ' counted ×3');
+    if (t.blacks && !BLACK_CARDS_COUNT) notes.push(t.blacks + ' inverted (black) card' + (t.blacks === 1 ? '' : 's') + ' not counted');
+    if (notes.length) h += '<p class="sub" style="font-size:12px;margin:0 0 4px">' + esc(notes.join(' · ')) + '</p>';
+    h += '<div class="setup-btn-row">' + (done && isHost ? '<button id="oAgain">Play again</button>' : '') + '<button id="oResBack" class="' + (done && isHost ? 'secondary-btn' : '') + '">' + (done ? 'Close' : 'Back') + '</button></div>' +
+      '<div class="setup-btn-row"><button class="secondary-btn" id="oLeave">Leave</button></div>' +
+      '<p class="sub" style="font-size:11px;opacity:.55;margin:14px 0 0">online script ' + VERSION + '</p>';
+    return h;
+  }
+
   function render() {
+    if (phase === 'playing' && resultsOpen && !blocked && baseDeck.length && meta) { box.innerHTML = resultsHTML(); return; }
     let h = '<h2>🌐 Online game</h2>';
     if (msg) h += '<p class="sub" style="color:#b00020">' + esc(msg) + '</p>';
     if (phase === 'menu') {
@@ -302,6 +374,7 @@
           '<div class="setup-btn-row"><button id="oUpdate">Update cards</button><button class="secondary-btn" id="oReload">Reload page</button></div>';
       }
       h += '<div class="setup-field"><label id="oCount"></label><div id="oRoster"></div></div>' +
+        (curN > 0 && !blocked ? '<div class="setup-btn-row"><button id="oResults">🍻 Drinks tally</button></div>' : '') +
         '<div id="oShareBox"></div>' +
         '<div class="setup-btn-row"><button id="oClose">Back to game</button><button class="secondary-btn" id="oLeave">Leave</button></div>';
     }
@@ -358,6 +431,9 @@
     else if (id === 'oShare') shareLink(buildUrl(roleNow()));
     else if (id === 'oUpdate') await updateCards(btn);
     else if (id === 'oReload') location.reload();
+    else if (id === 'oResults') { resultsOpen = true; render(); }
+    else if (id === 'oResBack') { resultsOpen = false; render(); overlay.style.display = 'none'; }
+    else if (id === 'oAgain') await restartAll();
   });
 
   // ---- joining / hosting ----
@@ -436,6 +512,7 @@
     try {
       await root().child('meta').transaction(cur => (cur && !cur.started) ? Object.assign({}, cur, {
         started: true, seed, cats, diff: difficulty, discord: disc, rounds, unlimited: unl, sig: deckSig(raw), count: sorted.length,
+        total: unl ? 100000 : rounds * sorted.length,
         order: sorted.map(([id, p]) => ({ uid: id, name: p.name, colour: p.colour }))
       }) : undefined);
     } catch (x) { msg = 'Could not start (' + (x.code || x.message) + ')'; render(); }
@@ -516,7 +593,7 @@
     const rule = meta.discord ? seededCall(rngOf(meta.seed + '|rule|' + n), () => applyDiscordTransforms(card.Rule)) : card.Rule;
     const content = '<div class="instructionText">' + rule + '</div>' + (type === 'red' ? '<div class="tripleBadge">×3!</div>' : '') +
       '<div class="categoryText" style="color: ' + card.Colour + ';">' + card.Category + '</div>';
-    return { type, content, colour: card.Colour };
+    return { type, content, colour: card.Colour, rule: String(rule).replace(/<[^>]*>/g, ' ') };
   }
 
   function startLocal(m) {
@@ -581,10 +658,15 @@
     cardFront.classList.remove('type-black', 'type-red');
     showingFront = true;
     cardFront.innerHTML = 'Ultimate Drinking Cards'; cardBack.innerHTML = '';
-    clearNudge(); warnBar.style.display = 'none'; lockSettings(false);
+    resultsOpen = false; clearNudge(); warnBar.style.display = 'none'; lockSettings(false);
     buildDeckFromEnabledCategories(); preloadNextCard(); updateTurnTracker();
     msg = ''; overlay.style.display = 'flex'; render();
     say(isHost ? 'Game restarted' : 'The host restarted the game');
+  }
+
+  async function restartAll() {
+    try { await root().update({ 'meta/started': false, state: null }); }
+    catch (x) { say('Could not restart: ' + (x.code || x.message)); }
   }
 
   // The menu's Restart / Edit Players buttons only know about local state, so in an online
@@ -598,8 +680,7 @@
     if (!active) return say('The game hasn’t started yet');
     if (!isHost) return say('Only the host can restart the game');
     if (!confirm('Restart the game for everyone? You’ll all go back to the lobby.')) return;
-    try { await root().update({ 'meta/started': false, state: null }); }
-    catch (x) { say('Could not restart: ' + (x.code || x.message)); }
+    await restartAll();
   }, true);
 
   function applyState(s) {
@@ -615,6 +696,7 @@
     flipCard();                         // plays the normal flip, sounds, flashes, and advances the turn
     paintRoster();
     setTimeout(() => { if (curN === n) nudge(); }, 750);   // after the flip, tell the next player it's their turn
+    if (finished()) setTimeout(() => { if (curN === n && !blocked) { resultsOpen = true; overlay.style.display = 'flex'; render(); } }, 2200);   // let the last card land first
   }
 
   const finished = () => !unlimitedRounds && curN >= totalRounds * players.length;
@@ -627,7 +709,8 @@
     clearNudge();
     const n = curN + 1;
     try {
-      const res = await root().child('state').transaction(cur => ((cur && cur.n) || 0) === n - 1 ? { n, by: uid } : undefined);
+      const next = order.length ? order[n % order.length].uid : uid;   // who may draw card n+1
+      const res = await root().child('state').transaction(cur => ((cur && cur.n) || 0) === n - 1 ? { n, prev: n - 1, by: uid, next } : undefined);
       if (!res.committed) say('Someone just drew, hang on…');
     } catch (x) { say('Could not draw: ' + (x.code || x.message)); }
     finally { drawing = false; }
