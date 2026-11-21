@@ -1,0 +1,51 @@
+{
+  "rules": {
+    "udcIndex": {
+      ".read": "auth != null",
+      "$room": {
+        ".write": "auth != null && ((!data.exists() && newData.exists()) || (!newData.exists() && !root.child('udc').child($room).exists()))",
+        ".validate": "newData.isNumber() && $room.length <= 8"
+      }
+    },
+    "udc": {
+      "$room": {
+        ".read": "auth != null",
+        ".validate": "$room.length <= 8",
+        ".write": "auth != null && !newData.exists() && data.child('meta/host').val() === auth.uid",
+        "meta": {
+          ".write": "auth != null && ((!data.exists() && newData.child('host').val() === auth.uid && newData.child('createdAt').isNumber()) || (data.exists() && newData.exists() && data.child('host').val() === auth.uid))",
+          "lastActivity": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now"
+          }
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid && root.child('udc').child($room).child('meta').exists()",
+            "t": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now"
+            },
+            "lastActivity": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now"
+            }
+          }
+        },
+        "react": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid && root.child('udc').child($room).child('meta').exists()",
+            ".validate": "newData.hasChildren(['e','t']) && newData.child('e').isString() && newData.child('e').val().length <= 8",
+            "t": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now"
+            }
+          }
+        },
+        "state": {
+          ".write": "auth != null && root.child('udc').child($room).child('meta').exists()",
+          ".validate": "newData.child('n').isNumber()",
+          "lastActivity": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now"
+          }
+        }
+      }
+    }
+  }
+}
