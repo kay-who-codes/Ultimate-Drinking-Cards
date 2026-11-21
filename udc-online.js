@@ -242,7 +242,7 @@
     const watchOnly = phase === 'playing';
     return '<div class="setup-field" style="margin-top:14px"><label>' + (watchOnly ? 'Invite spectators' : 'Invite friends') + '</label>' +
       (watchOnly ? '' : '<div class="toggleButtonRow" style="margin-bottom:10px"><button type="button" class="toggle-btn' + (qrRole === 'play' ? ' active' : '') + '" id="oQrPlay">Players</button><button type="button" class="toggle-btn' + (qrRole === 'watch' ? ' active' : '') + '" id="oQrWatch">Spectators</button></div>') +
-      '<div id="oQR" style="display:flex;justify-content:center;min-height:60px;font-size:12px;opacity:.7">Loading QR code…</div>' +
+      '<div id="oQR" style="display:flex;justify-content:center;min-height:60px;font-size:12px">Loading QR code…</div>' +
       '<div class="setup-btn-row" style="margin-top:10px"><button id="oCopy">Copy link</button><button id="oShare">Share</button></div></div>';
   }
   function paintShare() {
