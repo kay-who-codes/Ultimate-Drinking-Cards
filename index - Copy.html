@@ -1756,6 +1756,55 @@ body:not(.in-discord) .kwc-repo-search input {
 
   #oMoreBreakdown { padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 
+  .udc-results-overlay {
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .udc-results-overlay > .setup-box {
+    box-sizing: border-box;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html:has(.udc-results-overlay[style*="display: flex"], #localResultsOverlay[open]),
+  body:has(.udc-results-overlay[style*="display: flex"], #localResultsOverlay[open]) {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  #localResultsOverlay {
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border: 0;
+  }
+
+  #localResultsOverlay[open] { display: flex; }
+  #localResultsOverlay::backdrop { background: rgba(0, 0, 0, 0.64); backdrop-filter: blur(6px); }
+
+  #localResultsOverlay #localPlayAgain {
+    background: #18743e;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  #localResultsOverlay .udc-results-secondary {
+    background: var(--results-surface);
+    color: var(--menu-glass-text);
+    border: 1px solid var(--results-border);
+    box-shadow: none;
+  }
 </style></head>
 
 
@@ -1843,6 +1892,10 @@ body:not(.in-discord) .kwc-repo-search input {
       <button class="menu-action" id="restartGameButton">Restart Game</button>
     </div>
   </div>
+
+  <dialog id="localResultsOverlay" class="overlay udc-results-overlay" aria-labelledby="localResultsTitle">
+    <div class="setup-box" id="localResultsBox"></div>
+  </dialog>
 
   <div class="overlay" id="setupOverlay">
     <div class="setup-box">
@@ -1956,6 +2009,7 @@ if (isDiscord) {
 </script>
 
   <script src="card-wording.js?v=36"></script>
+  <script src="udc-results.js?v=37"></script>
   <script>
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coverCard = document.getElementById("coverCard");
@@ -2142,6 +2196,57 @@ function groupToDraws(group) {
   let editingLocalTracker = false;
   const existingPlayerRows = new WeakMap();
   let preloadedLocalCard = null;
+  let localResultDraws = [];
+  let localResultsLimit = UDCResults.pageSize;
+  const localResultPlayerIds = new WeakMap();
+  let nextLocalResultPlayerId = 0;
+  const localResultsOverlay = document.getElementById("localResultsOverlay");
+  const localResultsBox = document.getElementById("localResultsBox");
+
+  function localResultPlayer(player) {
+    if (!localResultPlayerIds.has(player)) {
+      localResultPlayerIds.set(player, ++nextLocalResultPlayerId);
+    }
+    return { uid: localResultPlayerIds.get(player), name: player.name, colour: player.colour };
+  }
+
+  function showLocalResults() {
+    const roster = new Map(localResultDraws.map(draw => [draw.player.uid, draw.player]));
+    players.map(localResultPlayer).forEach(player => roster.set(player.uid, player));
+    const breakdownOpen = localResultsBox.querySelector("#oCardBreakdown")?.open;
+    const tally = UDCResults.tally([...roster.values()], localResultDraws, localResultsLimit);
+    localResultsBox.innerHTML = UDCResults.render(tally, {
+      done: true,
+      titleId: "localResultsTitle",
+      breakdownOpen,
+      actions: `
+        <button id="localPlayAgain">Play again</button>
+        <button id="localGameSettings" class="udc-results-secondary">Go to game settings</button>
+        <button id="localCloseResults" class="udc-results-secondary">Close</button>`
+    });
+    if (!localResultsOverlay.open) {
+      localResultsBox.scrollTop = 0;
+      localResultsOverlay.showModal();
+    }
+  }
+
+  localResultsBox.addEventListener("click", event => {
+    const id = event.target.closest("button")?.id;
+    if (id === "oMoreBreakdown") {
+      localResultsLimit += UDCResults.pageSize;
+      showLocalResults();
+      (localResultsBox.querySelector("#oMoreBreakdown") ||
+        localResultsBox.querySelector("#oCardBreakdown summary"))?.focus();
+    } else if (id === "localPlayAgain") {
+      localResultsOverlay.close();
+      document.getElementById("restartGameButton").click();
+    } else if (id === "localGameSettings") {
+      localResultsOverlay.close();
+      document.getElementById("editPlayersButton").click();
+    } else if (id === "localCloseResults") {
+      localResultsOverlay.close();
+    }
+  });
 
   function resumeLocalTracker(nextPlayers, rows) {
     const newIndexes = new Map(rows.map((row, index) => [existingPlayerRows.get(row), index]));
@@ -2155,6 +2260,12 @@ function groupToDraws(group) {
       if (!scheduled.has(index)) waiting.push(index);
     });
 
+    rows.forEach((row, index) => {
+      const previous = existingPlayerRows.get(row);
+      if (previous && localResultPlayerIds.has(previous)) {
+        localResultPlayerIds.set(nextPlayers[index], localResultPlayerIds.get(previous));
+      }
+    });
     players = nextPlayers;
     localTurnOrder = [...completed, ...waiting];
     localTurnPosition = completed.length;
@@ -2190,8 +2301,12 @@ function groupToDraws(group) {
         turnTracker.innerHTML = `
           <div class="turnLabel">Game complete</div>
           <div class="turnName" style="color: var(--accent);">🎉 Nice one!</div>
-          <div class="roundLabel">Tap ⚙️ to restart or change players</div>
+          <div class="roundLabel">Tap the card to view results</div>
         `;
+        const completedDraws = localResultDraws;
+        setTimeout(() => {
+          if (localTrackerComplete && localResultDraws === completedDraws) showLocalResults();
+        }, prefersReducedMotion ? 0 : 600);
         return;
       }
       currentRound++;
@@ -2412,7 +2527,11 @@ function updateCardCounter() {
 
     trackingEnabled = useTracker;
     editingLocalTracker = false;
-    if (!resume) localTrackerComplete = false;
+    if (!resume) {
+      localTrackerComplete = false;
+      localResultDraws = [];
+      localResultsLimit = UDCResults.pageSize;
+    }
     gameStarted = true;
 
     closeSetupOverlay();
@@ -2432,6 +2551,8 @@ function updateCardCounter() {
   document.getElementById("restartGameButton").addEventListener("click", () => {
     if (!trackingEnabled || !players.length) return;
     localTrackerComplete = false;
+    localResultDraws = [];
+    localResultsLimit = UDCResults.pageSize;
     beginLocalTrackerRound();
     updateTurnTracker();
   });
@@ -2634,9 +2755,9 @@ function saveEnabledCategoriesToStorage() {
 
     const randomIndex = eligible[Math.floor(Math.random() * eligible.length)];
     const newCard = cards.splice(randomIndex, 1)[0];
-    preloadedLocalCard = newCard;
     const rule = isDiscordModeOn() ? applyDiscordTransforms(newCard.RawRule) : newCard.RawRule;
-    const { type, content } = generateCardContent({ ...newCard, Rule: rule });
+    preloadedLocalCard = { ...newCard, Rule: rule };
+    const { type, content } = generateCardContent(preloadedLocalCard);
 
     cardBack.dataset.content = content;
     cardBack.dataset.type = type;
@@ -2717,6 +2838,10 @@ function applyPreloadedContent(isFront = true, cardPlayers = [], ownerIndex = 0)
     }
 
     const isLocalFlip = advance !== false;
+    if (isLocalFlip && trackingEnabled && localTrackerComplete) {
+      showLocalResults();
+      return;
+    }
 
     if (nextCardPreloadFrame !== null) {
       if (isLocalFlip) {
@@ -2731,6 +2856,15 @@ function applyPreloadedContent(isFront = true, cardPlayers = [], ownerIndex = 0)
 
     coverCard.classList.remove("udc-opening-card");
     const upcomingType = cardBack.dataset.type || "white";
+    if (isLocalFlip && trackingEnabled && preloadedLocalCard && players[currentPlayerIndex]) {
+      const player = localResultPlayer(players[currentPlayerIndex]);
+      localResultDraws.push({
+        card: { type: upcomingType, rule: preloadedLocalCard.Rule, category: preloadedLocalCard.Category },
+        player,
+        recipient: player.uid,
+        playerCount: players.length
+      });
+    }
 
     if (drawnCount < totalDrawsInPlay) {
       drawnCount++;
@@ -2801,7 +2935,7 @@ function vibrate(pattern) {
   <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="udc-online.js?v=36"></script>
+<script src="udc-online.js?v=37"></script>
   
 </body>
 </html>
