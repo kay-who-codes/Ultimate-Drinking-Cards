@@ -2010,6 +2010,7 @@ if (isDiscord) {
 
   <script src="card-wording.js?v=36"></script>
   <script src="udc-results.js?v=37"></script>
+  <script src="drink-time.js?v=39"></script>
   <script>
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coverCard = document.getElementById("coverCard");
@@ -2166,11 +2167,20 @@ function groupToDraws(group) {
   function rebuildAllDraws() {
     allDraws = [];
     allCards.forEach(group => {
+      if (group.Category === DRINK_TIME_CATEGORY) return;
       if (group.Category && !(group.Category in categoryColours)) {
         categoryColours[group.Category] = group.Colour || "#999999";
       }
       allDraws.push(...groupToDraws(group));
     });
+    if (allCards.length) {
+      categoryColours[DRINK_TIME_CATEGORY] = DRINK_TIME_COLOUR;
+      allDraws.push(...groupToDraws({
+        Category: DRINK_TIME_CATEGORY,
+        Colour: DRINK_TIME_COLOUR,
+        Rules: DRINK_TIME_CARDS.map(([, rule]) => rule)
+      }));
+    }
   }
 
   function updateTurnTracker(status) {
@@ -2196,6 +2206,7 @@ function groupToDraws(group) {
   let editingLocalTracker = false;
   const existingPlayerRows = new WeakMap();
   let preloadedLocalCard = null;
+  let reservedLocalCard = null;
   let localResultDraws = [];
   let localResultsLimit = UDCResults.pageSize;
   const localResultPlayerIds = new WeakMap();
@@ -2457,12 +2468,14 @@ function groupToDraws(group) {
 
   // Build the deck of individual draws from the enabled categories.
   function buildDeckFromEnabledCategories() {
-    const enabledGroups = allCards.filter(c => enabledCategories.has(c.Category || ""));
-    const source = (enabledGroups.length || allCards.length === 0)
-      ? enabledGroups
-      : allCards; // safety net: if nothing enabled, use everything
+    const standardGroups = allCards.filter(group => group.Category !== DRINK_TIME_CATEGORY);
+    const enabledGroups = standardGroups.filter(group => enabledCategories.has(group.Category || ""));
+    const source = enabledGroups.length ? enabledGroups : standardGroups; // Safety net when no categories are selected.
     cards = source.flatMap(groupToDraws);
     preloadedLocalCard = null;
+    reservedLocalCard = null;
+    const standardCount = cards.filter(canDrawLocalCard).length;
+    cards.push(...generateDrinkTimeCards(standardCount, Math.random));
     totalDrawsInPlay = cards.filter(canDrawLocalCard).length;
     drawnCount = -1;
     updateCardCounter();
@@ -2539,7 +2552,7 @@ function updateCardCounter() {
     rebuildAllDraws();
 
     if (resume) {
-      if (preloadedLocalCard) cards.push(preloadedLocalCard);
+      if (reservedLocalCard) cards.push(reservedLocalCard);
       totalDrawsInPlay = Math.max(0, drawnCount + 1) + cards.filter(canDrawLocalCard).length;
     } else {
       buildDeckFromEnabledCategories();
@@ -2737,11 +2750,16 @@ function saveEnabledCategoriesToStorage() {
     }
 
     preloadedLocalCard = null;
+    reservedLocalCard = null;
     const eligible = cards.map((card, index) => canDrawLocalCard(card) ? index : -1)
       .filter(index => index >= 0);
 
     if (!eligible.length) {
-    cardBack.dataset.content = `
+      const needsStandardCards = drawnCount < 0;
+      cardBack.dataset.content = needsStandardCards
+        ? '<div class="emptyDeck"><div class="emptyDeckTitle">Enable another category</div>' +
+          '<div class="emptyDeckSub">Drink Time! needs standard cards to appear alongside it.</div></div>'
+        : `
       <div class="emptyDeck">
         <div class="emptyDeckEmoji">🎉</div>
         <div class="emptyDeckTitle">Deck complete!</div>
@@ -2754,7 +2772,8 @@ function saveEnabledCategoriesToStorage() {
     }
 
     const randomIndex = eligible[Math.floor(Math.random() * eligible.length)];
-    const newCard = cards.splice(randomIndex, 1)[0];
+    reservedLocalCard = cards.splice(randomIndex, 1)[0];
+    const newCard = reservedLocalCard;
     const rule = isDiscordModeOn() ? applyDiscordTransforms(newCard.RawRule) : newCard.RawRule;
     preloadedLocalCard = { ...newCard, Rule: rule };
     const { type, content } = generateCardContent(preloadedLocalCard);
@@ -2866,6 +2885,8 @@ function applyPreloadedContent(isFront = true, cardPlayers = [], ownerIndex = 0)
       });
     }
 
+    if (isLocalFlip) reservedLocalCard = null;
+
     if (drawnCount < totalDrawsInPlay) {
       drawnCount++;
     }
@@ -2917,7 +2938,8 @@ function applyPreloadedContent(isFront = true, cardPlayers = [], ownerIndex = 0)
 });
 
   function getUniqueCategories() {
-    const set = new Set(allCards.map((c) => c.Category || "").filter(Boolean));
+    const set = new Set(allCards.map(c => c.Category || "")
+      .filter(category => category && category !== DRINK_TIME_CATEGORY));
     return [...set].sort((a, b) => a.localeCompare(b));
   }
 
@@ -2935,7 +2957,7 @@ function vibrate(pattern) {
   <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="udc-online.js?v=37"></script>
+<script src="udc-online.js?v=40"></script>
   
 </body>
 </html>

@@ -1,6 +1,6 @@
 /* udc-online.js: Ultimate Drinking Cards online multiplayer */
 (() => {
-  const VERSION = 'v37';
+  const VERSION = 'v40';
   const QR_SCRIPTS = ['qrcode.min.js', 'qrcode.js'];
 
   if (/[?&]online=0\b/.test(location.search)) {
@@ -171,6 +171,7 @@
     });
 
     const cycles = new Map();
+    let onlineDeck = [];
 
     const ready = firebase.auth().signInAnonymously()
       .then(c => {
@@ -846,7 +847,9 @@
 
       if (isHost && allCards.length) {
         const draft = getLobbyDraft();
-        count = buildRaw(draft.cats || enabledCategories, draft.discord, onlineCount()).length;
+        const cats = draft.cats || enabledCategories;
+        const standard = buildRaw(cats, draft.discord, onlineCount());
+        count = makeOnlineDeck(standard, true, code).length;
         clearTimeout(deckCountTimer);
         if (connected && count !== meta?.lobbyDeckCount) {
           const room = code;
@@ -1817,7 +1820,7 @@
       ) return;
 
       const draft = getLobbyDraft();
-      const cats = [...(draft.cats || enabledCategories)];
+      const cats = [...(draft.cats || enabledCategories)].filter(category => category !== DRINK_TIME_CATEGORY);
       const disc = draft.discord;
       const deckPlayerCount = onlineCount();
       const raw = buildRaw(new Set(cats), disc, deckPlayerCount);
@@ -1853,9 +1856,11 @@
                 discord: disc,
                 rounds,
                 unlimited: unl,
-                sig: deckSig(raw),
+                sig: deckSig(raw, true, true),
+                drinkTimeOdds: true,
+                drinkTimeExpanded: true,
                 deckPlayerCount,
-                lobbyDeckCount: raw.length,
+                lobbyDeckCount: makeOnlineDeck(raw, true, code).length,
                 count: sorted.length,
                 total: unl
                   ? 100000
@@ -2080,9 +2085,9 @@
       }, HOST_GRACE_MS);
     }
 
-    function buildRaw(cats, discord, playerCount = Infinity) {
+    function buildRaw(cats, discord, playerCount = Infinity, weighted = true) {
       const raw = allCards
-        .filter(g => cats.has(g.Category || ''))
+        .filter(g => cats.has(g.Category || '') && (!weighted || g.Category !== DRINK_TIME_CATEGORY))
         .flatMap(g =>
           (Array.isArray(g.Rules) ? g.Rules : [])
             .filter(rule =>
@@ -2106,8 +2111,15 @@
       return raw;
     }
 
-    const deckSig = raw =>
-      raw.length + ':' +
+    function makeOnlineDeck(standard, expanded, roomCode) {
+      if (!expanded) return standard;
+      const random = rngOf(roomCode + '|drink-time-deck-v2');
+      return standard.concat(generateDrinkTimeCards(standard.length, random));
+    }
+
+    const deckSig = (raw, drinkTimeOdds = false, expanded = false) =>
+      (expanded ? 'drink-time-v2:' + xmur3(JSON.stringify(DRINK_TIME_CARDS))().toString(36) + ':' :
+        drinkTimeOdds ? 'drink-time-v1:' : '') + raw.length + ':' +
       xmur3(raw.map(c =>
         c.Category + '\u0001' + c.Rule
       ).join('\u0002'))().toString(36);
@@ -2118,7 +2130,7 @@
         cycles.set(
           cycle,
           shuffled(
-            baseDeck,
+            onlineDeck,
             rngOf(meta.seed + '|deck|' + cycle)
           )
         );
@@ -2127,8 +2139,11 @@
     }
 
     function cardFor(n, playerCount = order.length) {
-      const len = baseDeck.length;
-      const card = deckFor(
+      const len = onlineDeck.length;
+      const drinkTimeCard = meta.drinkTimeOdds && !meta.drinkTimeExpanded
+        ? drawDrinkTimeCard(rngOf(meta.seed + '|drink-time|' + n), LEGACY_DRINK_TIME_CARDS)
+        : null;
+      const card = drinkTimeCard || deckFor(
         Math.floor((n - 1) / len)
       )[(n - 1) % len];
 
@@ -2207,10 +2222,14 @@
       baseDeck = buildRaw(
         new Set(m.cats || []),
         !!m.discord,
-        m.deckPlayerCount ?? Infinity
+        m.deckPlayerCount ?? Infinity,
+        !!m.drinkTimeOdds
       );
 
       buildDeckFromEnabledCategories();
+      onlineDeck = makeOnlineDeck(baseDeck, !!m.drinkTimeExpanded, code);
+      totalDrawsInPlay = onlineDeck.length;
+      updateCardCounter();
       buildCategoryList();
       lockSettings(true);
       closeSetupOverlay();
@@ -2221,7 +2240,7 @@
 
       blocked = !!(
         m.sig &&
-        m.sig !== deckSig(baseDeck)
+        m.sig !== deckSig(baseDeck, !!m.drinkTimeOdds, !!m.drinkTimeExpanded)
       );
 
       warnBar.style.display =
@@ -2282,12 +2301,16 @@
         baseDeck = buildRaw(
           new Set(meta.cats || []),
           !!meta.discord,
-          meta.deckPlayerCount ?? Infinity
+          meta.deckPlayerCount ?? Infinity,
+          !!meta.drinkTimeOdds
         );
 
+        onlineDeck = makeOnlineDeck(baseDeck, !!meta.drinkTimeExpanded, code);
+        totalDrawsInPlay = onlineDeck.length;
+        updateCardCounter();
         cycles.clear();
 
-        if (meta.sig === deckSig(baseDeck)) {
+        if (meta.sig === deckSig(baseDeck, !!meta.drinkTimeOdds, !!meta.drinkTimeExpanded)) {
           blocked = false;
           msg = '';
           warnBar.style.display = 'none';
@@ -2335,6 +2358,7 @@
       lastN = curN = 0;
       cycles.clear();
       baseDeck = [];
+      onlineDeck = [];
       order = [];
 
       players = [];
@@ -2467,7 +2491,8 @@
       const len = order.length || 1;
 
       lastN = curN = n;
-      drawnCount = Math.max(-1, n - 2);
+      totalDrawsInPlay = onlineDeck.length;
+      drawnCount = (n - 1) % totalDrawsInPlay - 1;
 
       const drawnIndex = order.findIndex(p => p.uid === s.turn);
 

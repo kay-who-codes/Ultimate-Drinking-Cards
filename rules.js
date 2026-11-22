@@ -15,12 +15,13 @@
       <li>Take it in turns tapping the card to draw a new one.</li>
       <li><span class="rule-card-tag white">White card</span> Perform the instruction shown on the card.</li>
       <li><span class="rule-card-tag black">Black card</span> Invert the instruction, then perform the inverted version.</li>
-      <li><span class="rule-card-tag red">Red card</span> Rarer than black cards &mdash; perform the instruction, but do it <strong>three times</strong>!</li>
+      <li><span class="rule-card-tag red">Red card</span> Perform the instruction, but do it <strong>three times</strong>!</li>
     </ol>
-    <h3>A note on inverted cards</h3>
+    <h3>Black cards:</h3>
     <ul>
-      <li>Some inverted cards make more sense than others.</li>
-      <li>Don't worry if a card isn't obviously invertible &mdash; just try it, stay chill, and have fun.</li>
+      <li>The player who draws a black card determines the inversion of the instruction.</li>
+      <li>Some inverted instructions make more sense than others.</li>
+      <li>Don't worry if a card isn't easily invertible &mdash; just try it, stay chill, and have fun.</li>
     </ul>
     <p class="tip">Tip: use the ⚙️ menu to add players, set the number of rounds, change the theme, or turn categories on/off at any time.</p>
   `;
