@@ -12,6 +12,12 @@
   const restartGameButton = document.getElementById("restartGameButton");
   const categoryList = document.getElementById("categoryList");
 
+    const customThemePanel = document.getElementById("customThemePanel");
+  const customBgInput = document.getElementById("customBgInput");
+  const customAccentInput = document.getElementById("customAccentInput");
+  const customCardBgInput = document.getElementById("customCardBgInput");
+  const customPanelBgInput = document.getElementById("customPanelBgInput");
+
   // Every theme now also controls the black-card and red-card variants,
   // so switching themes recolours the cards themselves, not just the UI chrome.
   // animatedBg: "spooky" opts a theme into the drifting Halloween emoji layer.
@@ -75,6 +81,12 @@
       cardBlackBg: "#000000", cardBlackText: "#ffffff",
       cardRedBg: "#DB0000", cardRedText: "#ffffff",
       panelBg: "#FBE1F7", panelText: "#240F22", accentText: "#240F1F" },
+    
+      { id: "sky", label: "Sky", bg: "#10243e", accent: "#438ec1",
+      cardBg: "#f5f9ff", cardText: "#101c2b",
+      cardBlackBg: "#000000", cardBlackText: "#ffffff",
+      cardRedBg: "#DB0000", cardRedText: "#ffffff",
+      panelBg: "#e7eff8", panelText: "#101c2b" },
 
 
 
@@ -108,12 +120,6 @@
       animatedBg: "christmas" },
 
   ];
-
-  const customThemePanel = document.getElementById("customThemePanel");
-  const customBgInput = document.getElementById("customBgInput");
-  const customAccentInput = document.getElementById("customAccentInput");
-  const customCardBgInput = document.getElementById("customCardBgInput");
-  const customPanelBgInput = document.getElementById("customPanelBgInput");
 
   // Animated Theme Emojis
 const EMOJI_SETS = {
@@ -198,7 +204,171 @@ function setEmojiBackground(setName) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+  const SKY_DAY_MINUTES = 24 * 60;
+  const SKY_PHASES = [
+    { minute: 6 * 60,       colours: ["#25284d", "#a45176", "#fabb90"] }, // Dawn
+    { minute: 9 * 60,       colours: ["#174674", "#438ec1", "#bddfeb"] }, // Morning
+    { minute: 13 * 60,      colours: ["#104674", "#2f84bb", "#80c6de"] }, // Afternoon
+    { minute: 18 * 60 + 30, colours: ["#2c254d", "#a54f63", "#f6ad66"] }, // Evening
+    { minute: 23 * 60,      colours: ["#080c20", "#25395d", "#475e83"] }  // Night
+  ];
+  let skyUpdateTimer = null;
+  let skyCloudLayer = null;
+
+  const skyThemeStyle = document.createElement("style");
+  skyThemeStyle.textContent = `
+    html[data-udc-sky] body {
+      background-image: var(--udc-sky-gradient);
+      background-attachment: fixed;
+      isolation: isolate;
+    }
+
+    .udc-sky-clouds {
+      position: fixed;
+      inset: 0 0 auto;
+      height: calc(100vh / 3);
+      height: calc(100dvh / 3);
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .udc-sky-cloud {
+      --cloud-size: min(var(--cloud-width), 400vw, 80vh);
+      position: absolute;
+      left: 0;
+      top: clamp(0px, var(--cloud-top), 100% - var(--cloud-size));
+      font-size: var(--cloud-size);
+      line-height: 1;
+      opacity: var(--cloud-opacity);
+      animation: udc-sky-cloud-drift var(--cloud-duration) linear
+        var(--cloud-delay) infinite var(--cloud-direction);
+    }
+
+    @keyframes udc-sky-cloud-drift {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(100vw); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .udc-sky-cloud {
+        left: var(--cloud-static-left);
+        transform: translateX(-50%);
+        animation: none;
+      }
+    }
+  `;
+  document.head.appendChild(skyThemeStyle);
+
+  function mixSkyColour(from, to, progress) {
+    const channels = [1, 3, 5].map(index => {
+      const start = parseInt(from.slice(index, index + 2), 16);
+      const end = parseInt(to.slice(index, index + 2), 16);
+      return Math.round(start + (end - start) * progress)
+        .toString(16).padStart(2, "0");
+    });
+    return "#" + channels.join("");
+  }
+
+  function skyColoursAt(date) {
+    const minute = date.getHours() * 60 + date.getMinutes() +
+      date.getSeconds() / 60 + date.getMilliseconds() / 60000;
+    const first = SKY_PHASES[0];
+    const last = SKY_PHASES[SKY_PHASES.length - 1];
+    const nextIndex = SKY_PHASES.findIndex(phase => phase.minute > minute);
+    const start = nextIndex <= 0 ? last : SKY_PHASES[nextIndex - 1];
+    const end = nextIndex < 0 ? first : SKY_PHASES[nextIndex];
+    const startMinute = start.minute - (nextIndex === 0 ? SKY_DAY_MINUTES : 0);
+    const endMinute = end.minute + (nextIndex < 0 ? SKY_DAY_MINUTES : 0);
+    const progress = (minute - startMinute) / (endMinute - startMinute);
+    return start.colours.map((colour, index) => mixSkyColour(colour, end.colours[index], progress));
+  }
+
+  function skyGradient([top, accent, horizon]) {
+    return `linear-gradient(180deg, ${top} 0%, ${accent} 30%, ${horizon} 100%)`;
+  }
+
+function saturateSkyColour(hex, multiplier) {
+  const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const min = Math.min(...rgb);
+  const max = Math.max(...rgb);
+  if (min === max) return hex;
+
+  const lightness = (min + max) / 2;
+  const halfRange = (max - min) / 2;
+  const maxScale = Math.min(lightness, 255 - lightness) / halfRange;
+  const scale = Math.min(multiplier, maxScale);
+
+  return "#" + rgb.map(channel =>
+    Math.round(lightness + (channel - lightness) * scale)
+      .toString(16).padStart(2, "0")
+  ).join("");
+}
+
+function updateSkyTheme() {
+  const root = document.documentElement;
+  const colours = skyColoursAt(new Date());
+  const midpoint = mixSkyColour(colours[1], colours[2], (50 - 44) / (100 - 44));
+  const accent = saturateSkyColour(midpoint, 2.5);
+
+  root.style.setProperty("--udc-sky-gradient", skyGradient(colours));
+  root.style.setProperty("--accent", accent);
+  root.style.setProperty("--accent-text", readableTextColor(accent));
+}
+
+  function buildSkyClouds() {
+    const layer = document.createElement("div");
+    layer.className = "udc-sky-clouds";
+    layer.setAttribute("aria-hidden", "true");
+    const cloudEmoji = "☁️";
+
+    // Each direction shares its own cycle so clouds in that group stay staggered.
+    const tracks = [
+      { count: 3, direction: "normal", duration: 220 + Math.random() * 40 },
+      { count: 2, direction: "reverse", duration: 270 + Math.random() * 50 }
+    ];
+
+    let cloudIndex = 0;
+    for (const track of tracks) {
+      const trackOffset = Math.random();
+      for (let i = 0; i < track.count; i++) {
+        const phase = (trackOffset + (i + Math.random() * 0.3) / track.count) % 1;
+        const cloud = document.createElement("span");
+        cloud.className = "udc-sky-cloud";
+        cloud.textContent = cloudEmoji;
+        cloud.style.setProperty("--cloud-width", (88 + Math.random() * 76) + "px");
+        cloud.style.setProperty("--cloud-top", (cloudIndex * 12 + Math.random() * 8) + "%");
+        cloud.style.setProperty("--cloud-opacity", (0.18 + Math.random() * 0.15).toFixed(2));
+        cloud.style.setProperty("--cloud-duration", track.duration + "s");
+        cloud.style.setProperty("--cloud-delay", (-phase * track.duration) + "s");
+        cloud.style.setProperty("--cloud-direction", track.direction);
+        cloud.style.setProperty("--cloud-static-left", (12 + cloudIndex * 19) + "%");
+        layer.appendChild(cloud);
+        cloudIndex++;
+      }
+    }
+
+    document.body.appendChild(layer);
+    return layer;
+  }
+
+  function stopSkyTheme() {
+    if (skyUpdateTimer === null) return;
+    clearInterval(skyUpdateTimer);
+    skyUpdateTimer = null;
+    skyCloudLayer?.remove();
+    skyCloudLayer = null;
+    const root = document.documentElement;
+    root.removeAttribute("data-udc-sky");
+    root.style.removeProperty("--udc-sky-gradient");
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && skyUpdateTimer !== null) updateSkyTheme();
+  });
+
   function applyTheme(themeId) {
+    stopSkyTheme();
     if (themeId === "custom") {
       customThemePanel.style.display = "block";
       document.querySelectorAll(".theme-swatch").forEach(el => {
@@ -221,8 +391,16 @@ function setEmojiBackground(setName) {
     root.style.setProperty("--card-black-text", t.cardBlackText);
     root.style.setProperty("--card-red-bg", t.cardRedBg);
     root.style.setProperty("--card-red-text", t.cardRedText);
+    root.style.removeProperty("--menu-glass-tint");
     root.style.setProperty("--panel-bg", t.panelBg);
     root.style.setProperty("--panel-text", t.panelText);
+
+    if (t.id === "sky") {
+      updateSkyTheme();
+      root.setAttribute("data-udc-sky", "");
+      skyCloudLayer = buildSkyClouds();
+      skyUpdateTimer = setInterval(updateSkyTheme, 10000);
+    }
 
   // Only themes that opt in get the drifting emoji layer.
   setEmojiBackground(t.animatedBg || null);
@@ -234,6 +412,7 @@ function setEmojiBackground(setName) {
   }
 
   function applyCustomTheme(save = true) {
+    stopSkyTheme();
     const bg = customBgInput.value;
     const accent = customAccentInput.value;
     const cardBg = customCardBgInput.value;
@@ -249,6 +428,7 @@ function setEmojiBackground(setName) {
     root.style.setProperty("--card-red-bg", "#8b0000");
     root.style.setProperty("--card-red-text", "#ffffff");
     root.style.setProperty("--panel-bg", panelBg);
+    root.style.setProperty("--menu-glass-tint", hexToRgba(panelBg, 0.28));
     root.style.setProperty("--panel-text", readableTextColor(panelBg));
     setEmojiBackground(false);
     document.querySelectorAll(".theme-swatch").forEach(el => {
@@ -282,7 +462,9 @@ function buildThemeSwatches() {
     sw.className = "theme-swatch";
     sw.dataset.themeId = t.id;
     sw.title = t.label;
-    sw.style.background = `radial-gradient(circle, ${t.accent} 0 90%, ${t.bg} 38%)`;
+    sw.style.backgroundImage = t.id === "sky"
+      ? `linear-gradient(90deg, ${SKY_PHASES[1].colours.join(", ")})`
+      : `radial-gradient(circle, ${t.accent} 0 90%, ${t.bg} 38%)`;
 
     const emoji = SWATCH_EMOJI[t.id];
     if (emoji) {
@@ -301,9 +483,10 @@ function buildThemeSwatches() {
     customSw.className = "theme-swatch";
     customSw.dataset.themeId = "custom";
     customSw.title = "Custom";
-    customSw.style.background = "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)";
+    customSw.style.backgroundImage =
+      "linear-gradient(90deg, #ff5470, #ffc857, #5ee49a, #52b9ff, #a76bff)";
     customSw.addEventListener("click", () => applyTheme("custom"));
-    themeSwatchRow.appendChild(customSw);
+    themeSwatchRow.prepend(customSw);
   }
 
   cogButton.addEventListener("click", (e) => {

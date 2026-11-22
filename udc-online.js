@@ -1,6 +1,6 @@
 /* udc-online.js: Ultimate Drinking Cards online multiplayer */
 (() => {
-  const VERSION = 'v25';
+  const VERSION = 'v36';
   const QR_SCRIPTS = ['qrcode.min.js', 'qrcode.js'];
 
   const BLACK_CARDS_COUNT = false;
@@ -11,23 +11,79 @@
   };
   const NUM_PAT = '(a|an|one|two|three|four|five|six|seven|eight|nine|ten|\\d{1,2})';
   const DRINK_PAT = '\\s+(?:more\\s+)?(?:(?:big|large|small|full|long|quick|huge|good|massive)\\s+)?(?:drinks?|swigs?)\\b';
-  const TAKE_RE = new RegExp('\\b(?:take|takes|have|has)\\s+' + NUM_PAT + DRINK_PAT, 'gi');
-  const GIVE_RE = new RegExp('\\b(?:issue|issues|give|gives|hand out|hands out|assign|assigns|distribute|distributes|dish out|dishes out)\\s+(?:out\\s+)?' + NUM_PAT + DRINK_PAT, 'gi');
+  const DRINK_VERB_RE = new RegExp([
+    '\\bas you\\s+drinks?\\b',
+    '\\b(?:take|takes|have|has|drink|drinks)\\s+(?<takeCount>' + NUM_PAT + ')' + DRINK_PAT,
+    '\\b(?:issue|issues|give|gives|hand out|hands out|assign|assigns|distribute|distributes|dish out|dishes out)\\s+(?:out\\s+)?(?<giveCount>' + NUM_PAT + ')' + DRINK_PAT,
+    '\\b(?:drink|drinks|swig|swigs)\\b(?:\\s+(?<frequency>once|twice|thrice|' + NUM_PAT +
+      '\\s+times))?(?=\\s*(?:$|[,):]|\\b(?:and|then|or)\\b))'
+  ].join('|'), 'gi');
+  const EXCLUDED_ASSIGNMENT_RE = /\bassign(?:s|ing)?\s+(?:someone|somebody|another player|a player|any player)\b/i;
+  const DRAWER_RE = /^(?:you|the (?:current player|player who drew this card))$/i;
+  const OTHER_PLAYER_RE = /^(?:they|he|she|(?:that|this|another|one|either) (?:player|person)|the (?:chosen|selected|nominated|voted) (?:player|person))$/i;
 
-  function numOf(x) {
+    function numOf(x) {
     x = String(x).toLowerCase();
-    return Object.prototype.hasOwnProperty.call(NUM_WORDS, x)
-      ? NUM_WORDS[x] : (parseInt(x, 10) || 0);
+    return NUM_WORDS[x] || parseInt(x, 10) || 0;
   }
 
-  function parseDrinks(rule) {
-    const t = String(rule).replace(/<[^>]*>/g, ' ');
-    let take = 0, give = 0, m;
-    TAKE_RE.lastIndex = 0;
-    while ((m = TAKE_RE.exec(t))) take += numOf(m[1]);
-    GIVE_RE.lastIndex = 0;
-    while ((m = GIVE_RE.exec(t))) give += numOf(m[1]);
-    return { take, give };
+  function parseDrinks(rule, playerCount) {
+    const t = String(rule).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+    const result = {
+      take: 0, assigned: 0, possible: 0, likelyMin: 0, likelyMax: 0,
+      expectedTake: 0, expectedUnassigned: 0,
+      conditional: [], excluded: EXCLUDED_ASSIGNMENT_RE.test(t)
+    };
+    if (result.excluded) return result;
+
+    for (const clause of t.split(/[.!?;]+/)) {
+      const text = clause.trim();
+
+      if (/^everyone\s*,?\s*drink\s+if\b/i.test(text)) {
+        result.expectedUnassigned += playerCount * 0.5;
+        continue;
+      }
+      if (/^drink\s+if\b/i.test(text)) {
+        result.expectedTake += 0.5;
+        continue;
+      }
+
+      for (const match of text.matchAll(DRINK_VERB_RE)) {
+        const prefix = text.slice(0, match.index).trim();
+        const { takeCount, giveCount, frequency } = match.groups;
+        if (/^as you\b/i.test(match[0])) {
+          // Estimate how many of the other players match the drawer.
+          const low = Math.floor(Math.max(0, playerCount - 1) / 2);
+          result.likelyMin += low;
+          result.likelyMax += playerCount === 3 || playerCount < 2
+            ? low
+            : Math.ceil(playerCount / 2);
+          continue;
+        }
+
+        const explicitCount = takeCount || giveCount;
+        const count = explicitCount
+          ? numOf(explicitCount)
+          : frequency
+            ? ({ once: 1, twice: 2, thrice: 3 }[frequency.toLowerCase()] ||
+              numOf(frequency.split(' ')[0]))
+            : 1;
+        const subject = prefix.replace(/^.*(?:\b(?:then|and)\b|:)\s*/i, '').trim();
+
+        if (/\bor(?:\s+else)?$/i.test(prefix)) {
+          result.possible += count;
+        } else if (/\b(?:do not|don't|never|does not|doesn't)\s*$/i.test(prefix)) {
+          continue;
+        } else if (giveCount || OTHER_PLAYER_RE.test(subject)) {
+          result.assigned += count;
+        } else if (!subject || DRAWER_RE.test(subject) || /=\s*$/.test(prefix)) {
+          result.take += count;
+        } else if (takeCount || /^(?:if\b|everyone\b|anyone\b|whoever\b)|,$/i.test(subject)) {
+          result.conditional.push({ count, text });
+        }
+      }
+    }
+    return result;
   }
 
   if (/[?&]online=0\b/.test(location.search)) {
@@ -59,7 +115,7 @@
   }
 
   window.addEventListener('error', e => {
-    if (!e.filename || /udc-online/.test(e.filename)) {
+    if (/udc-online|firebase-(?:app|auth|database)-compat/.test(e.filename || '')) {
       showError((e.message || 'error') +
         (e.lineno ? ' (line ' + e.lineno + ')' : ''));
     }
@@ -212,6 +268,23 @@
 
     const menu = document.getElementById('themeMenu');
     const openBtn = document.getElementById('multiplayerButton');
+    const localEdit = document.getElementById('editPlayersButton');
+    const gameSettings = document.getElementById('restartGameButton');
+    const guestLeave = document.createElement('button');
+    guestLeave.type = 'button';
+    guestLeave.id = 'udcLeaveGameButton';
+    guestLeave.className = 'menu-action';
+    guestLeave.textContent = 'Leave Online Game';
+    guestLeave.hidden = true;
+    gameSettings.after(guestLeave);
+
+    function paintGameMenu() {
+      const online = phase !== 'menu';
+      localEdit.hidden = online;
+      gameSettings.hidden = online && !isHost;
+      gameSettings.textContent = online ? 'Edit Game Settings' : 'Restart Game';
+      guestLeave.hidden = !online || isHost;
+    }
 
     const css = document.createElement('style');
     css.textContent =
@@ -221,9 +294,13 @@
     css.textContent +=
       '#udcOnlineBox.udc-lobby{box-sizing:border-box;width:100%;max-width:640px}' +
       '.udcLobbyInvite{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}' +
-      '.udcLobbySettings summary{cursor:pointer;font-weight:700;color:var(--muted);margin:8px 0}' +
+      '.udcLobbySettings #oCategories > summary{cursor:pointer;font-weight:700;color:#ddd;margin:8px 0}' +
       '#udcOnlineBox{box-sizing:border-box}' +
       '#oShareBox{min-width:0}' +
+      '.udcLobbyInviteActions{min-width:0}' +
+      '.udcLobbyInviteActions #oShareBox>.setup-field{margin-bottom:0}' +
+      '.udcLobbyInviteActions .udcLobbyStart{margin-top:8px}' +
+      '.udcLobbyInviteActions #oStart{width:100%}' +
       '#oShareBox .setup-btn-row,#oShareBox .toggleButtonRow{flex-wrap:wrap}' +
       '#oShareBox button{min-width:0;overflow-wrap:anywhere}' +
       '.udcQRImage{box-sizing:border-box;width:220px;max-width:100%;min-width:0;background:#fff;padding:10px;border-radius:12px;line-height:0}' +
@@ -500,6 +577,27 @@
       const whiteContrast = 1.05 / (luminance + 0.05);
       return blackContrast >= whiteContrast ? '#000' : '#fff';
     }
+
+    const accentPixel = document.createElement('canvas');
+    accentPixel.width = accentPixel.height = 1;
+    const accentContext = accentPixel.getContext('2d', { willReadFrequently: true });
+
+    function paintAccentContrast() {
+      const button = box.querySelector('#oHost');
+      if (!button || !accentContext) return;
+      accentContext.clearRect(0, 0, 1, 1);
+      accentContext.fillStyle = getComputedStyle(button).backgroundColor;
+      accentContext.fillRect(0, 0, 1, 1);
+      const [r, g, b] = accentContext.getImageData(0, 0, 1, 1).data;
+      const hex = [r, g, b].map(channel => channel.toString(16).padStart(2, '0')).join('');
+      button.style.setProperty('--accent-button-text', reactionTextColour('#' + hex));
+    }
+
+    const accentObserver = new MutationObserver(paintAccentContrast);
+    for (const node of [document.documentElement, document.body]) {
+      accentObserver.observe(node, { attributes: true });
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintAccentContrast);
 
     function showReaction(emoji, name, colour) {
       const pop = document.createElement('span');
@@ -822,13 +920,47 @@
       return lobbyDraft;
     }
 
+    let deckCountTimer;
+
+    function paintLobbyDeckCount() {
+      const label = box.querySelector('#oLobbyDeckCount');
+      if (!label || phase !== 'lobby') return;
+      let count = meta?.lobbyDeckCount;
+
+      if (isHost && allCards.length) {
+        const draft = getLobbyDraft();
+        count = buildRaw(draft.cats || enabledCategories, draft.discord, onlineCount()).length;
+        clearTimeout(deckCountTimer);
+        if (connected && count !== meta?.lobbyDeckCount) {
+          const room = code;
+          deckCountTimer = setTimeout(() => {
+            if (code === room && isHost && phase === 'lobby' && connected) {
+              root().child('meta/lobbyDeckCount').set(count).catch(error => {
+                console.warn('Could not publish the lobby deck count', error);
+              });
+            }
+          }, 160);
+        }
+      }
+
+      label.textContent = Number.isInteger(count)
+        ? count + ' eligible card' + (count === 1 ? '' : 's') + ' in the deck'
+        : 'Counting cards…';
+    }
+
     function paintLobbyDrinkEstimate() {
-      const estimate = document.getElementById('oDrinkEstimate');
-      if (!estimate || typeof formatDrinkEstimate !== 'function') return;
+      const estimate = box.querySelector('#oDrinkEstimate');
+      const summary = box.querySelector('#oDrinkEstimateSummary');
+      if (!estimate || !summary || typeof formatDrinkEstimate !== 'function') return;
+
       const draft = getLobbyDraft();
-      estimate.textContent = formatDrinkEstimate(
-        onlineCount(), draft.unlimited ? Infinity : roundCount(draft.rounds)
-      );
+      const playerCount = onlineCount();
+      const rounds = draft.unlimited ? Infinity : roundCount(draft.rounds);
+      const description = formatDrinkEstimate(playerCount, rounds);
+
+      summary.textContent = formatDrinkEstimate(playerCount, rounds, true);
+      summary.setAttribute('aria-label', 'End. Estimated number of drinks. ' + description);
+      estimate.textContent = description;
     }
 
     function lobbySettingsHTML() {
@@ -841,7 +973,7 @@
       ).join('');
 
       return '<div class="setup-field udcLobbySettings" id="oSettings" tabindex="-1">' +
-        '<h3 style="font:20px/1.4 Arial, sans-serif;color:#9E9E9E"; font-weight:200;">Game settings</h3><div class="roundsRow">' +
+        '<h3 style="font:20px/1.4 Arial, sans-serif;color:#ddd"; font-weight:200;">Game settings</h3><div class="roundsRow">' +
         '<label>Rounds <input type="number" id="oRounds" min="1" max="999" value="' +
         esc(draft.rounds) + '"' + (draft.unlimited ? ' disabled' : '') + '></label>' +
         '<label><input type="checkbox" id="oUnl"' +
@@ -851,14 +983,17 @@
         (draft.diff === 'crazy' ? ' selected' : '') + '>Crazy</option></select></label>' +
         '<label><input type="checkbox" id="oDiscord"' +
         (draft.discord ? ' checked' : '') + '> Discord mode</label></div>' +
+        '<details id="oCategories"><summary>Categories</summary>' +
         '<div class="setup-btn-row"><button type="button" id="oSfw">All SFW</button>' +
         '<button type="button" id="oCompetitive">Competitive</button></div>' +
-        '<details id="oCategories"><summary>Categories</summary>' +
         '<div class="category-list">' + (categoryOptions || 'Loading categories…') +
         '</div></details>' +
         (typeof formatDrinkEstimate === 'function'
-          ? '<p class="drink-estimate"><strong>END (Estimated Number of Drinks)</strong>' +
-            '<span id="oDrinkEstimate" aria-live="polite"></span></p>'
+          ? '<details class="drink-estimate" id="oDrinkEstimateDetails">' +
+            '<summary id="oDrinkEstimateSummary">End</summary>' +
+            '<div class="drink-estimate-body">' +
+            '<span class="drink-estimate-label">Estimated Number of Drinks</span>' +
+            '<span id="oDrinkEstimate" aria-live="polite"></span></div></details>'
           : '') +
         '</div>';
     }
@@ -882,10 +1017,24 @@
       return u.toString();
     }
 
+    let copyFeedbackTimer;
+    let linkCopied = false;
+
+    function paintCopyFeedback() {
+      const feedback = box.querySelector('#oCopyFeedback');
+      if (feedback) feedback.textContent = linkCopied ? 'Link copied' : '';
+    }
+
     async function copyLink(url) {
       try {
         await navigator.clipboard.writeText(url);
-        say('Link copied');
+        linkCopied = true;
+        paintCopyFeedback();
+        clearTimeout(copyFeedbackTimer);
+        copyFeedbackTimer = setTimeout(() => {
+          linkCopied = false;
+          paintCopyFeedback();
+        }, 2500);
       } catch (x) {
         window.prompt('Copy this link', url);
       }
@@ -1009,7 +1158,8 @@
         '<summary>Invite QR code</summary><div id="oQR"></div></details>' +
         '<div class="setup-btn-row" style="margin-top:10px">' +
         '<button id="oCopy">Copy link</button>' +
-        '<button id="oShare">Share</button></div></div>';
+        '<button id="oShare">Share</button></div>' +
+        '<span id="oCopyFeedback" role="status"></span></div>';
     }
 
     let lobbyQROpen = !window.matchMedia('(max-width: 600px)').matches;
@@ -1019,6 +1169,7 @@
       if (!holder || !code) return;
 
       holder.innerHTML = shareHTML();
+      paintCopyFeedback();
       const disclosure = holder.querySelector('#oQrDisclosure');
       const el = holder.querySelector('#oQR');
       const renderQR = () => {
@@ -1061,10 +1212,12 @@
       else if (input.name === 'oCategory') {
         draft.cats = new Set([...box.querySelectorAll('[name="oCategory"]:checked')]
           .map(option => getUniqueCategories()[Number(option.value)]));
+        paintLobbyDeckCount();
         return;
       } else return;
 
       paintLobbyDrinkEstimate();
+      paintLobbyDeckCount();
       clearTimeout(shareT);
       shareT = setTimeout(paintShare, 300);
     }
@@ -1094,177 +1247,398 @@
       }
     }
 
+    const nextFlipUid = () => latestState?.next || order[0]?.uid;
+
     function currentTurnStatus() {
       const player = order[currentPlayerIndex];
       if (!player) return 'Waiting for players';
-      if (player.uid === uid && !amSpectator()) return 'Your turn!';
-      return (player.name || 'Player') + "'s Turn.";
+
+      const yours = player.uid === uid && !amSpectator();
+      const owner = yours ? 'Your turn' : (player.name || 'Player') + '’s turn';
+
+      if (nextFlipUid() === uid && !amSpectator()) return owner + ' · You’re next!';
+      const next = order.find(entry => entry.uid === nextFlipUid());
+      const status = next ? owner + ' · Next flip: ' + (next.name || 'Player') : owner;
+      return isHost && !amSpectator() ? status + ' · Double-tap to flip as host' : status;
     }
 
+    const turnEffects = document.createElement('div');
+    turnEffects.id = 'udcTurnEffects';
+    turnEffects.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(turnEffects);
+
+    const flipPrompt = document.createElement('div');
+    flipPrompt.id = 'udcFlipPrompt';
+    flipPrompt.setAttribute('role', 'status');
+    flipPrompt.hidden = true;
+    flipPrompt.textContent = 'Your turn to flip the card';
+    document.body.appendChild(flipPrompt);
+    let flipPromptTimer = null;
+
     function paintOnlineTurn() {
+      coverCard.classList.toggle('udc-opening-card', active && curN === 0);
       updateTurnTracker(active
         ? (finished() ? 'Game complete' : currentTurnStatus())
         : undefined);
     }
 
+    function updateEdgePulse() {
+      const readyToFlip = active && connected && !drawing && !blocked &&
+        !amSpectator() && !finished() && nextFlipUid() === uid;
+
+      turnEffects.classList.toggle('udc-ready-to-flip', readyToFlip);
+      if (!readyToFlip) {
+        clearFlipPrompt();
+      } else if (flipPromptTimer === null && flipPrompt.hidden) {
+        flipPromptTimer = setTimeout(() => {
+          flipPrompt.hidden = false;
+          flipPromptTimer = null;
+          updateEdgePulse();
+        }, 8000);
+      }
+      return readyToFlip;
+    }
+
     function nudge() {
-      if (!active || blocked || amSpectator() || finished()) return;
-      const cur = order[currentPlayerIndex];
-      if (!cur || cur.uid !== uid) return;
-      coverCard.classList.add('udc-yourturn');
-      document.title = '🎯 Your turn! · ' + baseTitle;
+      if (!updateEdgePulse()) return;
+      document.title = '🎯 Ready to flip · ' + baseTitle;
       try {
         vibrate([140, 90, 140, 90, 260]);
       } catch (x) {}
     }
 
+    function clearFlipPrompt() {
+      clearTimeout(flipPromptTimer);
+      flipPromptTimer = null;
+      flipPrompt.hidden = true;
+    }
+
     function clearNudge() {
-      coverCard.classList.remove('udc-yourturn');
+      clearFlipPrompt();
+      turnEffects.classList.remove('udc-ready-to-flip');
       document.title = baseTitle;
     }
 
+    function emitCardWave(colour) {
+      if (prefersReducedMotion || document.hidden) return;
+
+      const rect = coverCard.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const waveColour = CSS.supports('color', colour)
+        ? colour
+        : 'var(--accent, #999)';
+
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const horizontalReach = Math.max(Math.abs(x), Math.abs(turnEffects.clientWidth - x));
+      const verticalReach = Math.max(Math.abs(y), Math.abs(turnEffects.clientHeight - y));
+      const endScale = Math.max(
+        1.08,
+        (horizontalReach + 64) / (rect.width / 2),
+        (verticalReach + 64) / (rect.height / 2)
+      );
+
+      const wave = document.createElement('div');
+      wave.className = 'udc-card-wave';
+      wave.style.setProperty('--wave-colour', waveColour);
+
+      Object.assign(wave.style, {
+        left: x + 'px',
+        top: y + 'px',
+        width: rect.width + 'px',
+        height: rect.height + 'px',
+        border: 'none',
+        borderRadius: getComputedStyle(coverCard).borderRadius,
+        boxShadow: [
+          '0 0 22px 8px color-mix(in srgb, var(--wave-colour) 92%, white)',
+          '0 0 56px 24px color-mix(in srgb, var(--wave-colour) 65%, transparent)',
+          '0 0 104px 44px color-mix(in srgb, var(--wave-colour) 28%, transparent)',
+          'inset 0 0 22px 8px color-mix(in srgb, var(--wave-colour) 92%, white)',
+          'inset 0 0 56px 24px color-mix(in srgb, var(--wave-colour) 65%, transparent)',
+          'inset 0 0 104px 44px color-mix(in srgb, var(--wave-colour) 28%, transparent)'
+        ].join(', ')      });
+
+      turnEffects.appendChild(wave);
+
+      const animation = wave.animate([
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.65 },
+        { transform: 'translate(-50%, -50%) scale(' + endScale + ')', opacity: 0 }
+      ], {
+        duration: 1300,
+        easing: 'cubic-bezier(0.2, 0.65, 0.3, 1)'
+      });
+
+      animation.finished.then(() => wave.remove(), () => wave.remove());
+    }
+
+    const BREAKDOWN_PAGE_SIZE = 24;
+    let breakdownLimit = BREAKDOWN_PAGE_SIZE;
+
     function tallyDrinks() {
-      const len = order.length || 1;
       const rows = order.map(o => ({
         uid: o.uid,
         name: o.name,
         colour: o.colour,
         cards: 0,
-        take: 0,
-        give: 0,
-        total: 0
+        total: 0,
+        expectedTake: 0
       }));
-
-      let reds = 0, blacks = 0;
+      const playersById = new Map(rows.map(row => [row.uid, row]));
+      const runs = Object.values(latestState?.turnRuns || {}).filter(Boolean)
+        .sort((a, b) => a.start - b.start);
+      const conditional = [];
+      const breakdown = [];
+      let runIndex = -1;
+      let reds = 0, blacks = 0, unknown = 0;
+      let expectedUnassigned = 0;
+      let possible = 0, likelyMin = 0, likelyMax = 0, excluded = 0;
 
       for (let n = 1; n <= curN; n++) {
-        const c = cardFor(n);
-        const r = rows[(n - 1) % len];
-        if (!r) continue;
+        while (runs[runIndex + 1]?.start <= n) runIndex++;
+        const run = runs[runIndex];
+        const recipient = run
+          ? run.ids[(run.index + n - run.start) % run.ids.length]
+          : n === latestState?.n ? latestState.turn : undefined;
+        const row = playersById.get(recipient);
+        if (row) row.cards++;
 
-        r.cards++;
+        const playerCount = run?.ids.length ?? order.length;
+        const c = cardFor(n, playerCount);
+        const detail = n <= breakdownLimit
+          ? { n, type: c.type, rule: c.rule, category: c.category, player: row?.name }
+          : null;
+        if (detail) breakdown.push(detail);
+
         if (c.type === 'red') reds++;
-
         if (c.type === 'black') {
           blacks++;
-          if (!BLACK_CARDS_COUNT) continue;
+          if (!BLACK_CARDS_COUNT) {
+            if (detail) detail.excluded = 'Inverted card · excluded from the tally';
+            continue;
+          }
         }
 
         const mult = c.type === 'red' ? 3 : 1;
-        const d = parseDrinks(c.rule);
-        r.take += d.take * mult;
-        r.give += d.give * mult;
+        const drinks = parseDrinks(c.rule, playerCount);
+        if (drinks.excluded) excluded++;
+        if (detail) {
+          if (drinks.excluded) detail.excluded = 'Open-ended assignment · excluded from the tally';
+          detail.known = row ? drinks.take * mult : 0;
+          detail.unassigned = (drinks.assigned + (row ? 0 : drinks.take)) * mult;
+          detail.expected = (drinks.expectedTake + drinks.expectedUnassigned) * mult;
+          detail.expectedUnassigned = (drinks.expectedUnassigned + (row ? 0 : drinks.expectedTake)) * mult;
+          detail.possible = drinks.possible * mult;
+          detail.likelyMin = drinks.likelyMin * mult;
+          detail.likelyMax = drinks.likelyMax * mult;
+          detail.conditional = drinks.conditional.map(item => item.count * mult);
+        }
+        possible += drinks.possible * mult;
+        likelyMin += drinks.likelyMin * mult;
+        likelyMax += drinks.likelyMax * mult;
+        if (row) row.total += drinks.take * mult;
+        else unknown += drinks.take * mult;
+        unknown += drinks.assigned * mult;
+
+        const expectedTake = drinks.expectedTake * mult;
+        expectedUnassigned += drinks.expectedUnassigned * mult;
+        if (row) row.expectedTake += expectedTake;
+        else expectedUnassigned += expectedTake;
+
+        for (const instruction of drinks.conditional) {
+          conditional.push({ ...instruction, count: instruction.count * mult, card: n });
+        }
       }
 
-      rows.forEach(r => {
-        r.total = r.take + r.give;
-      });
-
       return {
-        rows, reds, blacks,
+        rows, reds, blacks, unknown, possible, likelyMin, likelyMax, conditional, excluded, breakdown,
+        expectedUnassigned,
+        expectedTotal: expectedUnassigned + rows.reduce((sum, row) => sum + row.expectedTake, 0),
         cards: curN,
-        total: rows.reduce((a, r) => a + r.total, 0)
+        total: unknown + rows.reduce((sum, row) => sum + row.total, 0)
       };
     }
 
     function resultPlayerName(player) {
-      const name = esc(player.name || '?');
-      const colour = player.colour;
-      if (typeof colour !== 'string' || !/^#[0-9a-f]{6}$/i.test(colour)) return name;
-      return '<span style="display:inline-block;color:' + colour +
-        ';filter:brightness(1.35)">' + name + '</span>';
+      return esc(player.name || '?');
+    }
+
+    function cardBreakdownHTML(entries, count) {
+      if (!entries.length) return '';
+      const open = box.querySelector('#oCardBreakdown')?.open;
+      const cards = entries.map(card => {
+        const badges = card.excluded ? [card.excluded] : [
+          card.known && card.known + ' known',
+          card.unassigned && card.unassigned + ' unassigned',
+          card.expected && card.expected + ' expected' +
+            (card.expectedUnassigned ? ' (' + card.expectedUnassigned + ' unassigned)' : ''),
+          card.possible && 'Up to ' + card.possible + ' possible',
+          card.likelyMax && (card.likelyMin === card.likelyMax
+            ? card.likelyMin : card.likelyMin + '–' + card.likelyMax) + ' likely',
+          ...card.conditional.map(value => value + ' per qualifying player')
+        ].filter(Boolean);
+        if (!badges.length) badges.push('No drinks counted');
+
+        const typeLabel = { white: 'White', red: 'Red ×3', black: 'Black' }[card.type];
+        return `
+          <li class="udc-breakdown-card udc-breakdown-${card.type}">
+            <header>
+              <span>Card ${card.n} · ${esc(typeLabel)}</span>
+              <span>${esc(card.category || '')}</span>
+            </header>
+            <p class="udc-breakdown-rule">${esc(card.rule)}</p>
+            <p class="udc-breakdown-owner">${card.player ? esc(card.player) + '’s turn' : 'Turn owner unknown'}</p>
+            <ul class="udc-breakdown-badges">
+              ${badges.map(badge => '<li>' + esc(badge) + '</li>').join('')}
+            </ul>
+          </li>`;
+      }).join('');
+
+      return `
+        <details id="oCardBreakdown" class="udc-results-details"${open ? ' open' : ''}>
+          <summary>Card-by-card breakdown (${count})</summary>
+          <ol class="udc-breakdown-list">${cards}</ol>
+          ${entries.length < count
+            ? '<button type="button" class="secondary-btn udc-results-secondary" id="oMoreBreakdown">Show more cards</button>'
+            : ''}
+        </details>`;
     }
 
     function resultsHTML() {
       const t = tallyDrinks();
       const done = finished();
       const sorted = t.rows.slice().sort((a, b) =>
-        b.total - a.total ||
-        String(a.name).localeCompare(String(b.name))
+        b.total - a.total || String(a.name).localeCompare(String(b.name))
       );
       const max = sorted.length ? sorted[0].total : 0;
+      const showExpected = sorted.some(row => row.expectedTake > 0);
 
-      let h =
-        '<section class="udc-results" aria-labelledby="udcResultsTitle">' +
-        '<h2 id="udcResultsTitle">' + (done ? '🏁 Game over' : '🍻 Drinks so far') +
-        '</h2>' +
-        '<p class="sub">' + t.cards + ' card' +
-        (t.cards === 1 ? '' : 's') + ' drawn</p>' +
-        '<div style="font-size:60px;color: var(--accent);font-weight:900;line-height:1">' +
-        t.total + '</div>' +
-        '<div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#555;margin:2px 0 18px">Total drinks</div>';
+      const metric = (label, value, note = '') => `
+        <div class="udc-results-metric">
+          <dt>${label}</dt>
+          <dd>${value}</dd>
+          ${note ? `<dd class="udc-results-note">${note}</dd>` : ''}
+        </div>`;
 
-      h += sorted.map(r => {
-        const pct = max
-          ? Math.round(100 * r.total / max)
-          : 0;
+      const likelyRange = t.likelyMin === t.likelyMax
+        ? t.likelyMin
+        : `${t.likelyMin}–${t.likelyMax}`;
 
-        return '<div style="text-align:left;margin-bottom:12px">' +
-          '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700">' +
-          '<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' +
-          esc(r.colour || '#999') +
-          ';margin-right:7px"></span>' +
-          resultPlayerName(r) +
-          (r.uid === uid ? ' <span class="udc-results-you">(you)</span>' : '') +
-          '</span><span class="udc-results-score" style="font-size:20px">' +
-          r.total + '</span></div>' +
-          '<div style="height:6px;border-radius:3px;background:rgba(0,0,0,.1);margin:5px 0">' +
-          '<div style="height:100%;width:' + pct +
-          '%;border-radius:3px;background:' +
-          esc(r.colour || '#999') +
-          '"></div></div>' +
-          '<div style="font-size:12px;color:#555">🍺 Take ' +
-          r.take + ' · 🎯 Issue ' + r.give +
-          ' · ' + r.cards + ' card' +
-          (r.cards === 1 ? '' : 's') +
-          '</div></div>';
+      const metrics = [
+        metric('Drinks with a known count', t.total),
+        metric('Unknown recipients', t.unknown, 'Included in the known total'),
+        t.expectedTotal && metric(
+          'Expected from “drink if”',
+          t.expectedTotal,
+          `${t.expectedUnassigned} unassigned · assumes a 50% chance per player`
+        ),
+        t.possible && metric('Possible drinks', `Up to ${t.possible}`),
+        t.likelyMax && metric('Likely drinks', likelyRange, 'Estimated from player count')
+      ].filter(Boolean).join('');
+
+      const playerRows = sorted.map(row => {
+        const colour = /^#[0-9a-f]{6}$/i.test(row.colour || '') ? row.colour : '';
+        const dotStyle = colour ? ` style="--player-colour: ${colour}"` : '';
+
+        return `
+          <tr>
+            <th scope="row">
+              <div class="udc-results-player">
+                <span class="udc-results-dot" aria-hidden="true"${dotStyle}></span>
+                <span class="udc-results-player-name">
+                  ${resultPlayerName(row)}${row.uid === uid ? ' (you)' : ''}
+                </span>
+              </div>
+              <div class="udc-results-note">
+                ${row.cards} recorded turn${row.cards === 1 ? '' : 's'}
+              </div>
+            </th>
+            <td>${row.total}</td>
+            ${showExpected ? `<td>${row.expectedTake || 0}</td>` : ''}
+          </tr>`;
       }).join('');
 
+      const board = sorted.length ? `
+        <table class="udc-results-board">
+          <caption>Player scores</caption>
+          <thead>
+            <tr>
+              <th scope="col">Player</th>
+              <th scope="col">Known</th>
+              ${showExpected ? '<th scope="col">Expected</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>${playerRows}</tbody>
+        </table>` : '';
+
+      let ranking = '';
       if (max > 0) {
         const top = sorted
-          .filter(r => r.total === max)
+          .filter(row => row.total === max)
           .map(resultPlayerName)
-          .join(' & ');
-        h += '<p class="sub" style="margin:6px 0 4px">' +
-          '<b>Most drinks:</b> ' + top +
-          ' (' + max + ')</p>';
-      } else if (t.cards) {
-        h += '<p class="sub" style="margin:6px 0 4px">' +
-          'No drink cards have turned up yet.</p>';
+          .join(' &amp; ');
+        ranking = `<p class="udc-results-note"><b>Most attributed drinks</b> · ${top} (${max})</p>`;
+      } else if (
+        t.cards && !t.total && !t.expectedTotal && !t.possible &&
+        !t.likelyMax && !t.conditional.length && !t.excluded
+      ) {
+        ranking = '<p class="udc-results-note">No drink cards have turned up yet.</p>';
       }
+
+      const conditional = t.conditional.length ? `
+        <details class="udc-results-details">
+          <summary>Conditional instructions (${t.conditional.length})</summary>
+          <p class="udc-results-note">The number of qualifying players is unknown.</p>
+          <ul>
+            ${t.conditional.map(row => `
+              <li>
+                <b>Card ${row.card} · ${row.count} per qualifying player</b><br>
+                ${esc(row.text)}
+              </li>`).join('')}
+          </ul>
+        </details>` : '';
 
       const notes = [];
+      if (t.excluded) {
+        notes.push(`${t.excluded} open-ended assignment card${t.excluded === 1 ? '' : 's'} excluded`);
+      }
       if (t.reds) {
-        notes.push(t.reds + ' red card' +
-          (t.reds === 1 ? '' : 's') + ' counted ×3');
+        notes.push(`${t.reds} red card${t.reds === 1 ? '' : 's'} counted ×3`);
       }
       if (t.blacks && !BLACK_CARDS_COUNT) {
-        notes.push(t.blacks + ' inverted (black) card' +
-          (t.blacks === 1 ? '' : 's') + ' not counted');
-      }
-      if (notes.length) {
-        h += '<p class="sub" style="font-size:12px;margin:0 0 4px">' +
-          esc(notes.join(' · ')) + '</p>';
+        notes.push(`${t.blacks} inverted (black) card${t.blacks === 1 ? '' : 's'} not counted`);
       }
 
-      h += '<div class="setup-btn-row">' +
-        (done && isHost
-          ? '<button id="oAgain">Play again</button>' +
-            '<button id="oGameSettings">Go to game settings</button>'
-          : '') +
-        (done
-          ? '<button id="oLeave" class="udc-results-leave">Leave</button>'
-          : '<button id="oResBack" class="udc-back-to-game">Back to game</button>') +
-        '</div>' +
-        '<p class="sub" style="font-size:11px;opacity:.55;margin:14px 0 0">' +
-        'online script ' + VERSION + '</p></section>';
+      return `
+        <section class="udc-results" aria-labelledby="udcResultsTitle">
+          <header class="udc-results-header">
+            <h2 id="udcResultsTitle">${done ? '🏁 Game over' : '🍻 Drinks so far'}</h2>
+            <p class="udc-results-meta">${t.cards} card${t.cards === 1 ? '' : 's'} drawn</p>
+          </header>
 
-      return h;
+          <dl class="udc-results-metrics">${metrics}</dl>
+          ${board}
+          ${ranking}
+          ${conditional}
+          ${cardBreakdownHTML(t.breakdown, t.cards)}
+          ${notes.length ? `<p class="udc-results-note">${esc(notes.join(' · '))}</p>` : ''}
+
+          <div class="setup-btn-row udc-results-actions">
+            ${done && isHost ? `
+              <button id="oAgain">Play again</button>
+              <button id="oGameSettings">Go to game settings</button>` : ''}
+            ${done
+              ? '<button id="oLeave" class="udc-results-leave">Leave</button>'
+              : '<button id="oResBack" class="udc-back-to-game udc-results-secondary">Back to game</button>'}
+          </div>
+        </section>`;
     }
 
     function render() {
+      paintGameMenu();
       box.classList.toggle('udc-lobby', phase === 'lobby');
       const categoriesOpen = box.querySelector('#oCategories')?.open;
+      const estimateOpen = box.querySelector('#oDrinkEstimateDetails')?.open;
       if (
         phase === 'playing' &&
         resultsOpen &&
@@ -1306,7 +1680,7 @@
 
         if (!inv) {
           h += '<div class="setup-btn-row">' +
-            '<button id="oHost">Host a game</button></div>';
+            '<button id="oHost" class="accent-btn">Host a Game</button></div>';
         }
 
         h += '<div class="setup-field" style="margin-top:18px">' +
@@ -1324,11 +1698,15 @@
           '<div style="font-size:42px;font-weight:900;color:#fff;letter-spacing:.1em;margin-bottom:12px">' +
           esc(code) + '</div>' +
           '<div class="setup-field"><label id="oCount"></label>' +
-          '<div id="oRoster"></div></div></div><div id="oShareBox"></div></div>';
+          '<div id="oRoster"></div><p id="oLobbyDeckCount" class="sub" aria-live="polite"></p></div></div>' +
+          '<div class="udcLobbyInviteActions"><div id="oShareBox"></div>' +
+          (isHost
+            ? '<div class="setup-btn-row udcLobbyStart"><button id="oStart">Start game</button></div>'
+            : '') +
+          '</div></div>';
 
         if (isHost) {
-          h += lobbySettingsHTML() +
-            '<div class="setup-btn-row"><button id="oStart">Start game</button></div>';
+          h += lobbySettingsHTML();
         } else if (amSpectator()) {
           h += '<p class="sub">You’re watching. Waiting for the host to start…</p>';
         } else {
@@ -1377,6 +1755,7 @@
         VERSION + '</p>';
 
       box.innerHTML = h;
+      paintAccentContrast();
       const categoryInputs = box.querySelectorAll('[name="oCategory"]');
       if (categoryInputs.length) {
         const categories = getUniqueCategories();
@@ -1387,6 +1766,8 @@
       if (categoriesOpen && box.querySelector('#oCategories')) {
         box.querySelector('#oCategories').open = true;
       }
+      const estimateDetails = box.querySelector('#oDrinkEstimateDetails');
+      if (estimateOpen && estimateDetails) estimateDetails.open = true;
       paintRoster();
       paintShare();
     }
@@ -1454,6 +1835,7 @@
           (specs.length ? ' · ' + specs.length + ' watching' : '');
       }
 
+      paintLobbyDeckCount();
       const st = document.getElementById('oStart');
       if (st) {
         paintLobbyDrinkEstimate();
@@ -1526,7 +1908,13 @@
         await updateCards(btn);
       } else if (id === 'oReload') {
         location.reload();
+      } else if (id === 'oMoreBreakdown') {
+        breakdownLimit += BREAKDOWN_PAGE_SIZE;
+        render();
+        const next = box.querySelector('#oMoreBreakdown') || box.querySelector('#oCardBreakdown summary');
+        next?.focus();
       } else if (id === 'oResults') {
+        breakdownLimit = BREAKDOWN_PAGE_SIZE;
         resultsOpen = true;
         render();
       } else if (id === 'oResBack') {
@@ -1542,6 +1930,7 @@
           option.checked = selected.has(categories[Number(option.value)]);
         });
         box.querySelector('#oCategories').open = true;
+        paintLobbyDeckCount();
       } else if (id === 'oAgain') {
         await finishRound(true);
       } else if (id === 'oGameSettings') {
@@ -1632,7 +2021,8 @@
             name,
             colour,
             online: true,
-            t: firebase.database.ServerValue.TIMESTAMP
+            t: firebase.database.ServerValue.TIMESTAMP,
+            lastActivity: firebase.database.ServerValue.TIMESTAMP
           }, spectate ? { spectator: true } : {}));
         }
       } catch (x) {
@@ -1649,6 +2039,7 @@
       attach();
       cardsReady().then(() => {
         if (phase === 'lobby' && !box.querySelector('[name="oCategory"]')) render();
+        else paintLobbyDeckCount();
       });
       presence();
       render();
@@ -1669,11 +2060,15 @@
           return;
         }
 
+        updateEdgePulse();
+        paintLobbyDeckCount();
         try {
           await me.onDisconnect().update({
             online: false
           });
-          if (code) {
+          if (disconnectRef === me && code &&
+              (await root().child('meta').once('value')).exists() &&
+              disconnectRef === me) {
             await me.update({ online: true });
           }
         } catch (e) {
@@ -1684,32 +2079,28 @@
       c.on('value', presenceCallback);
     }
 
+    let leaving = false;
+
     async function leave() {
-      const c = code;
+      if (leaving || !code || !uid) return;
+      leaving = true;
+      const player = root().child('players/' + uid);
       await detach();
-
-      try {
-        if (c && uid) {
-          const r = db.ref('udc/' + c);
-          const alone = Object.keys(roster)
-            .filter(i => i !== uid).length === 0;
-
-          if (alone) {
-            await r.remove();
-          } else if (started) {
-            await r.child('players/' + uid + '/online')
-              .set(false);
-          } else {
-            await r.child('players/' + uid).remove();
-          }
-        }
-      } catch (x) {}
-
       keep('udcOnSession', '');
+      if (connected) {
+        try {
+          if (started) await player.update({ online: false });
+          else await player.remove();
+        } catch (error) {
+          console.warn('Could not update room on leave', error);
+        }
+      }
       location.reload();
     }
 
     async function detach() {
+      clearNudge();
+      clearTimeout(deckCountTimer);
       hideRoomInvite();
       stopReactions();
       clearTimeout(hostTimer);
@@ -1720,7 +2111,7 @@
       presenceRef = null;
       presenceCallback = null;
 
-      if (disconnectRef) {
+      if (disconnectRef && connected) {
         try {
           await disconnectRef.onDisconnect().cancel();
         } catch (e) {}
@@ -1743,7 +2134,8 @@
       const draft = getLobbyDraft();
       const cats = [...(draft.cats || enabledCategories)];
       const disc = draft.discord;
-      const raw = buildRaw(new Set(cats), disc);
+      const deckPlayerCount = onlineCount();
+      const raw = buildRaw(new Set(cats), disc, deckPlayerCount);
 
       if (!raw.length) {
         msg = 'Choose at least one category with cards.';
@@ -1777,6 +2169,8 @@
                 rounds,
                 unlimited: unl,
                 sig: deckSig(raw),
+                deckPlayerCount,
+                lobbyDeckCount: raw.length,
                 count: sorted.length,
                 total: unl
                   ? 100000
@@ -1842,7 +2236,10 @@
 
         if (!m) {
           if (metaSeen) {
-            hideRoomInvite();
+            active = false;
+            clearNudge();
+            paintOnlineTurn();
+            void detach();
             say('This game was closed');
             keep('udcOnSession', '');
             setTimeout(() => location.reload(), 1500);
@@ -1891,14 +2288,10 @@
             colour: p.colour
           }));
 
-          const nextIndex = latestState &&
-            order.findIndex(p =>
-              p.uid === latestState.next
-            );
-
-          if (nextIndex >= 0) {
-            currentPlayerIndex = nextIndex;
-          }
+          const ownerIndex = order.findIndex(p => p.uid === latestState?.turn);
+          currentPlayerIndex = ownerIndex >= 0
+            ? ownerIndex
+            : (Math.max(0, curN - 1) % (order.length || 1));
 
           paintOnlineTurn();
           paintRoster();
@@ -2002,13 +2395,13 @@
       }, HOST_GRACE_MS);
     }
 
-    function buildRaw(cats, discord) {
+    function buildRaw(cats, discord, playerCount = Infinity) {
       const raw = allCards
         .filter(g => cats.has(g.Category || ''))
         .flatMap(g =>
           (Array.isArray(g.Rules) ? g.Rules : [])
             .filter(rule =>
-              !(discord && shouldRemoveForDiscord(rule))
+              minimumCardPlayers(rule) <= playerCount && !(discord && shouldRemoveForDiscord(rule))
             )
             .map(rule => ({
               Category: g.Category || '',
@@ -2048,7 +2441,7 @@
       return cycles.get(cycle);
     }
 
-    function cardFor(n) {
+    function cardFor(n, playerCount = order.length) {
       const len = baseDeck.length;
       const card = deckFor(
         Math.floor((n - 1) / len)
@@ -2070,7 +2463,7 @@
       const rule = meta.discord
         ? seededCall(
             rngOf(meta.seed + '|rule|' + n),
-            () => applyDiscordTransforms(card.Rule)
+            () => applyDiscordTransforms(card.Rule, playerCount)
           )
         : card.Rule;
 
@@ -2088,6 +2481,7 @@
         type,
         content,
         colour: card.Colour,
+        category: card.Category,
         rule: String(rule).replace(/<[^>]*>/g, ' ')
       };
     }
@@ -2127,7 +2521,8 @@
 
       baseDeck = buildRaw(
         new Set(m.cats || []),
-        !!m.discord
+        !!m.discord,
+        m.deckPlayerCount ?? Infinity
       );
 
       buildDeckFromEnabledCategories();
@@ -2161,15 +2556,19 @@
       const st = root().child('state');
       stRef = st;
 
+      let firstState = true;
       st.on('value', s => {
         const value = s.val();
         if (value?.seed && value.seed !== playingSeed) return;
         latestState = value;
+        const restoring = firstState && !!value?.n;
+        firstState = false;
 
         if (latestState?.n) {
-          applyState(latestState);
+          applyState(latestState, restoring);
         } else {
           clearNudge();
+          updateEdgePulse();
           setTimeout(() => {
             if (playingSeed === m.seed && !curN) nudge();
           }, 500);
@@ -2197,7 +2596,8 @@
 
         baseDeck = buildRaw(
           new Set(meta.cats || []),
-          !!meta.discord
+          !!meta.discord,
+          meta.deckPlayerCount ?? Infinity
         );
 
         cycles.clear();
@@ -2215,7 +2615,7 @@
           say('Cards updated');
 
           if (latestState) {
-            applyState(latestState);
+            applyState(latestState, curN === 0);
           }
           return;
         }
@@ -2275,6 +2675,7 @@
       cardBack.innerHTML = '';
 
       resultsOpen = false;
+      breakdownLimit = BREAKDOWN_PAGE_SIZE;
       clearNudge();
 
       warnBar.style.display = 'none';
@@ -2290,8 +2691,8 @@
       render();
 
       say(isHost
-        ? 'Game restarted'
-        : 'The host restarted the game'
+        ? 'You can edit the game settings in the lobby'
+        : 'The host returned everyone to the lobby'
       );
     }
 
@@ -2322,56 +2723,50 @@
     }
 
     async function restartAll() {
-      try {
-        await root().update({
-          'meta/started': false,
-          'meta/lastActivity': firebase.database.ServerValue.TIMESTAMP,
-          state: null
-        });
-      } catch (x) {
-        say('Could not restart: ' +
-          (x.code || x.message));
-      }
+      await root().update({
+        'meta/started': false,
+        'meta/lastActivity': firebase.database.ServerValue.TIMESTAMP,
+        state: null
+      });
+    }
+
+    function showGameSettings() {
+      overlay.style.display = 'flex';
+      render();
+      box.querySelector('#oSettings')?.focus();
     }
 
     menu.addEventListener('click', async e => {
-      const b = e.target.closest &&
-        e.target.closest(
-          '#restartGameButton, #editPlayersButton'
-        );
-
-      if (!b || !code) return;
+      const button = e.target.closest?.('#restartGameButton, #udcLeaveGameButton');
+      if (!button || phase === 'menu') return;
 
       e.stopImmediatePropagation();
       e.preventDefault();
       menu.style.display = 'none';
 
-      if (b.id === 'editPlayersButton') {
-        if (isHost && phase === 'lobby') {
-          overlay.style.display = 'flex';
-          render();
-          box.querySelector('#oSettings')?.focus();
-          return;
-        }
-        return say('In online games, players join from their own phones');
+      if (button === guestLeave) {
+        if (!isHost) await leave();
+        return;
       }
 
-      if (!active) {
-        return say('The game hasn’t started yet');
+      if (!isHost || roundActionPending) return;
+      if (phase === 'lobby') return showGameSettings();
+      if (!connected) return say('Waiting for connection…');
+      if (!finished() &&
+          !confirm('End this round and return everyone to the lobby to edit game settings?')) return;
+
+      roundActionPending = true;
+      try {
+        await restartAll();
+        if (phase === 'lobby') showGameSettings();
+      } catch (error) {
+        say('Could not open game settings: ' + (error.code || error.message));
+      } finally {
+        roundActionPending = false;
       }
-
-      if (!isHost) {
-        return say('Only the host can restart the game');
-      }
-
-      if (!confirm(
-        'Restart the game for everyone? You’ll all go back to the lobby.'
-      )) return;
-
-      await restartAll();
     }, true);
 
-    function applyState(s) {
+    function applyState(s, restoring = false) {
       if (
         !s ||
         !s.n ||
@@ -2389,9 +2784,7 @@
       lastN = curN = n;
       drawnCount = Math.max(-1, n - 2);
 
-      const drawnIndex = order.findIndex(p =>
-        p.uid === s.by
-      );
+      const drawnIndex = order.findIndex(p => p.uid === s.turn);
 
       currentPlayerIndex = drawnIndex >= 0
         ? drawnIndex
@@ -2400,23 +2793,32 @@
       currentRound =
         Math.floor((n - 1) / len) + 1;
 
-      const c = cardFor(n);
+      const drawRun = Object.values(s.turnRuns || {}).at(-1);
+      const drawIds = drawRun?.ids || order.map(player => player.uid);
+      const drawPlayers = drawIds.map(id => order.find(player => player.uid === id));
+      const ownerIndex = s.turn ? drawIds.indexOf(s.turn) : currentPlayerIndex;
+      const c = cardFor(n, drawPlayers.length);
 
       cardBack.dataset.content = c.content;
       cardBack.dataset.type = c.type;
       cardBack.dataset.categoryColour = c.colour;
 
-      flipCard();
-
-      const nextIndex = order.findIndex(p =>
-        p.uid === s.next
-      );
-
-      if (nextIndex >= 0) {
-        currentPlayerIndex = nextIndex;
+      if (restoring) {
+        showingFront = n % 2 === 1;
+        coverCard.classList.toggle('flipped', !showingFront);
+        coverCard.classList.add('udc-restoring-card');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          coverCard.classList.remove('udc-restoring-card');
+        }));
       }
+      flipCard(false, drawPlayers, ownerIndex, restoring);
+      if (drawing && s.by === uid && s.turn === uid) {
+        emitCardWave(c.colour);
+      }
+
       paintOnlineTurn();
       paintRoster();
+      updateEdgePulse();
 
       setTimeout(() => {
         if (playingSeed === seed && curN === n) nudge();
@@ -2440,15 +2842,36 @@
         totalRounds * players.length
       );
 
-    const canDraw = () =>
-      !amSpectator() &&
-      (
-        isHost ||
-        (
-          order[currentPlayerIndex] &&
-          order[currentPlayerIndex].uid === uid
-        )
-      );
+    const canDraw = () => !amSpectator() && (isHost || nextFlipUid() === uid);
+
+    let pendingHostFlip = null;
+
+    function confirmHostFlip(event) {
+      const now = performance.now();
+      const previous = pendingHostFlip;
+
+      if (
+        previous?.seed === playingSeed &&
+        previous?.card === curN &&
+        previous?.input === event.type &&
+        now - previous.time <= 600
+      ) {
+        pendingHostFlip = null;
+        return true;
+      }
+
+      pendingHostFlip = {
+        seed: playingSeed,
+        card: curN,
+        input: event.type,
+        time: now
+      };
+
+      say(event.type === 'keydown'
+        ? 'Press the key again to flip as host'
+        : 'Double-click or double-tap to flip as host');
+      return false;
+    }
 
     async function draw() {
       if (drawing || !connected) {
@@ -2492,8 +2915,18 @@
 
             if (index < 0) return;
 
+            const ids = order.map(player => player.uid);
+            const runs = cur?.turnRuns || {};
+            const lastRun = Object.values(runs).at(-1);
+            const sameRun = lastRun &&
+              lastRun.ids.length === ids.length &&
+              lastRun.ids.every((id, i) => id === ids[i]) &&
+              lastRun.ids[(lastRun.index + n - lastRun.start) % ids.length] === currentUid;
+
             return {
               n,
+              turn: currentUid,
+              turnRuns: sameRun ? runs : { ...runs, [n]: { start: n, index, ids } },
               prev: n - 1,
               seed,
               by: uid,
@@ -2512,6 +2945,7 @@
           (x.code || x.message));
       } finally {
         drawing = false;
+        updateEdgePulse();
       }
     }
 
@@ -2557,10 +2991,20 @@
         return say('Game complete! 🎉');
       }
 
+      if (drawing || (e.type === 'keydown' && e.repeat)) return;
+
       if (!canDraw()) {
-        return say(currentTurnStatus());
+        const next = order.find(player => player.uid === nextFlipUid());
+        return say(next ? (next.name || 'Player') + ' flips next.' : 'Waiting for players');
       }
 
+      if (
+        isHost &&
+        nextFlipUid() !== uid &&
+        !confirmHostFlip(e)
+      ) return;
+
+      pendingHostFlip = null;
       draw();
     }
 

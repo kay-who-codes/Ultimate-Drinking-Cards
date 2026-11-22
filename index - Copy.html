@@ -1,0 +1,2807 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>UDC</title>
+
+  <link rel="icon" type="image/x-icon" href="AppFiles/Icons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="AppFiles/Logos/AppIcon192px.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="AppFiles/Logos/AppIcon512px.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1210">
+
+<style>
+
+  :root {
+    --bg: #292929;
+    --card-bg: #ffffff;
+    --card-text: #000000;
+    --card-black-bg: #000000;
+    --card-black-text: #ffffff;
+    --card-red-bg: #eb0e0e;
+    --card-red-text: #ffffff;
+    --accent: #999999;
+    --muted: #767676;
+    --panel-bg: #e3e3e3;
+    --panel-text: #000000;
+    --btn-bg: #5b5b5b;
+    --btn-text: #ffffff;
+    --menu-glass-tint: #eeeeee0a;
+    --menu-glass-border: rgba(255, 255, 255, 0.14);
+    --menu-glass-text: #eee;
+    --menu-glass-muted: #bbb;
+    --accent-text: #ffffff;
+
+    --font-new: 'CustomFont', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  }
+
+  * { box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'CustomFont';
+    src: url('AppFiles/Fonts/UDC.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+  body {
+    background-color: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: background-color 0.3s;
+  }
+
+  #app {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    gap: 14px;
+    width: 100%;
+  }
+
+  /* Top bar / cog */
+  #topBar {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    z-index: 900;
+    display: flex;
+    gap: 8px;
+  }
+
+  .top-bar-button {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    width: 46px;
+    height: 46px;
+    margin-top: -10px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .top-bar-button[hidden] { display: none; }
+  .top-bar-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .top-bar-button:hover { background: rgba(255,255,255,0.18); transform: rotate(25deg); }
+
+  /* Turn tracker */
+  #turnTracker {
+    color: #ffffff;
+    font-family: Tahoma, sans-serif;
+    text-align: center;
+    min-height: 50px;
+  }
+  #turnTracker .turnLabel {
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  #turnTracker .turnName {
+    font-size: 26px;
+    font-weight: bold;
+    color: var(--accent);
+    animation: turnNameIn 0.4s ease-out;
+  }
+
+  @keyframes turnNameIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #turnTracker .roundLabel {
+    font-size: 13px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  /* Setup overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+
+  .setup-box {
+    background-color: var(--menu-glass-tint);
+    color: var(--menu-glass-text);
+    padding: 36px 32px;
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    font-family: Tahoma, sans-serif;
+    text-align: center;
+    box-shadow:
+      0 20px 50px rgba(0,0,0,0.45),
+      0 2px 0 rgba(255,255,255,0.4) inset;
+    border: 1px solid rgba(0,0,0,0.06);
+    animation: setupBoxIn 0.28s ease-out;
+  }
+
+  @keyframes setupBoxIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .setup-box h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 25px;
+    letter-spacing: 0.2px;
+    color: var(--btn-text);
+  }
+
+  .setup-box p.sub {
+    font-size: 13.5px;
+    color: #bbbbbb;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+  .setup-field {
+    text-align: left;
+    margin-bottom: 18px;
+  }
+
+  .setup-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    color: #ddd;
+  }
+
+  .setup-field input[type="text"],
+  .setup-field input[type="number"] {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 15px;
+    font-family: Tahoma, sans-serif;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .setup-field input[type="text"]:hover,
+  .setup-field input[type="number"]:hover {
+    border-color: #999;
+  }
+
+  .setup-field input[type="text"]:focus,
+  .setup-field input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  #playerNamesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #playerNamesContainer .remove-player-btn {
+    flex: 0 0 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #921d30;
+    border-radius: 8px;
+    background: #b42338;
+    color: #fff;
+    font: bold 24px/1 Tahoma, sans-serif;
+    cursor: pointer;
+  }
+
+  #playerNamesContainer .remove-player-btn:hover {
+    background: #921d30;
+  }
+
+  #playerNamesContainer .remove-player-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Player row: name, colour and remove button */
+  .playerRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .playerRow .playerNameInput {
+    flex: 1;
+    min-width: 0;
+  }
+  .playerRow .playerColourInput {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .playerRow .playerColourInput:hover { border-color: #999; }
+  .playerRow .playerColourInput:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .playerRow .playerColourInput::-webkit-color-swatch-wrapper { padding: 0; }
+  .playerRow .playerColourInput::-webkit-color-swatch { border: none; border-radius: 6px; }
+  .playerRow .playerColourInput::-moz-color-swatch { border: none; border-radius: 6px; }
+
+  .roundsRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .roundsRow label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: normal;
+    text-transform: none;
+    font-size: 14px;
+    color: #bdbdbd;
+    cursor: pointer;
+  }
+
+  .setup-field input[type="radio"],
+  .setup-field input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .setup-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .setup-btn-row button,
+  .primary-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background-color: var(--accent);
+    color: var(--accent-text, #ffffff);
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .setup-btn-row button:hover,
+  .primary-btn:hover {
+    filter: saturate(1.9);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 55%, transparent);
+    transform: scale(1.02);
+    outline: 2px solid var(--accent);
+  }
+  .setup-btn-row button:active,
+  .primary-btn:active {
+    transform: translateY(0);
+  }
+
+  .setup-btn-row .accent-btn {
+    background: var(--accent);
+    color: var(--accent-button-text, #000);
+  }
+
+  @supports (color: contrast-color(red)) {
+    .setup-btn-row .accent-btn { color: contrast-color(var(--accent)); }
+  }
+
+  #udcOnlineBox #oHost { font-size: 33px; }
+
+  #themeMenu #udcLeaveGameButton.menu-action:not([data-deck-preset]) {
+    background: #ffc4c4;
+    color: #531b20;
+    border-color: #dc9196;
+  }
+
+  #themeMenu button[hidden] { display: none; }
+
+  .secondary-btn {
+    background-color: transparent !important;
+    color: #333 !important;
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+  }
+
+  #udcOnlineBox #oJoin,
+  #udcOnlineBox #oWatch,
+  #udcOnlineBox #oCopy,
+  #udcOnlineBox #oShare {
+    --button-bg: #fff;
+    --button-fg: #202124;
+    --button-border: #c4c9ce;
+  }
+
+  #udcOnlineBox #oSfw,
+  #themeMenu [data-deck-preset="sfw"] {
+    --button-bg: #b9e2ff;
+    --button-fg: #102d43;
+    --button-border: #7cb6dc;
+  }
+
+  #udcOnlineBox #oCompetitive,
+  #themeMenu [data-deck-preset="competitive"] {
+    --button-bg: #ffc4c4;
+    --button-fg: #531b20;
+    --button-border: #dc9196;
+  }
+
+  #udcOnlineBox #oStart,
+  #startGameButton {
+    --button-bg: #18743e;
+    --button-fg: #fff;
+    --button-border: #125b30;
+  }
+
+/* Light red during a game and on the results screen */
+#udcOnlineBox #oLeave {
+  --button-bg: #ffc4c4;
+  --button-fg: #531b20;
+  --button-border: #dc9196;
+}
+
+/* Red in the lobby */
+#udcOnlineBox.udc-lobby #oLeave {
+  --button-bg: #b62334;
+  --button-fg: #fff;
+  --button-border: #971929;
+}
+
+  #udcOnlineBox #oClose,
+  #udcOnlineBox #oResBack.udc-back-to-game {
+    --button-bg: #c2edc4;
+    --button-fg: #174125;
+    --button-border: #8bc692;
+  }
+
+  #udcOnlineBox :is(#oJoin, #oWatch, #oCopy, #oShare, #oSfw,
+    #oCompetitive, #oStart, #oLeave, #oClose, #oResBack.udc-back-to-game),
+  #themeMenu .menu-action[data-deck-preset],
+  #startGameButton {
+    background: var(--button-bg);
+    color: var(--card-text, var(--button-fg));
+    border: 1px solid var(--button-border);
+    box-shadow: none;
+  }
+
+  #themeMenu .menu-action[data-deck-preset]:hover:not(:disabled) {
+    background: var(--button-bg);
+    border-color: var(--button-border);
+  }
+
+  #udcOnlineBox #oStart:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .small-add-btn {
+    padding: 9px;
+    border-radius: 8px;
+    border: 1px dashed #aaa;
+    background: rgba(0,0,0,0.02);
+    cursor: pointer;
+    font-size: 13px;
+    color: #444;
+    font-weight: 600;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .small-add-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .toggleButtonRow {
+    display: flex;
+    gap: 8px;
+    background: rgba(0,0,0,0.04);
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #555;
+    font-size: 13.5px;
+    font-weight: bold;
+    font-family: var(--font-new);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+
+  .toggle-btn:hover {
+    color: #d6d6d6;
+  }
+
+  .toggle-btn.active {
+    background: var(--highlight, var(--accent, #999999));
+    color: var(--accent-text, #ffffff);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .udc-results {
+    --results-muted: var(--menu-glass-muted, var(--menu-glass-text, #eee));
+    --results-border: var(--menu-glass-border, rgba(255, 255, 255, 0.18));
+    --results-surface: var(--menu-glass-tint, rgba(255, 255, 255, 0.06));
+    color: var(--menu-glass-text, #eee);
+    text-align: left;
+  }
+
+  .udc-results .udc-results-header {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  .udc-results .udc-results-header h2 {
+    margin: 0 0 4px;
+  }
+
+  .udc-results .udc-results-meta,
+  .udc-results .udc-results-note {
+    margin: 4px 0 0;
+    color: var(--results-muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .udc-results .udc-results-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 20px;
+  }
+
+  .udc-results .udc-results-metric {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--results-border);
+    border-radius: 12px;
+    background: var(--results-surface);
+  }
+
+  .udc-results .udc-results-metric:first-child {
+    grid-column: 1 / -1;
+    padding: 16px;
+    border-top: 3px solid var(--accent);
+  }
+
+  .udc-results .udc-results-metric dt {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--results-muted);
+  }
+
+  .udc-results .udc-results-metric dd {
+    margin: 4px 0 0;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  .udc-results .udc-results-metric:first-child dd {
+    font-size: clamp(36px, 10vw, 52px);
+  }
+
+  .udc-results .udc-results-metric .udc-results-note {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .udc-results .udc-results-board {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .udc-results .udc-results-board caption {
+    padding-bottom: 8px;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .udc-results .udc-results-board th,
+  .udc-results .udc-results-board td {
+    padding: 9px 6px;
+    border-bottom: 1px solid var(--results-border);
+    vertical-align: top;
+  }
+
+  .udc-results .udc-results-board thead th {
+    color: var(--results-muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .udc-results .udc-results-board th:first-child {
+    padding-left: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .udc-results .udc-results-board th:not(:first-child),
+  .udc-results .udc-results-board td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .udc-results .udc-results-board td {
+    font-weight: 800;
+  }
+
+  .udc-results .udc-results-player {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+
+  .udc-results .udc-results-dot {
+    flex: 0 0 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--player-colour, currentColor);
+  }
+
+  .udc-results .udc-results-player-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .udc-results .udc-results-board .udc-results-note {
+    margin-left: 15px;
+    font-weight: 400;
+  }
+
+  .udc-results .udc-results-details {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--results-border);
+    border-radius: 10px;
+    background: var(--results-surface);
+  }
+
+  .udc-results .udc-results-details summary {
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .udc-results .udc-results-details ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+  }
+
+  .udc-results .udc-results-details li + li {
+    margin-top: 6px;
+  }
+
+  .udc-results .udc-results-actions {
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+
+  .udc-results .udc-results-actions button {
+    flex: 1 1 130px;
+  }
+
+  #udcOnlineBox .udc-results #oAgain {
+    background: #18743e;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  #udcOnlineBox .udc-results .udc-results-secondary {
+    background: var(--results-surface);
+    color: var(--menu-glass-text, #eee);
+    border: 1px solid var(--results-border);
+    box-shadow: none;
+  }
+
+  @media (max-width: 360px) {
+    .udc-results .udc-results-metric {
+      padding: 8px;
+    }
+
+    .udc-results .udc-results-board th,
+    .udc-results .udc-results-board td {
+      padding-inline: 4px;
+    }
+  }
+
+  .drink-estimate {
+    text-align: left;
+    color: var(--menu-glass-muted, #bbb);
+    font: 13px/1.5 Tahoma, sans-serif;
+    margin: 0 0 16px;
+  }
+
+  .drink-estimate strong {
+    display: block;
+    color: var(--menu-glass-text, #eee);
+  }
+
+  details.drink-estimate {
+    --end-yellow: #ffda3c;
+    --end-black: #14130f;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--end-yellow);
+    border-radius: 10px;
+    background: var(--end-black);
+    color: var(--end-yellow);
+  }
+
+  .drink-estimate > summary {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 8px 62px 8px 14px;
+    background: var(--end-yellow);
+    color: var(--end-black);
+    font: 900 18px/1.2 Tahoma, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .drink-estimate > summary::-webkit-details-marker { display: none; }
+
+  .drink-estimate > summary::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 46px;
+    border-left: 2px solid var(--end-black);
+    background: repeating-linear-gradient(
+      -45deg, var(--end-black) 0 7px, var(--end-yellow) 7px 14px
+    );
+  }
+
+  .drink-estimate > summary::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+  }
+
+  .drink-estimate[open] > summary::after {
+    transform: translateY(2px) rotate(225deg);
+  }
+
+  .drink-estimate > summary:hover { background: #ffe46a; }
+
+  .drink-estimate > summary:focus-visible {
+    outline: 2px solid var(--end-black);
+    outline-offset: -5px;
+  }
+
+  .drink-estimate .drink-estimate-body {
+    padding: 12px 14px 14px;
+  }
+
+  .drink-estimate .drink-estimate-label {
+    display: block;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  #setupDrinkEstimate,
+  #oDrinkEstimate {
+    display: block;
+    margin-top: 4px;
+    color: var(--end-yellow);
+    font-size: clamp(16px, 4vw, 22px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Theme / settings menu */
+  #themeMenu {
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    background: linear-gradient(var(--menu-glass-tint), var(--menu-glass-tint)),
+      rgba(0, 0, 0, 0.74);
+    color: var(--menu-glass-text);
+    border: 1px solid var(--menu-glass-border);
+    border-radius: 20px;
+    padding: 0;
+    box-sizing: border-box;
+    width: min(280px, calc(100% - 32px));
+    max-height: min(75vh, calc(100dvh - 86px - env(safe-area-inset-top, 0px)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 950;
+    display: none;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color-scheme: dark;
+    font-family: Tahoma, sans-serif;
+  }
+
+  #themeMenu .menuSection {
+    padding: 16px;
+    border-bottom: 1px solid var(--menu-glass-border);
+  }
+  #themeMenu .menuSection:last-child {
+    border-bottom: none;
+  }
+
+  #themeMenu h3 {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    color: var(--menu-glass-muted);
+  }
+
+  #themeMenu :is(.category-list label, .roundsRow label, .category-empty) {
+    color: var(--menu-glass-muted);
+  }
+
+  #themeMenu .toggleButtonRow {
+    background: var(--menu-glass-tint);
+    border: 1px solid var(--menu-glass-border);
+  }
+
+  #themeMenu .toggle-btn {
+    color: var(--menu-glass-muted);
+  }
+
+    #themeMenu .toggle-btn:hover {
+      background-color: rgba(255, 255, 255, 0.09);
+    }
+
+  #themeMenu .toggle-btn.active {
+    background: #fff;
+    color: #202124;
+    box-shadow: none;
+  }
+
+  #themeMenu :is(button, input):focus-visible {
+    outline: 2px solid var(--menu-glass-text);
+    outline-offset: 2px;
+  }
+
+  #themeMenu button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+.theme-swatch-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.theme-swatch {
+  width: 100%;
+  height: 36px;
+  min-width: 0;
+  border-radius: 15px;
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-clip: padding-box;
+}
+
+  .theme-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 2px var(--accent);
+  }
+  .theme-swatch.active {
+    border-color: #333;
+    transform: scale(1.22);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  }
+  .theme-swatch.active::after {
+    content: "✓";
+    position: absolute;
+    inset: auto 2px 2px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  }
+
+  .theme-swatch-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;   /* clicks still hit the swatch */
+}
+
+  /* ---------- Spooky animated background (Halloween theme) ---------- */
+#spookyBg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+#spookyBg.active { opacity: 1; }
+
+.spookyEmoji {
+  position: absolute;
+  bottom: -12vh;
+  display: inline-block;
+  user-select: none;
+  will-change: transform;
+  animation-name: spookyRise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+#spookyBg.christmas .spookyEmoji {
+  bottom: auto;
+  top: -12vh;
+  animation-name: emojiFall;
+}
+
+@keyframes emojiFall {
+  0%   { transform: translateY(0)      rotate(0deg); }
+  50%  { transform: translateY(55vh)   rotate(12deg); }
+  100% { transform: translateY(120vh)  rotate(-6deg); }
+}
+
+@keyframes spookyRise {
+  0%   { transform: translateY(0)      rotate(0deg); }
+  50%  { transform: translateY(-55vh) rotate(12deg); }
+  100% { transform: translateY(-120vh) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #spookyBg { display: none; }
+}
+
+  #themeMenu .menu-action {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font: 600 13px Tahoma, sans-serif;
+    margin-top: 8px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  #themeMenu .menu-action:not([data-deck-preset]) {
+    background: var(--menu-glass-tint);
+    color: var(--menu-glass-text);
+    border: 1px solid var(--menu-glass-border);
+  }
+
+  .category-bulk-row {
+    display: flex;
+    gap: 8px;
+  }
+  .category-bulk-row .menu-action {
+    margin-top: 0;
+  }
+
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 2px;
+    margin-top: 8px;
+    color: var(--menu-glass-muted, #bbb);
+  }
+
+  .category-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: normal;
+    text-transform: none;
+    color: #fff;
+    cursor: pointer;
+  }
+
+
+  .category-swatch-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .category-empty {
+    font-size: 12px;
+    color: #777;
+    font-style: italic;
+  }
+
+  /* Card styles */
+  .card {
+    width: min(300px, 88vw);
+    height: min(400px, 56vh, 480px);
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px;
+    position: relative;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), border 0.3s;
+    z-index: 1;
+    flex-shrink: 0;
+  box-shadow:
+        0px 0px 5px 10px rgba(255,255,255,0.01),
+        0px 0px 0px 6px var(--category-glow, transparent);
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border 0.3s,
+    box-shadow 0.55s ease-out;
+  }
+
+  .card.type-black {
+    border: 2px solid #000000;
+  }
+  .card.type-red {
+    border: 2px solid var(--card-red-bg);
+  }
+
+  .card .card-front,
+  .card .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: left;
+    flex-direction: column;
+    border-radius: 15px;
+    padding: 35px;
+    font-family: var(--font-new);
+    overflow: hidden;
+    box-shadow:
+        0 0 30px 0px rgba(255,255,255,0.1),
+        0 0 28px 6px var(--category-glow, transparent);
+  }
+
+  .card .card-front {
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    text-align: left;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    font-family: var(--font-new);
+  }
+
+  .card .card-back {
+    transform: rotateY(180deg);
+    font-size: 24px;
+    text-align: left;
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  @keyframes glowPulse {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 12px 2px var(--category-glow, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 34px 10px var(--category-glow, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 0 28px 6px var(--category-glow, transparent);
+  }
+}
+
+.card.revealing {
+  animation: glowPulse 0.7s ease-out;
+}
+
+  .card.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .card-back .instructionText,
+  .card-front .instructionText {
+    font-size: clamp(18px, 6vw, 26px);
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+    margin-bottom: auto;
+    overflow-wrap: break-word;
+  }
+
+  .card-back .categoryText,
+  .card-front .categoryText {
+    font-size: 17px;
+    margin-top: 6%;
+    text-align: center;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-decoration: underline;
+  }
+
+  .card-back .tripleBadge,
+  .card-front .tripleBadge {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: rgba(255,255,255,0.85);
+    color: #8b0000;
+  }
+
+  #resetButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #131313;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  #resetButton:hover {
+    background-color: #dddddd;
+  }
+
+  .card .card-front.type-black,
+  .card .card-back.type-black {
+    background-color: var(--card-black-bg);
+    color: var(--card-black-text);
+  }
+  .card .card-front.type-black .instructionText,
+  .card .card-back.type-black .instructionText {
+    color: var(--card-black-text);
+  }
+  .card .card-front.type-black .categoryText,
+  .card .card-back.type-black .categoryText {
+    color: var(--accent);
+  }
+
+  .card .card-front.type-red,
+  .card .card-back.type-red {
+    background-color: var(--card-red-bg);
+    color: var(--card-red-text);
+  }
+  .card .card-front.type-red .instructionText,
+  .card .card-back.type-red .instructionText {
+    color: var(--card-red-text);
+  }
+  .card .card-front.type-red .categoryText,
+  .card .card-back.type-red .categoryText {
+    color: var(--card-red-text);
+  }
+
+  #coverCard {
+    touch-action: manipulation;
+  }
+
+  #footer {
+    position: fixed;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  #footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  #footer a:hover {
+    text-decoration: underline;
+  }
+
+  #rulesButtonContainer {
+    position: fixed;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    text-align: center;
+    padding: 40px;
+  }
+
+  #showRulesLink {
+    color: var(--muted);
+    font-size: 18px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  #showRulesLink:hover {
+    text-decoration: underline;
+  }
+
+  #rulesModal {
+    background: rgba(0, 0, 0, 0.48);
+  }
+
+  #rulesModal .modal-content {
+    background: linear-gradient(var(--menu-glass-tint), var(--menu-glass-tint)),
+      rgba(0, 0, 0, 0.74);
+    color: var(--menu-glass-text);
+    border: 1px solid var(--menu-glass-border);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45),
+      0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color-scheme: dark;
+    padding: clamp(16px, 4vw, 24px);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    max-height: 80dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-family: Tahoma, sans-serif;
+  }
+
+  .rules-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--menu-glass-border);
+  }
+
+  #rulesModal .rules-actions button {
+    flex: 1 1 132px;
+    padding: 10px 12px;
+    background: var(--menu-glass-tint);
+    color: var(--menu-glass-text);
+    border: 1px solid var(--menu-glass-border);
+    border-radius: 8px;
+    font: 600 13px Tahoma, sans-serif;
+    cursor: pointer;
+  }
+
+  #rulesModal .rules-actions button:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  #rulesModal .rules-actions button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  #rulesText h2 {
+    margin-top: 0;
+    font-size: 22px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
+  }
+
+  #rulesText h3 {
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 8px 0;
+    color: var(--menu-glass-text);
+  }
+
+  #rulesText ol,
+  #rulesText ul {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+
+  #rulesText li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .rule-card-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    margin-right: 4px;
+  }
+  .rule-card-tag.white { background-color: #999; color: #000; border: 1px solid #666; }
+  .rule-card-tag.black { background-color: #000; }
+  .rule-card-tag.red { background-color: #8b0000; }
+
+  #rulesText .tip {
+    font-size: 13px;
+    color: var(--menu-glass-muted);
+    font-style: italic;
+    margin-top: 10px;
+  }
+
+  .all-cards-list li {
+    margin-bottom: 10px;
+  }
+
+  .all-cards-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .all-cards-controls input[type="text"],
+  .all-cards-controls select {
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--menu-glass-border);
+    background-color: var(--menu-glass-tint);
+    color: var(--menu-glass-text);
+    font-size: 14px;
+    font-family: Tahoma, sans-serif;
+  }
+
+  .all-cards-controls input[type="text"] {
+    flex: 2;
+    min-width: 140px;
+  }
+
+  .all-cards-controls select {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .all-cards-controls input[type="text"]:focus,
+  .all-cards-controls select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .all-cards-empty {
+    font-size: 14px;
+    color: var(--menu-glass-muted);
+    font-style: italic;
+  }
+
+  .all-cards-count {
+    font-size: 12px;
+    color: var(--menu-glass-muted);
+    margin-bottom: 10px;
+  }
+
+  .all-cards-category-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #fff;
+    margin-right: 6px;
+  }
+
+  @media (max-width: 600px) {
+    .card {
+      width: min(88vw, 320px);
+      height: min(58vh, 420px);
+    }
+    .card .card-front,
+    .card .card-back {
+      padding: 22px;
+    }
+  }
+
+  @media (max-height: 700px) {
+    .card {
+      height: min(50vh, 380px);
+    }
+  }
+
+    /* --- REPO SEARCH BAR - ALIGNED TO TOP LEFT (like the cog on top right) --- */
+#topBar {
+  background: transparent;
+}
+
+/* Repo search: show on web, hide in Discord */
+body.in-discord .kwc-repo-search {
+  display: none !important;
+}
+
+body:not(.in-discord) .kwc-repo-search {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: calc(16px + 46px + 10px);
+  right: auto;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  width: min(155px, calc(100% - 196px));
+}
+
+/* Make only the text input shrink, leaving the icon and slash alone */
+body:not(.in-discord) .kwc-repo-search input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+  .card-counter {
+    color: var(--accent);
+    opacity: 0.4;
+    filter: brightness(1.6);
+    font-size: 14px;
+    font-family: var(--font-new);
+    position: relative;
+  }
+
+  .card-counter #cardCounterNumber {
+  display: inline-block;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.card-counter #cardCounterNumber.changing {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.black-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0) 25%, rgba(0,0,0,0.85) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.6s ease-out;
+}
+.black-flash.active {
+  opacity: 1;
+  transition: opacity 0.08s ease-in;
+}
+
+  .red-flash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(235, 14, 14, 0.45) 0%, rgba(235,14,14,0.75) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  transition: opacity 0.85s ease-out;
+}
+
+.red-flash.active {
+  opacity: 1;
+  transition: opacity 0.05s ease-in;
+}
+
+#spinIcon {
+  position: fixed;
+  top: calc(11px + env(safe-area-inset-top, 0px));
+  left: 16px;
+  width: 46px;
+  height: 46px;
+  z-index: 901;
+  transform-origin: 50% 50%;
+  animation: spinLoop 10s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#spinIcon img,
+#spinIcon svg {
+  display: block;
+  width: 39px;
+  height: 39px;
+  transform-origin: 50% 50%;
+}
+
+#spinIcon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+#spinIcon img:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1) drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 44%, transparent));
+}
+
+@keyframes spinLoop {
+  0%, 30% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  36% {
+    transform: rotate(90deg);
+    animation-timing-function: linear;
+  }
+  60% {
+    transform: rotate(90deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  66%, 100% {
+    transform: rotate(0deg);
+    animation-timing-function: linear;
+  }
+}
+
+.emptyDeck {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.emptyDeckEmoji { font-size: 56px; }
+.emptyDeckTitle {
+  font-family: var(--font-new);
+  font-size: 26px;
+  font-weight: 700;
+}
+.emptyDeckSub {
+  font-family: var(--font-new);
+  font-size: 15px;
+  opacity: 0.7;
+}
+
+.card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 6px;
+}
+
+.loading-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: var(--accent);
+  animation: spinSpinner 0.9s linear infinite;
+  margin: 0 auto 18px auto;
+}
+@keyframes spinSpinner {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-family: var(--font-new);
+  font-size: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+  #udcTurnEffects {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 900;
+  }
+
+  #udcTurnEffects::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    box-shadow: inset 0 0 48px 7px var(--accent, #999);
+  }
+
+  #udcTurnEffects.udc-ready-to-flip::before {
+    animation: udc-edge-pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes udc-edge-pulse {
+    0%, 100% { opacity: 0.16; }
+    50% { opacity: 0.58; }
+  }
+
+  #udcTurnEffects .udc-card-wave {
+    position: absolute;
+    box-sizing: border-box;
+    border: 3px solid var(--wave-colour);
+    border-radius: 50%;
+    box-shadow:
+      0 0 14px var(--wave-colour),
+      inset 0 0 10px var(--wave-colour);
+  }
+
+  #coverCard.udc-opening-card::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      0 0 7px 2px rgba(255, 234, 203, 0.28),
+      0 0 26px 9px rgba(255, 249, 192, 0.1),
+      0 0 48px 14px rgba(255, 239, 185, 0.09);
+    opacity: 0.64;
+    animation: udc-opening-glow 2.2s ease-in-out infinite;
+  }
+
+  @keyframes udc-opening-glow {
+    0%, 100% { opacity: 0.32; }
+    50% { opacity: 0.96; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #coverCard.udc-opening-card::before { animation: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #udcTurnEffects.udc-ready-to-flip::before {
+      animation: none;
+      opacity: 0.35;
+    }
+  }
+
+  #themeMenu :is(
+    #selectAllCategoriesButton,
+    #deselectAllCategoriesButton,
+    #editPlayersButton,
+    #restartGameButton
+  ) {
+    background-color: #292929;
+  }
+
+  @media (hover: hover) {
+    :is(#themeMenu, #topBar, #setupOverlay, #rulesModal, #udcOnlineBox, #udcRoomQRPanel)
+      button:hover:not(:disabled),
+    #themeMenu .theme-swatch:hover:not(:disabled),
+    body #udcOnlineBox .udc-results button:hover:not(:disabled) {
+      filter: brightness(1.15) saturate(1.5);
+    }
+  }
+
+  #udcFlipPrompt {
+    position: fixed;
+    left: 50%;
+    bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 12;
+    max-width: calc(100vw - 24px);
+    padding: 10px 16px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: #191919;
+    color: #fff;
+    font: 700 14px/1.25 Tahoma, sans-serif;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  #coverCard.udc-restoring-card { transition: none; }
+
+  #oCopyFeedback {
+    display: block;
+    min-height: 1.4em;
+    margin-top: 4px;
+    color: var(--menu-glass-text, #eee);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  #oLobbyDeckCount { font-variant-numeric: tabular-nums; }
+
+  .udc-results .udc-breakdown-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr));
+    gap: 10px;
+    padding: 0;
+    margin: 12px 0;
+    list-style: none;
+  }
+
+  .udc-breakdown-card {
+    --breakdown-bg: #f4f1ee;
+    --breakdown-fg: #252127;
+    --breakdown-edge: #c9bfb7;
+    padding: 13px;
+    border: 1px solid var(--breakdown-edge);
+    border-radius: 12px;
+    background: var(--breakdown-bg);
+    color: var(--breakdown-fg);
+    overflow-wrap: anywhere;
+  }
+
+  .udc-breakdown-red {
+    --breakdown-bg: #891728;
+    --breakdown-fg: #fff2f3;
+    --breakdown-edge: #e06c7e;
+  }
+
+  .udc-breakdown-black {
+    --breakdown-bg: #121215;
+    --breakdown-fg: #f6f5f9;
+    --breakdown-edge: #777380;
+  }
+
+  .udc-breakdown-card header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 8px;
+    font: 700 11px/1.35 Tahoma, sans-serif;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+
+  .udc-breakdown-rule { margin: 9px 0; font-weight: 700; line-height: 1.35; }
+  .udc-breakdown-owner { margin: 0; font-size: 12px; }
+
+  .udc-results .udc-breakdown-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 0;
+    margin: 9px 0 0;
+    list-style: none;
+  }
+
+  .udc-results .udc-breakdown-badges li {
+    margin: 0;
+    padding: 3px 7px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 11px;
+  }
+
+  #oMoreBreakdown { padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+
+</style></head>
+
+
+<body>
+
+  <div id="blackFlash" class="black-flash"></div>
+  <div id="redFlash" class="red-flash"></div>
+
+  <div id="srAnnouncer" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);"></div>
+
+<a id="spinIcon"
+   href="https://github.com/kay-who-codes/Ultimate-Drinking-Cards"
+   aria-label="View Ultimate Drinking Cards on GitHub">
+  <img src="AppFiles/Icons/UDC - Face.svg" alt="">
+</a>
+
+  <div class="kwc-repo-search" id="kwc-repo-search"></div>
+
+  <div id="topBar">
+    <button type="button" id="multiplayerButton" class="top-bar-button"
+      aria-label="Multiplayer" aria-controls="udcOnlineBox" title="Multiplayer" hidden>🛜</button>
+    <button type="button" id="cogButton" class="top-bar-button" aria-label="Settings">⚙️</button>
+  </div>
+
+  <div id="themeMenu">
+
+    <div class="menuSection">
+      <h3>Theme</h3>
+      
+      <div class="theme-swatch-row" id="themeSwatchRow"></div>
+
+      <div id="customThemePanel" style="display:none; margin-top:12px;">
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Background</label>
+          <input type="color" id="customBgInput" value="#131313">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Accent</label>
+          <input type="color" id="customAccentInput" value="#999999">
+        </div>
+        <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Card</label>
+          <input type="color" id="customCardBgInput" value="#ffffff">
+        </div>
+                <div class="roundsRow" style="justify-content:space-between; margin-bottom:6px;">
+          <label style="font-size:12px;">Panel</label>
+          <input type="color" id="customPanelBgInput" value="#e3e3e3">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="menuSection">
+      <h3>Discord Mode</h3>
+      <div class="roundsRow">
+        <label><input type="checkbox" id="discordModeCheckbox"> Enable Discord mode</label>
+      </div>
+    </div>
+
+    <div class="menuSection">
+      <h3>Difficulty</h3>
+      <div class="toggleButtonRow" id="difficultyRow">
+    <button type="button" class="toggle-btn active" id="difficultyNormalBtn" data-difficulty="normal">Normal</button>
+    <button type="button" class="toggle-btn" id="difficultyCrazyBtn" data-difficulty="crazy">CRAZY</button>
+  </div>
+    </div>
+
+    <div class="menuSection">
+      <h3>Categories</h3>
+      <div class="category-bulk-row" id="deckPresetButtons">
+        <button class="menu-action" type="button" data-deck-preset="sfw">All SFW</button>
+        <button class="menu-action" type="button" data-deck-preset="competitive">Competitive</button>
+      </div>
+      <div class="category-bulk-row">
+        <button class="menu-action" id="selectAllCategoriesButton">Select All</button>
+        <button class="menu-action" id="deselectAllCategoriesButton">Deselect All</button>
+      </div>
+      <div class="category-list" id="categoryList">
+        <div class="category-empty">Loading categories&hellip;</div>
+      </div>
+    </div>
+
+    <div class="menuSection">
+      <button class="menu-action" id="editPlayersButton">Edit Players / Rounds</button>
+      <button class="menu-action" id="restartGameButton">Restart Game</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="setupOverlay">
+    <div class="setup-box">
+      <h2>Ultimate Drinking Cards</h2>
+      <p class="sub">Set up your game before you start</p>
+
+      <div class="setup-field">
+
+        <label>Player / Round Tracking</label>
+        <div class="toggleButtonRow" id="trackingModeRow">
+          <button type="button" class="toggle-btn active" id="trackingOffBtn" data-mode="off">Just Cards</button>
+          <button type="button" class="toggle-btn" id="trackingOnBtn" data-mode="on">Use Tracker</button>
+        </div>
+      </div>
+
+      <div id="trackingFields">
+        <div class="setup-field">
+          <label>Players</label>
+          <div id="playerNamesContainer"></div>
+          <button class="small-add-btn" id="addPlayerButton" style="margin-top:8px; width:100%;">+ Add Player</button>
+        </div>
+
+        <div class="setup-field">
+          <label>Rounds</label>
+          <div class="roundsRow">
+            <input type="number" id="roundsInput" min="1" value="5" style="width:80px;">
+            <label><input type="checkbox" id="unlimitedRoundsCheckbox"> Unlimited</label>
+          </div>
+        </div>
+
+        <div class="setup-field">                                   
+          <label>Turn Order</label>
+          <div class="roundsRow">
+            <label><input type="checkbox" id="randomiseOrderCheckbox"> Randomise turn order</label>
+          </div>   
+        </div>
+        <details class="drink-estimate">
+          <summary id="setupDrinkEstimateSummary">END</summary>
+          <div class="drink-estimate-body">
+            <span class="drink-estimate-label">Estimated Number of Drinks</span>
+            <span id="setupDrinkEstimate" aria-live="polite"></span>
+          </div>
+        </details>
+
+
+
+      </div>
+
+      <div class="setup-btn-row">
+        <button class="primary-btn" id="startGameButton">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="app">
+    <div id="turnTracker" aria-live="polite"></div>
+
+  <div id="cardCounter" class="card-counter">
+  <span id="cardCounterNumber"></span>
+  <span id="cardCounterSuffix"></span>
+</div>
+
+    <div class="card udc-opening-card" id="coverCard" role="button" tabindex="0" aria-label="Draw next card">
+
+      <div class="card-front" id="cardFrontInitial">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading cards…</div>
+      </div>
+
+      <div class="card-back"></div>
+    </div>
+    <button id="resetButton" hidden="">Refresh</button>
+  </div>
+
+  <div id="rulesButtonContainer">
+    <a href="#" id="showRulesLink">View Game Rules</a>
+  </div>
+
+  <div id="rulesModal" class="overlay">
+    <div class="modal-content">
+      <div id="rulesText"></div>
+      <div class="rules-actions">
+        <button type="button" id="viewAllCardsButton">View All Cards</button>
+        <button type="button" id="closeRulesButton">Close Rules</button>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer">
+    Made by <a href="https://linktr.ee/kaywhocreates" target="_blank" rel="noopener noreferrer">Kay 🧡</a>
+  </footer>
+
+    <script src="theme.js"></script>
+
+<script>
+const isDiscord =
+  window.location.hostname.includes("discordsays.com") ||
+  window.location.hostname.includes("discord.com") ||
+  document.referrer.includes("discord.com") ||
+  document.referrer.includes("discordsays.com");
+
+if (isDiscord) {
+  document.body.classList.add("in-discord");
+} else {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/gh/kay-who-codes/Kay-App-Assets@main/Headers/Header.js?v=4";
+  document.body.appendChild(s);
+}
+</script>
+
+  <script src="card-wording.js?v=36"></script>
+  <script>
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const coverCard = document.getElementById("coverCard");
+  const cardFront = coverCard.querySelector(".card-front");
+  const cardBack = coverCard.querySelector(".card-back");
+
+
+  // Screen flashes: declared once here instead of on every card flip.
+  const blackFlash = document.getElementById("blackFlash");
+  const redFlash = document.getElementById("redFlash");
+  const flashTimers = {};
+  function flash(el, ms) {
+    el.classList.add("active");
+    clearTimeout(flashTimers[el.id]);
+    flashTimers[el.id] = setTimeout(() => el.classList.remove("active"), ms);
+  }
+
+  // ---------- Data shapes ----------
+  // OLD: allCards = [{ Category, Rule, Colour }, ...]  (one entry per rule)
+  // NEW: allCards = [{ Category, Colour, Rules: [rule, rule, ...] }, ...] (one entry per category)
+  //
+  // Internally we now work with "draws": individual { Category, Colour, Rule } entries,
+  // reconstructed from the grouped data so all the existing game logic still works.
+  let cards = [];          // remaining draws in the current deck
+  let allCards = [];       // grouped category objects, straight from cards.json
+  let allDraws = [];       // flat list of every individual draw, for "View All Cards"
+  let showingFront = true;
+  const NORMAL_BLACK_CHANCE = 0.15;
+  const NORMAL_RED_CHANCE = NORMAL_BLACK_CHANCE / 2;
+  const CRAZY_BLACK_CHANCE = 0.33;
+  const CRAZY_RED_CHANCE = CRAZY_BLACK_CHANCE / 1.5;
+
+  let difficulty = "normal";                // "normal" | "crazy"
+  let BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+  let RED_CHANCE = NORMAL_RED_CHANCE;
+
+  const difficultyRow = document.getElementById("difficultyRow");
+const difficultyNormalBtn = document.getElementById("difficultyNormalBtn");
+const difficultyCrazyBtn = document.getElementById("difficultyCrazyBtn");
+
+function setDifficulty(mode) {
+  difficulty = mode;
+  difficultyNormalBtn.classList.toggle("active", mode === "normal");
+  difficultyCrazyBtn.classList.toggle("active", mode === "crazy");
+  if (mode === "crazy") {
+    BLACK_CHANCE = CRAZY_BLACK_CHANCE;
+    RED_CHANCE = CRAZY_RED_CHANCE;
+  } else {
+    BLACK_CHANCE = NORMAL_BLACK_CHANCE;
+    RED_CHANCE = NORMAL_RED_CHANCE;
+  }
+}
+
+difficultyNormalBtn.addEventListener("click", () => setDifficulty("normal"));
+difficultyCrazyBtn.addEventListener("click", () => setDifficulty("crazy"));
+
+  let enabledCategories = new Set();
+  const categoryColours = {};
+
+  // players now holds { name, colour } objects when tracking is enabled
+  let players = [];
+  let currentPlayerIndex = 0;
+  let currentRound = 1;
+  let totalRounds = 5;
+  let unlimitedRounds = false;
+  let gameStarted = true;
+  let trackingEnabled = false;
+
+  let totalDrawsInPlay = 0;   // total draws in the current filtered deck
+  let drawnCount = 0;         // how many draws have been revealed
+
+  const turnTracker = document.getElementById("turnTracker");
+  const cardCounter = document.getElementById("cardCounter");
+
+    // ---------- Discord mode ----------
+  // When enabled, certain phrases in card rules are transformed for Discord play:
+  //   "Point"                    -> the card is removed from the deck entirely
+  //   "The player opposite"      -> replaced with a random player's name
+  //   "the player to your left"  -> "the previous player"
+  //   "the player to your right" -> "the next player"
+  const discordModeCheckbox = document.getElementById("discordModeCheckbox");
+
+  function loadDiscordModeFromStorage() {
+    try {
+      return localStorage.getItem("udcDiscordMode") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveDiscordModeToStorage() {
+    try {
+      localStorage.setItem("udcDiscordMode", discordModeCheckbox.checked ? "1" : "0");
+    } catch (e) {}
+  }
+
+  function isDiscordModeOn() {
+    return !!(discordModeCheckbox && discordModeCheckbox.checked);
+  }
+
+  if (discordModeCheckbox) {
+    discordModeCheckbox.checked = loadDiscordModeFromStorage();
+
+    discordModeCheckbox.addEventListener("change", () => {
+      saveDiscordModeToStorage();
+      // Rebuild the flat list so "View All Cards" reflects the transform.
+      rebuildAllDraws();
+      // Rebuild the live deck so removals/rewrites take effect immediately.
+      buildDeckFromEnabledCategories();
+      preloadNextCard();
+    });
+  }
+
+  // Palette used to auto-assign distinct default colours to new player rows.
+  const PLAYER_COLOUR_PALETTE = [
+    "#FFEA2F", "#5BFFF4", "#FF7EFF", "#EB3A3A",
+    "#56FF56", "#63ACFF", "#E8FF67", "#FFAC3F",
+    "#9D53FF", "#D4D4DA"
+  ];
+
+  function nextPlayerColour() {
+    const used = new Set(
+      [...document.querySelectorAll(".playerColourInput")].map(i => i.value.toLowerCase())
+    );
+    const next = PLAYER_COLOUR_PALETTE.find(c => !used.has(c.toLowerCase()));
+    return next || PLAYER_COLOUR_PALETTE[
+      document.querySelectorAll(".playerColourInput").length % PLAYER_COLOUR_PALETTE.length
+    ];
+  }
+
+  function escapeHTML(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  // Flatten a grouped category object into one draw per rule.
+function groupToDraws(group) {
+    const rules = Array.isArray(group.Rules) ? group.Rules : [];
+    const colour = group.Colour || group.Color || group.color || group.colour || "#999999";
+    const discord = isDiscordModeOn();
+    return rules
+      .filter(rule => !(discord && shouldRemoveForDiscord(rule)))
+      .map(rule => ({
+        Category: group.Category || "",
+        Colour: colour,
+        RawRule: rule,
+        Rule: discord ? applyDiscordTransforms(rule) : rule
+      }));
+  }
+
+  // Rebuild the flat list used by "View All Cards", honouring current Discord mode/players.
+  function rebuildAllDraws() {
+    allDraws = [];
+    allCards.forEach(group => {
+      if (group.Category && !(group.Category in categoryColours)) {
+        categoryColours[group.Category] = group.Colour || "#999999";
+      }
+      allDraws.push(...groupToDraws(group));
+    });
+  }
+
+  function updateTurnTracker(status) {
+    if (!gameStarted || !trackingEnabled || players.length === 0) {
+      turnTracker.innerHTML = "";
+      return;
+    }
+    const current = players[currentPlayerIndex];
+    const turnStatus = status || (current ? current.name + "'s Turn." : "Waiting for players");
+    const diffBadge = difficulty === "crazy" ? ` · <span style="color:#ff4747;">CRAZY</span>` : "";
+    const roundText = (unlimitedRounds ? `Round ${currentRound}` : `Round ${currentRound} of ${totalRounds}`) + diffBadge;
+    turnTracker.innerHTML = `
+      <div class="turnName">${escapeHTML(turnStatus)}</div>
+      <div class="roundLabel">${roundText}</div>
+    `;
+    turnTracker.querySelector(".turnName").style.color = current?.colour || "#999999";
+  }
+
+  let localTurnOrder = [];
+  let localTurnPosition = 0;
+  let localTrackerComplete = false;
+  let localRandomiseOrder = false;
+  let editingLocalTracker = false;
+  const existingPlayerRows = new WeakMap();
+  let preloadedLocalCard = null;
+
+  function resumeLocalTracker(nextPlayers, rows) {
+    const newIndexes = new Map(rows.map((row, index) => [existingPlayerRows.get(row), index]));
+    newIndexes.delete(undefined);
+    const oldOrder = localTurnOrder.map(index => players[index]);
+    const translate = list => list.filter(player => newIndexes.has(player)).map(player => newIndexes.get(player));
+    const completed = translate(oldOrder.slice(0, localTurnPosition));
+    const waiting = translate(oldOrder.slice(localTurnPosition));
+    const scheduled = new Set([...completed, ...waiting]);
+    nextPlayers.forEach((_, index) => {
+      if (!scheduled.has(index)) waiting.push(index);
+    });
+
+    players = nextPlayers;
+    localTurnOrder = [...completed, ...waiting];
+    localTurnPosition = completed.length;
+    if (waiting.length) {
+      currentPlayerIndex = waiting[0];
+    } else {
+      localTurnPosition--;
+      advanceTurn();
+    }
+  }
+
+  function beginLocalTrackerRound() {
+    localTurnOrder = players.map((_, index) => index);
+    if (localRandomiseOrder) {
+      for (let i = localTurnOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [localTurnOrder[i], localTurnOrder[j]] = [localTurnOrder[j], localTurnOrder[i]];
+      }
+    }
+    localTurnPosition = 0;
+    currentPlayerIndex = localTurnOrder[0] ?? 0;
+  }
+
+  function advanceTurn() {
+    if (!gameStarted || !trackingEnabled || !players.length || localTrackerComplete) return;
+
+    localTurnPosition++;
+    if (localTurnPosition < localTurnOrder.length) {
+      currentPlayerIndex = localTurnOrder[localTurnPosition];
+    } else {
+      if (!unlimitedRounds && currentRound >= totalRounds) {
+        localTrackerComplete = true;
+        turnTracker.innerHTML = `
+          <div class="turnLabel">Game complete</div>
+          <div class="turnName" style="color: var(--accent);">🎉 Nice one!</div>
+          <div class="roundLabel">Tap ⚙️ to restart or change players</div>
+        `;
+        return;
+      }
+      currentRound++;
+      beginLocalTrackerRound();
+    }
+    updateTurnTracker();
+  }
+
+  const setupOverlay = document.getElementById("setupOverlay");
+  const playerNamesContainer = document.getElementById("playerNamesContainer");
+  const addPlayerButton = document.getElementById("addPlayerButton");
+  const roundsInput = document.getElementById("roundsInput");
+  const unlimitedRoundsCheckbox = document.getElementById("unlimitedRoundsCheckbox");
+  const startGameButton = document.getElementById("startGameButton");
+  const trackingOnBtn = document.getElementById("trackingOnBtn");
+  const trackingOffBtn = document.getElementById("trackingOffBtn");
+  const trackingFields = document.getElementById("trackingFields");
+  const randomiseOrderCheckbox = document.getElementById("randomiseOrderCheckbox");
+
+  let trackingModeSelected = "off";
+
+  function formatDrinkEstimate(playerCount, rounds, compact = false) {
+    if (playerCount < 1) return compact ? "END" : "Add a player to see an estimate.";
+
+    const drinksPerRound = (49 + 45 * Math.sqrt(playerCount - 1)) / 100;
+    const perRound = rounds === Infinity;
+    const estimate = drinksPerRound * (perRound ? 1 : rounds);
+    const format = value => perRound ? value.toFixed(1) : String(Math.round(value));
+    const perPlayer = format(estimate);
+    const total = format(estimate * playerCount);
+    if (compact) return `END - ${perPlayer}|${total}`;
+    return `About ${perPlayer} per player · ${total} total${perRound ? " per round" : ""}`;
+  }
+
+  function setupRoundCount() {
+    return Math.max(1, parseInt(roundsInput.value, 10) || 1);
+  }
+
+  function paintSetupDrinkEstimate() {
+    const playerCount = playerNamesContainer.children.length;
+    const perRound = unlimitedRoundsCheckbox.checked || randomiseOrderCheckbox.checked;
+    const rounds = perRound ? Infinity : setupRoundCount();
+    const estimate = formatDrinkEstimate(playerCount, rounds);
+    const summary = document.getElementById("setupDrinkEstimateSummary");
+    summary.textContent = formatDrinkEstimate(playerCount, rounds, true);
+    summary.setAttribute("aria-label", `END. Estimated number of drinks. ${estimate}`);
+    document.getElementById("setupDrinkEstimate").textContent = estimate;
+  }
+
+  function toggleTrackingFieldsVisibility() {
+    trackingFields.style.display = trackingModeSelected === "on" ? "block" : "none";
+  }
+
+  function setTrackingMode(mode) {
+    trackingModeSelected = mode;
+    trackingOnBtn.classList.toggle("active", mode === "on");
+    trackingOffBtn.classList.toggle("active", mode === "off");
+    toggleTrackingFieldsVisibility();
+    if (mode === "on") paintSetupDrinkEstimate();
+  }
+
+  trackingOnBtn.addEventListener("click", () => setTrackingMode("on"));
+  trackingOffBtn.addEventListener("click", () => setTrackingMode("off"));
+
+  function labelPlayerRows() {
+    Array.from(playerNamesContainer.children).forEach((row, index) => {
+      const label = `Player ${index + 1}`;
+      row.querySelector(".playerNameInput").placeholder = label;
+      row.querySelector(".remove-player-btn").setAttribute("aria-label", `Remove ${label}`);
+    });
+  }
+
+  // Each local player row has a name, a colour and a remove button.
+  function createPlayerRow(name = "", colour = "") {
+    const row = document.createElement("div");
+    row.className = "playerRow";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.className = "playerNameInput";
+    nameInput.placeholder = `Player ${playerNamesContainer.children.length + 1}`;
+    nameInput.value = name;
+
+    const colourInput = document.createElement("input");
+    colourInput.type = "color";
+    colourInput.className = "playerColourInput";
+    colourInput.value = colour || nextPlayerColour();
+    colourInput.title = "Player colour";
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "remove-player-btn";
+    removeButton.textContent = "−";
+    removeButton.addEventListener("click", () => {
+      const nearbyRow = row.nextElementSibling || row.previousElementSibling;
+      row.remove();
+      labelPlayerRows();
+      paintSetupDrinkEstimate();
+      (nearbyRow?.querySelector(".playerNameInput") || addPlayerButton).focus();
+    });
+
+    row.append(nameInput, colourInput, removeButton);
+    playerNamesContainer.appendChild(row);
+    return row;
+  }
+
+  // Accepts either an array of strings (old behaviour) or {name, colour} objects.
+  function resetSetupFields(prefill = ["", ""], prefillRounds = 5, prefillUnlimited = false, prefillTracking = false, prefillRandomise = prefill === players && localRandomiseOrder) {
+    editingLocalTracker = prefill === players && trackingEnabled && !localTrackerComplete;
+    startGameButton.textContent = editingLocalTracker ? "Save & resume" : "Start Game";
+    playerNamesContainer.innerHTML = "";
+    prefill.forEach(p => {
+      if (typeof p === "string") {
+        createPlayerRow(p);
+      } else if (p && typeof p === "object") {
+        existingPlayerRows.set(createPlayerRow(p.name || "", p.colour || ""), p);
+      }
+    });
+    labelPlayerRows();
+    roundsInput.value = prefillRounds;
+    unlimitedRoundsCheckbox.checked = prefillUnlimited;
+    roundsInput.disabled = prefillUnlimited;
+    randomiseOrderCheckbox.checked = prefillRandomise;
+    setTrackingMode(prefillTracking ? "on" : "off");
+  }
+
+  addPlayerButton.addEventListener("click", () => {
+    createPlayerRow();
+    labelPlayerRows();
+    paintSetupDrinkEstimate();
+  });
+
+  roundsInput.addEventListener("input", paintSetupDrinkEstimate);
+  randomiseOrderCheckbox.addEventListener("change", paintSetupDrinkEstimate);
+
+  unlimitedRoundsCheckbox.addEventListener("change", () => {
+    roundsInput.disabled = unlimitedRoundsCheckbox.checked;
+    paintSetupDrinkEstimate();
+  });
+
+  function openSetupOverlay() {
+    setupOverlay.style.display = "flex";
+  }
+
+  function closeSetupOverlay() {
+    setupOverlay.style.display = "none";
+  }
+
+  // Build the deck of individual draws from the enabled categories.
+  function buildDeckFromEnabledCategories() {
+    const enabledGroups = allCards.filter(c => enabledCategories.has(c.Category || ""));
+    const source = (enabledGroups.length || allCards.length === 0)
+      ? enabledGroups
+      : allCards; // safety net: if nothing enabled, use everything
+    cards = source.flatMap(groupToDraws);
+    preloadedLocalCard = null;
+    totalDrawsInPlay = cards.filter(canDrawLocalCard).length;
+    drawnCount = -1;
+    updateCardCounter();
+  }
+
+  const cardCounterNumber = document.getElementById("cardCounterNumber");
+const cardCounterSuffix = document.getElementById("cardCounterSuffix");
+
+function updateCardCounter() {
+  if (!totalDrawsInPlay) {
+    cardCounterNumber.textContent = "";
+    cardCounterSuffix.textContent = "";
+    return;
+  }
+  const current = Math.min(drawnCount + 1, totalDrawsInPlay);
+  const newText = String(current);
+
+  if (cardCounterNumber.textContent !== newText ||
+        cardCounterSuffix.textContent !== ` of ${totalDrawsInPlay}`) {
+    cardCounterNumber.classList.add("changing");
+    setTimeout(() => {
+      cardCounterNumber.textContent = newText;
+      cardCounterSuffix.textContent = ` of ${totalDrawsInPlay}`;
+      cardCounterNumber.classList.remove("changing");
+    }, 180);
+  }
+}
+
+  startGameButton.addEventListener("click", () => {
+    const useTracker = trackingModeSelected === "on";
+    const resume = editingLocalTracker && useTracker;
+
+    if (useTracker) {
+      const rows = Array.from(playerNamesContainer.children);
+      const parsed = rows.map((row, i) => {
+        const nameInput = row.querySelector(".playerNameInput");
+        const colourInput = row.querySelector(".playerColourInput");
+        return {
+          name: (nameInput.value || "").trim() || `Player ${i + 1}`,
+          colour: colourInput.value || "#999999"
+        };
+      });
+
+      if (parsed.length < 1) {
+        alert("Add at least one player.");
+        return;
+      }
+
+      localRandomiseOrder = randomiseOrderCheckbox.checked;
+      unlimitedRounds = unlimitedRoundsCheckbox.checked;
+      totalRounds = unlimitedRounds ? Infinity : Math.max(resume ? currentRound : 1, setupRoundCount());
+      if (resume) {
+        resumeLocalTracker(parsed, rows);
+      } else {
+        players = parsed;
+        currentRound = 1;
+        beginLocalTrackerRound();
+      }
+    } else {
+      players = [];
+    }
+
+    trackingEnabled = useTracker;
+    editingLocalTracker = false;
+    if (!resume) localTrackerComplete = false;
+    gameStarted = true;
+
+    closeSetupOverlay();
+    if (!localTrackerComplete) updateTurnTracker();
+    rebuildAllDraws();
+
+    if (resume) {
+      if (preloadedLocalCard) cards.push(preloadedLocalCard);
+      totalDrawsInPlay = Math.max(0, drawnCount + 1) + cards.filter(canDrawLocalCard).length;
+    } else {
+      buildDeckFromEnabledCategories();
+    }
+    preloadNextCard();
+    updateCardCounter();
+  });
+
+  document.getElementById("restartGameButton").addEventListener("click", () => {
+    if (!trackingEnabled || !players.length) return;
+    localTrackerComplete = false;
+    beginLocalTrackerRound();
+    updateTurnTracker();
+  });
+
+  // ---------- Category settings ----------
+  const CATEGORY_PREF_VERSION = 3; // bump this to force a fresh default for everyone
+
+function loadEnabledCategoriesFromStorage(allCategoryNames) {
+    let stored = null;
+    let storedVersion = 0;
+    try {
+      stored = JSON.parse(localStorage.getItem("udcEnabledCategories") || "null");
+      storedVersion = parseInt(localStorage.getItem("udcEnabledCategoriesVersion") || "0", 10) || 0;
+    } catch (e) {}
+
+    // Only "Spicy" is off by default. Everything else is on.
+    const isOffByDefault = (c) => c.trim().toLowerCase() === "spicy";
+
+    if (Array.isArray(stored) && storedVersion >= CATEGORY_PREF_VERSION) {
+      // Respect the user's saved choices, but only for categories that still exist.
+      const storedSet = new Set(stored);
+      enabledCategories = new Set(allCategoryNames.filter(c => storedSet.has(c)));
+    } else {
+      // First run, or outdated stored preference: enable everything except "Spicy".
+      enabledCategories = new Set(allCategoryNames.filter(c => !isOffByDefault(c)));
+      saveEnabledCategoriesToStorage();
+    }
+}
+
+function saveEnabledCategoriesToStorage() {
+    try {
+      localStorage.setItem("udcEnabledCategories", JSON.stringify([...enabledCategories]));
+      localStorage.setItem("udcEnabledCategoriesVersion", String(CATEGORY_PREF_VERSION));
+    } catch (e) {}
+}
+
+  const competitiveCategories = new Set([
+    "Challenge", "Group Challenge", "Group Voting", "Round-Based Rule", "You Vote"
+  ]);
+
+  function deckPresetCategories(preset, categories) {
+    if (preset === "sfw") {
+      return categories.filter(category => category !== "Spicy");
+    }
+    return categories.filter(category => competitiveCategories.has(category));
+  }
+
+  document.getElementById("deckPresetButtons").addEventListener("click", event => {
+    const button = event.target.closest("[data-deck-preset]");
+    if (!button) return;
+    enabledCategories = new Set(
+      deckPresetCategories(button.dataset.deckPreset, getUniqueCategories())
+    );
+    saveEnabledCategoriesToStorage();
+    buildCategoryList();
+    buildDeckFromEnabledCategories();
+  });
+
+  function setAllCategories(enabled) {
+    const categories = getUniqueCategories();
+    enabledCategories = enabled ? new Set(categories) : new Set();
+    saveEnabledCategoriesToStorage();
+    buildCategoryList();
+    buildDeckFromEnabledCategories();
+  }
+
+  selectAllCategoriesButton.addEventListener("click", () => setAllCategories(true));
+  deselectAllCategoriesButton.addEventListener("click", () => setAllCategories(false));
+
+  function buildCategoryList() {
+    const categories = getUniqueCategories();
+    categoryList.innerHTML = "";
+
+    if (categories.length === 0) {
+      categoryList.innerHTML = `<div class="category-empty">No categories found.</div>`;
+      return;
+    }
+
+    categories.forEach(cat => {
+      const id = "cat-" + cat.replace(/[^a-z0-9]/gi, "_");
+      const wrapper = document.createElement("label");
+      wrapper.setAttribute("for", id);
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = id;
+      checkbox.checked = enabledCategories.has(cat);
+      checkbox.style.accentColor = categoryColours[cat] || "#999999";
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          enabledCategories.add(cat);
+        } else {
+          enabledCategories.delete(cat);
+        }
+        saveEnabledCategoriesToStorage();
+        buildDeckFromEnabledCategories();
+      });
+
+      const dot = document.createElement("span");
+      dot.className = "category-swatch-dot";
+      dot.style.backgroundColor = categoryColours[cat] || "#999999";
+
+      const text = document.createElement("span");
+      text.textContent = cat;
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(dot);
+      wrapper.appendChild(text);
+      categoryList.appendChild(wrapper);
+    });
+  }
+
+  // Initialise the local setup independently of the deck download.
+  resetSetupFields();
+
+  // ---------- Card loading ----------
+  fetch("AppFiles/Data/cards.json")
+    .then((response) => response.json())
+    .then((data) => {
+      allCards = [...data];
+      rebuildAllDraws();   // builds category colours + the flat list of draws
+
+      const uniqueCategories = getUniqueCategories();
+      loadEnabledCategoriesFromStorage(uniqueCategories);
+      buildCategoryList();
+
+      buildDeckFromEnabledCategories();
+      preloadNextCard();
+
+      cardFront.innerHTML = "Ultimate Drinking Cards";
+      cardBack.innerHTML = "";
+    })
+    .catch((error) => {
+  console.error("Error loading cards:", error);
+  cardFront.innerHTML = `<div class="loading-text" style="color:#ff4747;">Failed to load cards. Check your connection and refresh.</div>`;
+});
+
+  function pickCardType() {
+    const r = Math.random();
+    if (r < RED_CHANCE) return "red";
+    if (r < RED_CHANCE + BLACK_CHANCE) return "black";
+    return "white";
+  }
+
+  function generateCardContent(card) {
+    const type = pickCardType();
+
+    const tripleBadge = type === "red"
+      ? `<div class="tripleBadge">×3!</div>`
+      : "";
+
+    return {
+      type,
+      content: `
+        <div class="instructionText">
+          ${card.Rule} 
+        </div>
+        ${tripleBadge}
+        <div class="categoryText" style="color: ${card.Colour};">
+          ${card.Category}
+        </div>
+      `,
+    };
+  }
+
+  function canDrawLocalCard(card) {
+    return !trackingEnabled || players.length >= minimumCardPlayers(card.RawRule);
+  }
+
+  let nextCardPreloadFrame = null;
+
+  function queueNextCardPreload() {
+    nextCardPreloadFrame = requestAnimationFrame(() => {
+      nextCardPreloadFrame = requestAnimationFrame(preloadNextCard);
+    });
+  }
+
+  function preloadNextCard() {
+    if (nextCardPreloadFrame !== null) {
+      cancelAnimationFrame(nextCardPreloadFrame);
+      nextCardPreloadFrame = null;
+    }
+
+    preloadedLocalCard = null;
+    const eligible = cards.map((card, index) => canDrawLocalCard(card) ? index : -1)
+      .filter(index => index >= 0);
+
+    if (!eligible.length) {
+    cardBack.dataset.content = `
+      <div class="emptyDeck">
+        <div class="emptyDeckEmoji">🎉</div>
+        <div class="emptyDeckTitle">Deck complete!</div>
+        <div class="emptyDeckSub">You've drawn every card in play.</div>
+      </div>
+    `;
+    cardBack.dataset.type = "white";
+      cardBack.dataset.categoryColour = "#000000";
+      return;
+    }
+
+    const randomIndex = eligible[Math.floor(Math.random() * eligible.length)];
+    const newCard = cards.splice(randomIndex, 1)[0];
+    preloadedLocalCard = newCard;
+    const rule = isDiscordModeOn() ? applyDiscordTransforms(newCard.RawRule) : newCard.RawRule;
+    const { type, content } = generateCardContent({ ...newCard, Rule: rule });
+
+    cardBack.dataset.content = content;
+    cardBack.dataset.type = type;
+    cardBack.dataset.categoryColour = newCard.Colour;
+  }
+
+  const INSTRUCTION_MAX_FONT_SIZE = 27;
+  const INSTRUCTION_MIN_FONT_SIZE = 13;
+
+  function fitInstructionText(container) {
+    const el = container.querySelector(".instructionText");
+    if (!el) return;
+    let fontSize = INSTRUCTION_MAX_FONT_SIZE;
+    el.style.fontSize = fontSize + "px";
+    const maxHeight = container.clientHeight - 60;
+    let guard = 0;
+    while (el.scrollHeight > maxHeight && fontSize > INSTRUCTION_MIN_FONT_SIZE && guard < 40) {
+      fontSize -= 1;
+      el.style.fontSize = fontSize + "px";
+      guard++;
+    }
+  }
+
+function applyPreloadedContent(isFront = true, cardPlayers = [], ownerIndex = 0) {
+  const target = isFront ? cardFront : cardBack;
+  const type = cardBack.dataset.type || "white";
+  const glow = hexToRgba(cardBack.dataset.categoryColour || "#999999", 0.25);
+
+  target.innerHTML = cardBack.dataset.content || "";
+  if (cardPlayers.length === 2 && (ownerIndex === 0 || ownerIndex === 1)) {
+    const instruction = target.querySelector(".instructionText");
+    if (instruction) {
+      instruction.innerHTML = rewordTwoPlayerCard(
+        instruction.innerHTML, cardPlayers[1 - ownerIndex]?.name
+      );
+    }
+  }
+  target.classList.remove("type-black", "type-red");
+  if (type === "black") target.classList.add("type-black");
+  if (type === "red") target.classList.add("type-red");
+
+  coverCard.classList.remove("type-black", "type-red");
+  if (type === "black") coverCard.classList.add("type-black");
+  if (type === "red") coverCard.classList.add("type-red");
+
+  coverCard.style.setProperty("--category-glow", glow);
+  cardFront.style.setProperty("--category-glow", glow);
+  cardBack.style.setProperty("--category-glow", glow);
+
+  requestAnimationFrame(() => fitInstructionText(target));
+}
+
+  const cardSounds = {};
+
+  for (const [type, file] of Object.entries({
+    white: "flip.mp3",
+    red: "red.mp3",
+    black: "black.mp3",
+    click: "click.mp3"
+  })) {
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = "AppFiles/Sounds/" + file;
+    cardSounds[type] = audio;
+  }
+
+  function playCardSound(type) {
+    const audio = cardSounds[type] || cardSounds.white;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
+
+  function flipCard(advance = true, cardPlayers, ownerIndex = currentPlayerIndex, restoring = false) {
+    if (!gameStarted) {
+      playCardSound("click");
+      openSetupOverlay();
+      return;
+    }
+
+    const isLocalFlip = advance !== false;
+
+    if (nextCardPreloadFrame !== null) {
+      if (isLocalFlip) {
+        // A quick second tap arrived before the next card was prepared.
+        preloadNextCard();
+      } else {
+        // The online state has already supplied the card to reveal.
+        cancelAnimationFrame(nextCardPreloadFrame);
+        nextCardPreloadFrame = null;
+      }
+    }
+
+    coverCard.classList.remove("udc-opening-card");
+    const upcomingType = cardBack.dataset.type || "white";
+
+    if (drawnCount < totalDrawsInPlay) {
+      drawnCount++;
+    }
+
+    applyPreloadedContent(
+      !showingFront,
+      cardPlayers ?? (trackingEnabled ? players : []),
+      ownerIndex
+    );
+
+    coverCard.classList.toggle("flipped");
+    coverCard.classList.toggle("face-up", showingFront);
+    showingFront = !showingFront;
+
+    if (!restoring) playCardSound(upcomingType);
+    updateCardCounter();
+    if (restoring) return;
+
+    if (upcomingType === "red") {
+      flash(redFlash, 180);
+      vibrate([30, 90, 60]);
+    } else if (upcomingType === "black") {
+      flash(blackFlash, 220);
+      vibrate([40]);
+    } else {
+      vibrate([12]);
+    }
+
+    const srAnnouncer = document.getElementById("srAnnouncer");
+    if (srAnnouncer) {
+      const visibleCard = showingFront ? cardFront : cardBack;
+      const ruleText = visibleCard.querySelector(".instructionText")?.textContent.trim() || "";
+      srAnnouncer.textContent = `${upcomingType} card. ${ruleText}`;
+    }
+
+    if (isLocalFlip) {
+      advanceTurn();
+      queueNextCardPreload();
+    }
+  }
+
+  coverCard.addEventListener("click", flipCard);
+
+  coverCard.addEventListener("keydown", (e) => {
+  if (e.key === " " || e.key === "Enter" || e.code === "Space") {
+    e.preventDefault();
+    flipCard();
+  }
+});
+
+  function getUniqueCategories() {
+    const set = new Set(allCards.map((c) => c.Category || "").filter(Boolean));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }
+
+function vibrate(pattern) {
+  if (navigator.vibrate && !prefersReducedMotion) {
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+}
+  
+
+
+  </script>
+  <script src="rules.js"></script>
+
+  <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="udc-online.js?v=36"></script>
+  
+</body>
+</html>
